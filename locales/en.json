@@ -1,0 +1,11 @@
+{
+  "settings": {
+    "title": "Welcome Wall Settings",
+    "subtitle": "Configure the local HTTP server",
+    "httpPort": "HTTP port",
+    "httpPortHelp": "Default port is 7999. The server restarts automatically when the port changes.",
+    "save": "Save",
+    "saved": "Settings saved. The HTTP server will restart if the port changed.",
+    "invalidPort": "Enter a valid TCP port between 1 and 65535."
+  }
+}

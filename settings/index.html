@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script
+      type="text/javascript"
+      src="/homey.js"
+      data-origin="settings"
+    ></script>
+  </head>
+  <body>
+    <header class="homey-header">
+      <h1 class="homey-title" data-i18n="settings.title">Welcome Wall Settings</h1>
+      <p class="homey-subtitle" data-i18n="settings.subtitle">
+        Configure the local HTTP server
+      </p>
+    </header>
+
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend" data-i18n="settings.httpPort">HTTP port</legend>
+
+      <div class="homey-form-group">
+        <label class="homey-form-label" for="httpPort" data-i18n="settings.httpPort">
+          HTTP port
+        </label>
+        <input
+          class="homey-form-input"
+          id="httpPort"
+          type="number"
+          min="1"
+          max="65535"
+          step="1"
+          value="7999"
+        />
+        <p class="homey-form-help" data-i18n="settings.httpPortHelp">
+          Default port is 7999. The server restarts automatically when the port changes.
+        </p>
+      </div>
+    </fieldset>
+
+    <button id="save" class="homey-button-primary-full" data-i18n="settings.save">
+      Save
+    </button>
+
+    <script type="text/javascript">
+      function onHomeyReady(Homey) {
+        Homey.ready();
+
+        var portElement = document.getElementById('httpPort');
+        var saveElement = document.getElementById('save');
+
+        Homey.get('httpPort', function (err, httpPort) {
+          if (err) {
+            return Homey.alert(err);
+          }
+
+          if (httpPort === undefined || httpPort === null || httpPort === '') {
+            portElement.value = '7999';
+            return;
+          }
+
+          portElement.value = String(httpPort);
+        });
+
+        saveElement.addEventListener('click', function () {
+          var parsed = Number(portElement.value);
+          if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
+            return Homey.alert(Homey.__('settings.invalidPort'));
+          }
+
+          Homey.set('httpPort', parsed, function (err) {
+            if (err) {
+              return Homey.alert(err);
+            }
+
+            Homey.alert(Homey.__('settings.saved'));
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

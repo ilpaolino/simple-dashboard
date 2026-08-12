@@ -1,0 +1,16 @@
+.git/
+.github/
+.idea/
+.vscode/
+.DS_Store
+node_modules/
+test/
+scripts/
+coverage/
+*.md
+!README.txt
+tsconfig*.json
+.eslintrc*
+.env*
+*.log
+*.tsbuildinfo

@@ -1,0 +1,11 @@
+{
+  "settings": {
+    "title": "Impostazioni Welcome Wall",
+    "subtitle": "Configura il server HTTP locale",
+    "httpPort": "Porta HTTP",
+    "httpPortHelp": "La porta predefinita è 7999. Il server si riavvia automaticamente quando la porta cambia.",
+    "save": "Salva",
+    "saved": "Impostazioni salvate. Il server HTTP si riavvierà se la porta è cambiata.",
+    "invalidPort": "Inserisci una porta TCP valida tra 1 e 65535."
+  }
+}
