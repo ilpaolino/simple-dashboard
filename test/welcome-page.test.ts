@@ -12,7 +12,7 @@ describe('renderWelcomePage', () => {
       timestamp: '2026-08-12T20:00:00.000Z',
     });
 
-    assert.match(html, /<h1>Welcome Wall<\/h1>/);
+    assert.match(html, /<h1>Simple Dashboard<\/h1>/);
     assert.match(html, /192\.168\.1\.10/);
     assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
     assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);

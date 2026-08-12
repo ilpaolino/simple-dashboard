@@ -15,7 +15,7 @@ export function renderWelcomePage(info: RequestInfo): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Welcome Wall</title>
+  <title>Simple Dashboard</title>
   <style>
     :root {
       color-scheme: light;
@@ -74,7 +74,7 @@ export function renderWelcomePage(info: RequestInfo): string {
 </head>
 <body>
   <main>
-    <h1>Welcome Wall</h1>
+    <h1>Simple Dashboard</h1>
     <p>Local HTTP proof of concept is reachable.</p>
     <dl>
       <dt>Client IP</dt>

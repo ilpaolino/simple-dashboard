@@ -1,21 +1,34 @@
 {
-  "id": "com.ilpaolino.simpledashboard",
-  "version": "0.1.0",
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "dev.dadda.simpledashboard",
+  "version": "0.2.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
-  "platforms": ["local"],
+  "platforms": [
+    "local"
+  ],
   "name": {
-    "en": "Welcome Wall",
-    "it": "Welcome Wall"
+    "en": "Simple Dashboard",
+    "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Local HTTP server proof of concept for a wall display dashboard.",
-    "it": "Proof of concept del server HTTP locale per una dashboard su wall display."
+    "en": "Wall Display devices and a local HTTP welcome page for Homey Pro.",
+    "it": "Dispositivi Wall Display e pagina di benvenuto HTTP locale per Homey Pro."
   },
-  "category": ["tools"],
+  "category": [
+    "tools"
+  ],
   "tags": {
-    "en": ["http", "dashboard", "wall display"],
-    "it": ["http", "dashboard", "wall display"]
+    "en": [
+      "http",
+      "dashboard",
+      "wall display"
+    ],
+    "it": [
+      "http",
+      "dashboard",
+      "wall display"
+    ]
   },
   "permissions": [],
   "images": {
@@ -26,5 +39,170 @@
   "author": {
     "name": "ilpaolino"
   },
-  "brandColor": "#1F4B5C"
+  "brandColor": "#1F4B5C",
+  "drivers": [
+    {
+      "name": {
+        "en": "Wall Display",
+        "it": "Wall Display"
+      },
+      "class": "other",
+      "capabilities": [],
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "icon": "/drivers/wall_display/assets/icon.svg",
+      "images": {
+        "small": "/drivers/wall_display/assets/images/small.png",
+        "large": "/drivers/wall_display/assets/images/large.png",
+        "xlarge": "/drivers/wall_display/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "enter_ip"
+        }
+      ],
+      "id": "wall_display",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection",
+            "it": "Connessione"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "IP address",
+                "it": "Indirizzo IP"
+              },
+              "value": "",
+              "hint": {
+                "en": "IPv4 address of the wall display. Changing this does not change the device identity.",
+                "it": "Indirizzo IPv4 del wall display. La modifica non cambia l'identità del dispositivo."
+              },
+              "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Device",
+            "it": "Dispositivo"
+          },
+          "children": [
+            {
+              "id": "adapter",
+              "type": "label",
+              "label": {
+                "en": "Adapter",
+                "it": "Adapter"
+              },
+              "value": "",
+              "hint": {
+                "en": "Set during pairing. Read-only when the device was auto-detected.",
+                "it": "Impostato durante il pairing. Sola lettura se il dispositivo è stato riconosciuto automaticamente."
+              }
+            },
+            {
+              "id": "manufacturer",
+              "type": "label",
+              "label": {
+                "en": "Manufacturer",
+                "it": "Produttore"
+              },
+              "value": ""
+            },
+            {
+              "id": "model",
+              "type": "label",
+              "label": {
+                "en": "Model",
+                "it": "Modello"
+              },
+              "value": ""
+            },
+            {
+              "id": "firmware",
+              "type": "label",
+              "label": {
+                "en": "Firmware",
+                "it": "Firmware"
+              },
+              "value": ""
+            },
+            {
+              "id": "serial",
+              "type": "label",
+              "label": {
+                "en": "UUID / Serial",
+                "it": "UUID / Seriale"
+              },
+              "value": ""
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Display",
+            "it": "Display"
+          },
+          "children": [
+            {
+              "id": "layout",
+              "type": "dropdown",
+              "label": {
+                "en": "Layout",
+                "it": "Layout"
+              },
+              "value": "2x2",
+              "hint": {
+                "en": "Only layouts supported by this device configuration can be saved.",
+                "it": "È possibile salvare solo i layout supportati dalla configurazione di questo dispositivo."
+              },
+              "highlight": true,
+              "values": [
+                {
+                  "id": "2x2",
+                  "label": {
+                    "en": "2 × 2",
+                    "it": "2 × 2"
+                  }
+                },
+                {
+                  "id": "3x3",
+                  "label": {
+                    "en": "3 × 3",
+                    "it": "3 × 3"
+                  }
+                },
+                {
+                  "id": "2x4",
+                  "label": {
+                    "en": "2 × 4",
+                    "it": "2 × 4"
+                  }
+                },
+                {
+                  "id": "3x6",
+                  "label": {
+                    "en": "3 × 6",
+                    "it": "3 × 6"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

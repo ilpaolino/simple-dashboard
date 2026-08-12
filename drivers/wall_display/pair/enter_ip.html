@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <!--
+      Pairing views: Homey is injected globally by the client.
+      Do NOT load /homey.js here (that is for app settings only and breaks pair with
+      "Could not load script: /js/homey.pair.js").
+      @see https://apps.developer.homey.app/advanced/custom-views/custom-pairing-views
+    -->
+
+    <section id="step-ip">
+      <header class="homey-header">
+        <h1 class="homey-title" data-i18n="pair.enterIp.title">IP address</h1>
+        <p class="homey-subtitle" data-i18n="pair.enterIp.subtitle">
+          Enter the IPv4 address of the wall display.
+        </p>
+      </header>
+
+      <form class="homey-form" id="ip-form" action="#" method="post">
+        <fieldset class="homey-form-fieldset">
+          <legend class="homey-form-legend" data-i18n="pair.enterIp.legend">
+            Connection
+          </legend>
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="ip" data-i18n="pair.enterIp.ip">
+              IP address
+            </label>
+            <input
+              class="homey-form-input"
+              id="ip"
+              name="ip"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              required
+            />
+            <p class="homey-form-help" data-i18n="pair.enterIp.ipHelp">
+              Example: 192.168.1.50
+            </p>
+          </div>
+        </fieldset>
+
+        <button
+          id="probe"
+          type="submit"
+          class="homey-button-primary-full"
+          data-i18n="pair.enterIp.continue"
+        >
+          Connect
+        </button>
+      </form>
+    </section>
+
+    <section id="step-confirm" style="display: none;">
+      <header class="homey-header">
+        <h1 class="homey-title" data-i18n="pair.confirm.title">Device found</h1>
+        <p class="homey-subtitle" data-i18n="pair.confirm.subtitle">
+          Confirm that this is the wall display you want to add.
+        </p>
+      </header>
+
+      <div class="homey-form">
+        <fieldset class="homey-form-fieldset">
+          <legend class="homey-form-legend" data-i18n="pair.confirm.legend">
+            Detected information
+          </legend>
+
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.confirm.adapter">Adapter</label>
+            <p class="homey-form-help" id="adapter">—</p>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.confirm.manufacturer">Manufacturer</label>
+            <p class="homey-form-help" id="manufacturer">—</p>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.confirm.model">Model</label>
+            <p class="homey-form-help" id="model">—</p>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.confirm.firmware">Firmware</label>
+            <p class="homey-form-help" id="firmware">—</p>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.confirm.serial">UUID / Serial</label>
+            <p class="homey-form-help" id="serial">—</p>
+          </div>
+        </fieldset>
+
+        <button
+          id="confirm-add"
+          type="button"
+          class="homey-button-primary-full"
+          data-i18n="pair.confirm.confirm"
+        >
+          Add device
+        </button>
+        <button
+          id="confirm-back"
+          type="button"
+          class="homey-button-secondary-shadow"
+          data-i18n="pair.back"
+        >
+          Back
+        </button>
+      </div>
+    </section>
+
+    <section id="step-adapter" style="display: none;">
+      <header class="homey-header">
+        <h1 class="homey-title" data-i18n="pair.selectAdapter.title">Unknown device</h1>
+        <p class="homey-subtitle" data-i18n="pair.selectAdapter.subtitle">
+          The device could not be recognized automatically. Choose an adapter.
+        </p>
+      </header>
+
+      <form class="homey-form" id="adapter-form" action="#" method="post">
+        <fieldset class="homey-form-fieldset">
+          <legend class="homey-form-legend" data-i18n="pair.selectAdapter.legend">
+            Adapter
+          </legend>
+          <div class="homey-form-group">
+            <fieldset class="homey-form-radio-set" id="adapter-set">
+              <legend
+                class="homey-form-radio-set-title"
+                data-i18n="pair.selectAdapter.choose"
+              >
+                Choose adapter
+              </legend>
+            </fieldset>
+          </div>
+        </fieldset>
+
+        <button
+          id="adapter-add"
+          type="submit"
+          class="homey-button-primary-full"
+          data-i18n="pair.selectAdapter.continue"
+        >
+          Add device
+        </button>
+        <button
+          id="adapter-back"
+          type="button"
+          class="homey-button-secondary-shadow"
+          data-i18n="pair.back"
+        >
+          Back
+        </button>
+      </form>
+    </section>
+
+    <script type="application/javascript">
+      (function () {
+        var started = false;
+
+        function start(Homey) {
+          if (started) {
+            return;
+          }
+          started = true;
+
+          // Hide Homey chrome Next ("Collegati"); use the in-page button instead.
+          Homey.setNavigationClose();
+          Homey.setTitle(Homey.__('pair.enterIp.title'));
+
+          var stepIp = document.getElementById('step-ip');
+          var stepConfirm = document.getElementById('step-confirm');
+          var stepAdapter = document.getElementById('step-adapter');
+          var ipForm = document.getElementById('ip-form');
+          var ipElement = document.getElementById('ip');
+          var probeButton = document.getElementById('probe');
+          var confirmAddButton = document.getElementById('confirm-add');
+          var confirmBackButton = document.getElementById('confirm-back');
+          var adapterForm = document.getElementById('adapter-form');
+          var adapterAddButton = document.getElementById('adapter-add');
+          var adapterBackButton = document.getElementById('adapter-back');
+          var adapterSet = document.getElementById('adapter-set');
+
+          function showStep(step) {
+            stepIp.style.display = step === 'ip' ? '' : 'none';
+            stepConfirm.style.display = step === 'confirm' ? '' : 'none';
+            stepAdapter.style.display = step === 'adapter' ? '' : 'none';
+
+            if (step === 'ip') {
+              Homey.setTitle(Homey.__('pair.enterIp.title'));
+            } else if (step === 'confirm') {
+              Homey.setTitle(Homey.__('pair.confirm.title'));
+            } else {
+              Homey.setTitle(Homey.__('pair.selectAdapter.title'));
+            }
+          }
+
+          function setLoading(button, loading) {
+            if (loading) {
+              button.classList.add('is-loading');
+              button.disabled = true;
+              try {
+                Homey.showLoadingOverlay();
+              } catch (error) {
+                // ignore missing overlay support
+              }
+              return;
+            }
+
+            button.classList.remove('is-loading');
+            button.disabled = false;
+            try {
+              Homey.hideLoadingOverlay();
+            } catch (error) {
+              // ignore
+            }
+          }
+
+          function fillDetectedInfo(info) {
+            document.getElementById('adapter').textContent = info.adapterName;
+            document.getElementById('manufacturer').textContent = info.manufacturer;
+            document.getElementById('model').textContent = info.model;
+            document.getElementById('firmware').textContent = info.firmware;
+            document.getElementById('serial').textContent = info.serial;
+          }
+
+          function renderAdapters(adapters) {
+            while (adapterSet.children.length > 1) {
+              adapterSet.removeChild(adapterSet.lastChild);
+            }
+
+            adapters.forEach(function (adapter, index) {
+              var label = document.createElement('label');
+              label.className = 'homey-form-radio';
+
+              var input = document.createElement('input');
+              input.className = 'homey-form-radio-input';
+              input.type = 'radio';
+              input.name = 'adapter';
+              input.value = adapter.id;
+              if (index === 0) {
+                input.checked = true;
+              }
+
+              var checkmark = document.createElement('span');
+              checkmark.className = 'homey-form-radio-checkmark';
+
+              var text = document.createElement('span');
+              text.className = 'homey-form-radio-text';
+              text.textContent = adapter.name;
+
+              label.appendChild(input);
+              label.appendChild(checkmark);
+              label.appendChild(text);
+              adapterSet.appendChild(label);
+            });
+          }
+
+          function createPairedDevice() {
+            return Homey.emit('get_pairing_device').then(function (device) {
+              return Homey.createDevice(device);
+            }).then(function () {
+              Homey.done();
+            });
+          }
+
+          function runProbe() {
+            setLoading(probeButton, true);
+
+            return Homey.emit('probe', { ip: ipElement.value })
+              .then(function (result) {
+                if (result.nextView === 'confirm') {
+                  return Homey.emit('get_detected_info').then(function (info) {
+                    fillDetectedInfo(info);
+                    showStep('confirm');
+                  });
+                }
+
+                return Homey.emit('list_adapters').then(function (adapters) {
+                  renderAdapters(adapters);
+                  showStep('adapter');
+                });
+              })
+              .catch(function (error) {
+                Homey.alert(
+                  (error && error.message) || Homey.__('errors.invalidIp'),
+                );
+              })
+              .then(function () {
+                setLoading(probeButton, false);
+              });
+          }
+
+          ipForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            runProbe();
+          });
+
+          confirmAddButton.addEventListener('click', function () {
+            setLoading(confirmAddButton, true);
+            createPairedDevice().catch(function (error) {
+              setLoading(confirmAddButton, false);
+              Homey.alert(
+                (error && error.message) || Homey.__('errors.createDeviceFailed'),
+              );
+            });
+          });
+
+          confirmBackButton.addEventListener('click', function () {
+            showStep('ip');
+          });
+
+          adapterForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            var selected = adapterForm.querySelector(
+              'input[name="adapter"]:checked',
+            );
+            if (!selected) {
+              Homey.alert(Homey.__('errors.unknownAdapter'));
+              return;
+            }
+
+            setLoading(adapterAddButton, true);
+
+            Homey.emit('select_adapter', { adapterId: selected.value })
+              .then(function () {
+                return createPairedDevice();
+              })
+              .catch(function (error) {
+                setLoading(adapterAddButton, false);
+                Homey.alert(
+                  (error && error.message) ||
+                    Homey.__('errors.createDeviceFailed'),
+                );
+              });
+          });
+
+          adapterBackButton.addEventListener('click', function () {
+            showStep('ip');
+          });
+        }
+
+        // Official pairing docs: Homey is globally available.
+        if (typeof Homey !== 'undefined') {
+          start(Homey);
+        }
+
+        // Also support the onHomeyReady callback used in some Homey clients.
+        window.onHomeyReady = function (HomeyApi) {
+          start(HomeyApi);
+        };
+      })();
+    </script>
+  </body>
+</html>

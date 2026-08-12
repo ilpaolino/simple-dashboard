@@ -48,7 +48,7 @@ describe('HttpServer', () => {
     }
   });
 
-  it('serves Welcome Wall HTML on /', async () => {
+  it('serves Simple Dashboard HTML on /', async () => {
     const port = await getFreePort();
     const server = new HttpServer({
       host: '127.0.0.1',
@@ -63,7 +63,7 @@ describe('HttpServer', () => {
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(body, /Welcome Wall/);
+    assert.match(body, /Simple Dashboard/);
     assert.match(body, /Client IP/);
     assert.match(body, /User Agent/);
     assert.match(body, /Method/);

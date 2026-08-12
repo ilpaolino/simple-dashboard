@@ -1,11 +1,57 @@
 {
   "settings": {
-    "title": "Impostazioni Welcome Wall",
+    "title": "Impostazioni Simple Dashboard",
     "subtitle": "Configura il server HTTP locale",
     "httpPort": "Porta HTTP",
     "httpPortHelp": "La porta predefinita è 7999. Il server si riavvia automaticamente quando la porta cambia.",
     "save": "Salva",
     "saved": "Impostazioni salvate. Il server HTTP si riavvierà se la porta è cambiata.",
     "invalidPort": "Inserisci una porta TCP valida tra 1 e 65535."
+  },
+  "adapters": {
+    "shelly_wall_display": "Shelly Wall Display",
+    "generic_web_display": "Generic Web Display"
+  },
+  "device": {
+    "defaultName": "Wall Display",
+    "notAvailable": "Non disponibile"
+  },
+  "pair": {
+    "back": "Indietro",
+    "enterIp": {
+      "title": "Indirizzo IP",
+      "subtitle": "Inserisci l'indirizzo IPv4 del wall display.",
+      "legend": "Connessione",
+      "ip": "Indirizzo IP",
+      "ipHelp": "Esempio: 192.168.1.50",
+      "continue": "Collegati"
+    },
+    "confirm": {
+      "title": "Dispositivo trovato",
+      "subtitle": "Conferma che questo è il wall display da aggiungere.",
+      "legend": "Informazioni rilevate",
+      "adapter": "Adapter",
+      "manufacturer": "Produttore",
+      "model": "Modello",
+      "firmware": "Firmware",
+      "serial": "UUID / Seriale",
+      "confirm": "Aggiungi dispositivo"
+    },
+    "selectAdapter": {
+      "title": "Dispositivo sconosciuto",
+      "subtitle": "Il dispositivo non è stato riconosciuto automaticamente. Scegli un adapter.",
+      "legend": "Adapter",
+      "choose": "Scegli adapter",
+      "continue": "Aggiungi dispositivo"
+    }
+  },
+  "errors": {
+    "invalidIp": "Inserisci un indirizzo IPv4 valido.",
+    "unsupportedLayout": "Questo layout non è supportato dalla configurazione del dispositivo.",
+    "adapterReadOnly": "L'adapter non può essere modificato dopo il pairing.",
+    "unknownAdapter": "Seleziona un adapter valido.",
+    "deviceNotIdentified": "Nessun dispositivo identificato da confermare.",
+    "invalidConfiguration": "La configurazione memorizzata del dispositivo manca o non è valida.",
+    "createDeviceFailed": "Impossibile aggiungere il dispositivo. Riprova."
   }
 }

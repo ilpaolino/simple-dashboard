@@ -1,7 +1,6 @@
-Welcome Wall
+Simple Dashboard
 
-Milestone 0 proof of concept for Homey Pro.
-Starts a local HTTP server (default port 7999) and serves a simple Welcome Wall page.
+Homey Pro app: Wall Display devices plus a local HTTP welcome page (default port 7999).
 
-Open http://<homey-ip>:7999 from a browser or Shelly Wall Display to verify connectivity.
-Change the port in the app settings; the server restarts automatically.
+Pair a Wall Display by IP address from the Homey app. Open http://<homey-ip>:7999 from a browser or display to verify the welcome page.
+Change the HTTP port in the app settings; the server restarts automatically.

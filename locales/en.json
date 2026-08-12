@@ -1,11 +1,57 @@
 {
   "settings": {
-    "title": "Welcome Wall Settings",
+    "title": "Simple Dashboard Settings",
     "subtitle": "Configure the local HTTP server",
     "httpPort": "HTTP port",
     "httpPortHelp": "Default port is 7999. The server restarts automatically when the port changes.",
     "save": "Save",
     "saved": "Settings saved. The HTTP server will restart if the port changed.",
     "invalidPort": "Enter a valid TCP port between 1 and 65535."
+  },
+  "adapters": {
+    "shelly_wall_display": "Shelly Wall Display",
+    "generic_web_display": "Generic Web Display"
+  },
+  "device": {
+    "defaultName": "Wall Display",
+    "notAvailable": "Not available"
+  },
+  "pair": {
+    "back": "Back",
+    "enterIp": {
+      "title": "IP address",
+      "subtitle": "Enter the IPv4 address of the wall display.",
+      "legend": "Connection",
+      "ip": "IP address",
+      "ipHelp": "Example: 192.168.1.50",
+      "continue": "Connect"
+    },
+    "confirm": {
+      "title": "Device found",
+      "subtitle": "Confirm that this is the wall display you want to add.",
+      "legend": "Detected information",
+      "adapter": "Adapter",
+      "manufacturer": "Manufacturer",
+      "model": "Model",
+      "firmware": "Firmware",
+      "serial": "UUID / Serial",
+      "confirm": "Add device"
+    },
+    "selectAdapter": {
+      "title": "Unknown device",
+      "subtitle": "The device could not be recognized automatically. Choose an adapter.",
+      "legend": "Adapter",
+      "choose": "Choose adapter",
+      "continue": "Add device"
+    }
+  },
+  "errors": {
+    "invalidIp": "Enter a valid IPv4 address.",
+    "unsupportedLayout": "This layout is not supported by the device configuration.",
+    "adapterReadOnly": "The adapter cannot be changed after pairing.",
+    "unknownAdapter": "Select a valid adapter.",
+    "deviceNotIdentified": "No identified device is available to confirm.",
+    "invalidConfiguration": "The stored device configuration is missing or invalid.",
+    "createDeviceFailed": "The device could not be added. Try again."
   }
 }

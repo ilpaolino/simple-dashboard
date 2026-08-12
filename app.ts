@@ -41,7 +41,7 @@ class WelcomeWallApp extends Homey.App {
       this.logger.error('HTTP server did not start during app init', error);
     }
 
-    this.logger.info('Welcome Wall app initialized');
+    this.logger.info('Simple Dashboard app initialized');
   }
 
   public async onUninit(): Promise<void> {
@@ -51,7 +51,7 @@ class WelcomeWallApp extends Homey.App {
       this.logger.error('HTTP server cleanup failed during app uninit', error);
     }
 
-    this.logger.info('Welcome Wall app uninitialized');
+    this.logger.info('Simple Dashboard app uninitialized');
   }
 }
 

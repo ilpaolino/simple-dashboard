@@ -1,8 +1,8 @@
-# Welcome Wall (Homey App)
+# Simple Dashboard
 
-Milestone 0 — local HTTP server proof of concept for Homey Pro.
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display devices and a local HTTP welcome page.
 
-This app starts a local HTTP server on Homey (default port **7999**) and serves a minimal **Welcome Wall** HTML page. No dashboard, devices, flows, or WebSockets.
+This milestone does **not** include a dashboard UI, Vue, widgets, Flow cards, WebSockets, or Homey device control.
 
 ## Requirements
 
@@ -24,25 +24,24 @@ homey login
 ```bash
 cd /path/to/simple-dashboard
 npm install
+npm run assets
 npm test
 npm run typecheck
 ```
 
-## Run on Homey Pro (required for real LAN access)
+## Run on Homey Pro
 
-A plain `homey app run` uses a local Docker container. **Port binding for LAN clients (browser / Shelly Wall Display) only works when the app runs on Homey itself.**
+A plain `homey app run` uses a local Docker container. **LAN access (browser / Shelly Wall Display / pairing probe) only works when the app runs on Homey itself.**
 
 ```bash
 homey app run --remote
 ```
 
-Then open:
+Welcome page:
 
 ```text
 http://<HOMEY_LAN_IP>:7999/
 ```
-
-You should see the Welcome Wall page with client IP, User-Agent, method, URL, and timestamp.
 
 ### Install persistently (without live logs)
 
@@ -50,14 +49,23 @@ You should see the Welcome Wall page with client IP, User-Agent, method, URL, an
 homey app install
 ```
 
+## Pair a Wall Display
+
+1. Open the Homey mobile/web app
+2. Add device → **Simple Dashboard** → **Wall Display**
+3. Enter the display IPv4 address
+4. If the device is a Shelly Wall Display, confirm manufacturer / model / firmware / serial
+5. If it is not recognized, choose **Shelly Wall Display** or **Generic Web Display**
+6. Open the new device → **Advanced settings**
+7. Verify IP, adapter, detected info, and layout
+8. Change the IP and save — the device identity must stay the same
+
 ## Configure the HTTP port
 
 1. Open the Homey mobile/web app
-2. Go to **More → Apps → Welcome Wall → Configure / Settings**
+2. Go to **More → Apps → Simple Dashboard → Configure / Settings**
 3. Set **HTTP port** (1–65535)
 4. Save
-
-The previous server is closed and a new one is started on the updated port. If the port is occupied, the error is logged via the Homey app logger.
 
 ## Useful Homey CLI commands
 
@@ -70,14 +78,17 @@ The previous server is closed and a new one is started on the updated port. If t
 
 ## Local automated tests
 
-Unit/integration tests do **not** require Homey hardware:
-
 ```bash
 npm test
+npm run typecheck
 ```
 
-Coverage includes port validation, logger routing, settings change handling, welcome HTML rendering, HTTP start/restart, and port-in-use errors.
+## Documentation
 
-## Documentation for this milestone
+See [`docs/PROJECT.md`](docs/PROJECT.md) to resume the project. Milestone details:
 
-See [docs/MILESTONE-0.md](docs/MILESTONE-0.md) for architecture decisions, manual test checklist, and known limitations.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/DECISIONS.md](docs/DECISIONS.md)
+- [docs/MILESTONES.md](docs/MILESTONES.md)
+- [docs/TODO.md](docs/TODO.md)
+- [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)

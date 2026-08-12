@@ -1,5 +1,8 @@
 # Milestone 0 — Local HTTP Server PoC
 
+Living project docs: [PROJECT.md](PROJECT.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [MILESTONES.md](MILESTONES.md).
+
+
 ## 1. Architectural choices
 
 ### Component split (App / Logger / SettingsManager / HttpServer)
@@ -71,7 +74,7 @@ Manifest `platforms: ["local"]` and `compatibility: ">=12.9.0"` — Homey Pro on
 - [ ] App starts without crash
 - [ ] Homey logs show HTTP server started on port `7999` (or configured port)
 - [ ] From a PC/phone on the same LAN: open `http://<HOMEY_IP>:7999/`
-- [ ] Page title/heading shows **Welcome Wall**
+- [ ] Page title/heading shows **Simple Dashboard**
 - [ ] Client IP is shown and looks plausible
 - [ ] User Agent is shown
 - [ ] Method shows `GET`
@@ -81,7 +84,7 @@ Manifest `platforms: ["local"]` and `compatibility: ">=12.9.0"` — Homey Pro on
 ### Shelly Wall Display (optional but recommended)
 
 - [ ] Configure Wall Display browser/URL to `http://<HOMEY_IP>:7999/`
-- [ ] Welcome Wall page loads on the display
+- [ ] Simple Dashboard welcome page loads on the display
 
 ### Settings / port change
 
@@ -90,7 +93,7 @@ Manifest `platforms: ["local"]` and `compatibility: ">=12.9.0"` — Homey Pro on
 - [ ] Change port to another free port (e.g. `8001`) and save
 - [ ] Logs show server stop + start on the new port
 - [ ] Old port no longer answers
-- [ ] New port serves Welcome Wall
+- [ ] New port serves the Simple Dashboard welcome page
 
 ### Error handling
 

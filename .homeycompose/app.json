@@ -1,0 +1,30 @@
+{
+  "id": "dev.dadda.simpledashboard",
+  "version": "0.2.0",
+  "compatibility": ">=12.9.0",
+  "sdk": 3,
+  "platforms": ["local"],
+  "name": {
+    "en": "Simple Dashboard",
+    "it": "Simple Dashboard"
+  },
+  "description": {
+    "en": "Wall Display devices and a local HTTP welcome page for Homey Pro.",
+    "it": "Dispositivi Wall Display e pagina di benvenuto HTTP locale per Homey Pro."
+  },
+  "category": ["tools"],
+  "tags": {
+    "en": ["http", "dashboard", "wall display"],
+    "it": ["http", "dashboard", "wall display"]
+  },
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "ilpaolino"
+  },
+  "brandColor": "#1F4B5C"
+}

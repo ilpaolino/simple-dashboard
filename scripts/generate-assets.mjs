@@ -68,7 +68,7 @@ writeFileSync(join(imagesDir, 'large.png'), createPng(500, 350, brand));
 writeFileSync(join(imagesDir, 'xlarge.png'), createPng(1000, 700, brand));
 
 const iconSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Welcome Wall">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Simple Dashboard">
   <rect width="100" height="100" rx="18" fill="#1F4B5C"/>
   <rect x="18" y="24" width="64" height="42" rx="4" fill="none" stroke="#F4F7F8" stroke-width="4"/>
   <rect x="38" y="70" width="24" height="6" rx="2" fill="#F4F7F8"/>
@@ -76,4 +76,24 @@ const iconSvg = `<?xml version="1.0" encoding="UTF-8"?>
 `;
 
 writeFileSync(join(root, 'assets', 'icon.svg'), iconSvg);
-console.log('Generated Homey app assets.');
+
+const driverImagesDir = join(root, 'drivers', 'wall_display', 'assets', 'images');
+mkdirSync(driverImagesDir, { recursive: true });
+writeFileSync(join(driverImagesDir, 'small.png'), createPng(75, 75, brand));
+writeFileSync(join(driverImagesDir, 'large.png'), createPng(500, 500, brand));
+writeFileSync(join(driverImagesDir, 'xlarge.png'), createPng(1000, 1000, brand));
+
+const driverIconSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Wall Display">
+  <rect width="100" height="100" rx="18" fill="#1F4B5C"/>
+  <rect x="18" y="24" width="64" height="42" rx="4" fill="none" stroke="#F4F7F8" stroke-width="4"/>
+  <rect x="26" y="32" width="20" height="14" rx="2" fill="#F4F7F8" opacity="0.35"/>
+  <rect x="50" y="32" width="20" height="14" rx="2" fill="#F4F7F8" opacity="0.35"/>
+  <rect x="26" y="50" width="20" height="8" rx="2" fill="#F4F7F8" opacity="0.35"/>
+  <rect x="50" y="50" width="20" height="8" rx="2" fill="#F4F7F8" opacity="0.35"/>
+  <rect x="38" y="70" width="24" height="6" rx="2" fill="#F4F7F8"/>
+</svg>
+`;
+
+writeFileSync(join(root, 'drivers', 'wall_display', 'assets', 'icon.svg'), driverIconSvg);
+console.log('Generated Homey app and driver assets.');

@@ -1,7 +1,7 @@
 {
-  "name": "com.ilpaolino.simpledashboard",
-  "version": "0.1.0",
-  "description": "Welcome Wall — local HTTP server proof of concept for Homey Pro",
+  "name": "dev.dadda.simpledashboard",
+  "version": "0.2.0",
+  "description": "Simple Dashboard — Wall Display devices and local HTTP welcome page for Homey Pro",
   "main": "app.js",
   "scripts": {
     "build": "tsc",
