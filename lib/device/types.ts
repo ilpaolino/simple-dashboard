@@ -7,12 +7,13 @@ export interface WallDisplayData {
 
 export interface WallDisplaySettings {
   readonly ip: string;
-  readonly adapter: string;
   readonly layout: LayoutId;
-  readonly manufacturer: string;
-  readonly model: string;
-  readonly firmware: string;
-  readonly serial: string;
+  readonly manufacturer?: string;
+  readonly model?: string;
+  readonly firmware?: string;
+  readonly serial?: string;
+  /** @deprecated Type is selected by Homey driver; kept optional for older payloads. */
+  readonly adapter?: string;
 }
 
 export interface WallDisplayStore {

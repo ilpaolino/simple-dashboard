@@ -41,32 +41,45 @@ const translations: Record<string, string> = {
   'errors.invalidIp': 'Enter a valid IPv4 address.',
   'errors.unknownAdapter': 'Select a valid adapter.',
   'errors.deviceNotIdentified': 'No identified device is available to confirm.',
+  'errors.notShellyWallDisplay': 'No Shelly Wall Display was found at this IP address.',
   'device.notAvailable': 'Not available',
-  'device.defaultName': 'Wall Display',
+  'device.defaultNameShelly': 'Shelly Wall Display',
+  'device.defaultNameGeneric': 'Generic Web Display',
   'adapters.shelly_wall_display': 'Shelly Wall Display',
   'adapters.generic_web_display': 'Generic Web Display',
 };
 
-function createFlow(httpPayload: unknown | Error): {
-  flow: PairingFlow;
-  session: MemorySession;
-} {
+function createShellyFlow(httpPayload: unknown | Error): MemorySession {
   const flow = new PairingFlow({
     registry: new AdapterRegistry([
       new ShellyWallDisplayAdapter(new MockJsonHttpClient(httpPayload)),
-      new GenericWebDisplayAdapter(),
     ]),
+    mode: 'identify_required',
+    adapterId: ADAPTER_IDS.SHELLY_WALL_DISPLAY,
     translate: (key) => translations[key] ?? key,
     createId: () => 'generated-uuid',
   });
   const session = new MemorySession();
   flow.bind(session);
-  return { flow, session };
+  return session;
+}
+
+function createGenericFlow(): MemorySession {
+  const flow = new PairingFlow({
+    registry: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+    mode: 'ip_only',
+    adapterId: ADAPTER_IDS.GENERIC_WEB_DISPLAY,
+    translate: (key) => translations[key] ?? key,
+    createId: () => 'generated-uuid',
+  });
+  const session = new MemorySession();
+  flow.bind(session);
+  return session;
 }
 
 describe('PairingFlow', () => {
   it('rejects an invalid IP before probing', async () => {
-    const { session } = createFlow(new Error('unused'));
+    const session = createShellyFlow(new Error('unused'));
     await assert.rejects(
       () => session.emit('probe', { ip: 'bad' }),
       /Enter a valid IPv4 address/,
@@ -74,72 +87,62 @@ describe('PairingFlow', () => {
   });
 
   it('returns confirm when a Shelly Wall Display is recognized', async () => {
-    const { session } = createFlow({
+    const session = createShellyFlow({
       id: 'shellywalldisplay-1',
       mac: 'AABBCCDDEEFF',
       model: 'SAWD-0A1XX10EU1',
-      ver: '2.1.0',
       app: 'WallDisplay',
+      ver: '1.0.0',
     });
 
-    const probe = await session.emit('probe', { ip: '192.168.1.50' });
+    const probe = await session.emit('probe', { ip: '192.168.1.20' });
     assert.deepEqual(probe, {
       ok: true,
-      ip: '192.168.1.50',
+      ip: '192.168.1.20',
       nextView: 'confirm',
     });
 
-    const info = await session.emit('get_detected_info');
-    assert.deepEqual(info, {
-      manufacturer: 'Shelly',
-      model: 'SAWD-0A1XX10EU1',
-      firmware: '2.1.0',
-      serial: 'AABBCCDDEEFF',
-      adapterName: 'Shelly Wall Display',
+    const device = (await session.emit('get_pairing_device')) as {
+      data: { id: string };
+      settings: { ip: string; layout: string; model: string };
+      store: { adapterId: string };
+    };
+
+    assert.equal(device.data.id, 'shellywalldisplay-1');
+    assert.equal(device.settings.ip, '192.168.1.20');
+    assert.equal(device.settings.model, 'SAWD-0A1XX10EU1');
+    assert.equal(device.settings.layout, LAYOUT_IDS.GRID_2X2);
+    assert.equal(device.store.adapterId, ADAPTER_IDS.SHELLY_WALL_DISPLAY);
+  });
+
+  it('rejects unrecognized devices for the Shelly driver', async () => {
+    const session = createShellyFlow(new Error('offline'));
+    await assert.rejects(
+      () => session.emit('probe', { ip: '192.168.1.20' }),
+      /No Shelly Wall Display was found/,
+    );
+  });
+
+  it('pairs Generic Web Display by IP without probing hardware', async () => {
+    const session = createGenericFlow();
+    const probe = await session.emit('probe', { ip: '10.0.0.8' });
+    assert.deepEqual(probe, {
+      ok: true,
+      ip: '10.0.0.8',
+      nextView: 'ready',
     });
 
     const device = (await session.emit('get_pairing_device')) as {
       data: { id: string };
       settings: { ip: string; layout: string };
-      store: { adapterAutoDetected: boolean };
-    };
-    assert.equal(device.data.id, 'shellywalldisplay-1');
-    assert.equal(device.settings.ip, '192.168.1.50');
-    assert.equal(device.settings.layout, LAYOUT_IDS.GRID_2X2);
-    assert.equal(device.store.adapterAutoDetected, true);
-  });
-
-  it('returns select_adapter when the device is unknown', async () => {
-    const { session } = createFlow(new Error('offline'));
-
-    const probe = await session.emit('probe', { ip: '192.168.1.50' });
-    assert.deepEqual(probe, {
-      ok: true,
-      ip: '192.168.1.50',
-      nextView: 'select_adapter',
-    });
-
-    const adapters = await session.emit('list_adapters');
-    assert.deepEqual(adapters, [
-      { id: ADAPTER_IDS.SHELLY_WALL_DISPLAY, name: 'Shelly Wall Display' },
-      { id: ADAPTER_IDS.GENERIC_WEB_DISPLAY, name: 'Generic Web Display' },
-    ]);
-
-    await session.emit('select_adapter', {
-      adapterId: ADAPTER_IDS.GENERIC_WEB_DISPLAY,
-    });
-
-    const device = (await session.emit('get_pairing_device')) as {
-      data: { id: string };
-      settings: { ip: string; layout: string; adapter: string };
       store: { adapterId: string; adapterAutoDetected: boolean };
     };
+
     assert.equal(device.data.id, 'generated-uuid');
-    assert.notEqual(device.data.id, '192.168.1.50');
-    assert.equal(device.settings.ip, '192.168.1.50');
-    assert.equal(device.settings.adapter, 'Generic Web Display');
+    assert.equal(device.settings.ip, '10.0.0.8');
     assert.equal(device.settings.layout, LAYOUT_IDS.GRID_2X4);
     assert.equal(device.store.adapterId, ADAPTER_IDS.GENERIC_WEB_DISPLAY);
     assert.equal(device.store.adapterAutoDetected, false);
+    assert.equal('manufacturer' in device.settings, false);
   });
 });

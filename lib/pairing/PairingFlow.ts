@@ -1,13 +1,14 @@
 import type { AdapterRegistry } from '../adapters/AdapterRegistry';
-import { UnknownAdapterError } from '../adapters/AdapterRegistry';
-import type { IdentifyResult, WallDisplayAdapter } from '../adapters/types';
+import type { AdapterId, IdentifyResult, WallDisplayAdapter } from '../adapters/types';
 import { buildPairingDevice } from '../device/pairingPayload';
 import type { AdapterChoice, HomeyPairingDevice, PairingDetectedInfoView } from '../device/types';
 import { toDetectedInfoView } from '../device/types';
 import { InvalidIpError, parseIpv4 } from '../ip/ipv4';
 import type { Logger } from '../types';
 
-export type PairingNextView = 'confirm' | 'select_adapter';
+export type PairingNextView = 'confirm' | 'ready';
+
+export type PairingMode = 'identify_required' | 'ip_only';
 
 export interface ProbeResult {
   readonly ok: true;
@@ -24,6 +25,9 @@ export interface PairingSessionPort {
 
 export interface PairingFlowOptions {
   readonly registry: AdapterRegistry;
+  readonly mode: PairingMode;
+  /** Required for ip_only; optional for identify_required (uses matched adapter). */
+  readonly adapterId?: AdapterId;
   readonly translate: (key: string) => string;
   readonly createId?: () => string;
   readonly logger?: Logger;
@@ -33,30 +37,28 @@ interface SetIpPayload {
   readonly ip: string;
 }
 
-interface SelectAdapterPayload {
-  readonly adapterId: string;
-}
-
 /**
- * Pairing orchestration for the Wall Display driver.
+ * Pairing orchestration shared by display drivers.
  * Views stay in Homey HTML; this class owns protocol-agnostic session state.
- *
- * Identification runs via the `probe` handler (not the system `loading` view)
- * so the frontend can choose confirm vs select_adapter without Homey advancing
- * to the next pair-array entry automatically.
  */
 export class PairingFlow {
   private ip: string | null = null;
   private identifyResult: IdentifyResult | null = null;
   private selectedAdapter: WallDisplayAdapter | null = null;
 
-  public constructor(private readonly options: PairingFlowOptions) {}
+  public constructor(private readonly options: PairingFlowOptions) {
+    if (options.mode === 'ip_only') {
+      if (!options.adapterId) {
+        throw new Error('ip_only pairing requires adapterId');
+      }
+      this.selectedAdapter = options.registry.getById(options.adapterId);
+    }
+  }
 
   public bind(session: PairingSessionPort): void {
     session.setHandler('probe', async (data: unknown) => this.probe(data));
     session.setHandler('list_adapters', async () => this.listAdapters());
     session.setHandler('get_detected_info', async () => this.getDetectedInfo());
-    session.setHandler('select_adapter', async (data: unknown) => this.selectAdapter(data));
     session.setHandler('get_pairing_device', async () => this.getPairingDevice());
   }
 
@@ -64,10 +66,18 @@ export class PairingFlow {
     const ip = this.parseIpOrThrow(data);
     this.ip = ip;
     this.identifyResult = null;
+
+    if (this.options.mode === 'ip_only') {
+      if (!this.options.adapterId) {
+        throw new Error(this.options.translate('errors.unknownAdapter'));
+      }
+      this.selectedAdapter = this.options.registry.getById(this.options.adapterId);
+      this.log('info', 'Pairing IP accepted (no hardware probe)', { ip });
+      return { ok: true, ip, nextView: 'ready' };
+    }
+
     this.selectedAdapter = null;
-
     this.log('info', 'Pairing probe started', { ip });
-
     this.identifyResult = await this.options.registry.identify(ip);
 
     if (this.identifyResult.kind === 'matched') {
@@ -80,10 +90,10 @@ export class PairingFlow {
       return { ok: true, ip, nextView: 'confirm' };
     }
 
-    this.log('info', 'Pairing probe unrecognized; manual adapter selection required', {
+    this.log('info', 'Pairing probe unrecognized for required identify mode', {
       ip,
     });
-    return { ok: true, ip, nextView: 'select_adapter' };
+    throw new Error(this.options.translate('errors.notShellyWallDisplay'));
   }
 
   private listAdapters(): AdapterChoice[] {
@@ -103,25 +113,6 @@ export class PairingFlow {
       this.options.translate(this.identifyResult.adapter.nameKey),
       this.options.translate('device.notAvailable'),
     );
-  }
-
-  private selectAdapter(data: unknown): { ok: true; adapterId: string } {
-    try {
-      const payload = parseSelectAdapterPayload(data);
-      this.selectedAdapter = this.options.registry.getById(payload.adapterId);
-    } catch (error) {
-      if (error instanceof UnknownAdapterError) {
-        throw new Error(this.options.translate('errors.unknownAdapter'));
-      }
-      throw error;
-    }
-
-    this.log('info', 'Pairing adapter selected manually', {
-      adapterId: this.selectedAdapter.id,
-      ip: this.ip,
-    });
-
-    return { ok: true, adapterId: this.selectedAdapter.id };
   }
 
   private getPairingDevice(): HomeyPairingDevice {
@@ -147,7 +138,11 @@ export class PairingFlow {
       adapterAutoDetected: matched !== null,
       info: matched?.info,
       notAvailable: this.options.translate('device.notAvailable'),
-      defaultName: this.options.translate('device.defaultName'),
+      defaultName: this.options.translate(
+        adapter.id === 'shelly_wall_display'
+          ? 'device.defaultNameShelly'
+          : 'device.defaultNameGeneric',
+      ),
       createId: this.options.createId,
     });
 
@@ -202,17 +197,4 @@ function parseSetIpPayload(data: unknown): SetIpPayload {
   }
 
   return { ip: candidate.ip };
-}
-
-function parseSelectAdapterPayload(data: unknown): SelectAdapterPayload {
-  if (typeof data !== 'object' || data === null) {
-    throw new UnknownAdapterError('invalid');
-  }
-
-  const candidate = data as Record<string, unknown>;
-  if (typeof candidate.adapterId !== 'string') {
-    throw new UnknownAdapterError('invalid');
-  }
-
-  return { adapterId: candidate.adapterId };
 }

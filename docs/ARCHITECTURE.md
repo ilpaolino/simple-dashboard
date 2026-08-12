@@ -1,93 +1,72 @@
 # Architecture
 
-## Milestone 0 (unchanged)
+## Milestone 0–1 foundations (still true)
 
-`WelcomeWallApp` still owns only Homey app lifecycle. It starts `HttpServer` on the configured port and serves `renderWelcomePage`. Logging goes through `AppLogger`. App-level persistence uses `SettingsManager` + `this.homey.settings`.
+`WelcomeWallApp` owns Homey app lifecycle. It starts `HttpServer` on the configured port. Logging goes through `AppLogger`. App-level persistence uses `SettingsManager` + `this.homey.settings`.
 
-See [MILESTONE-0.md](MILESTONE-0.md) for the HTTP server details.
+Adapters (`ShellyWallDisplayAdapter`, `GenericWebDisplayAdapter`) remain the only place protocol details live. Pairing orchestration stays in `PairingFlow`.
 
-## Milestone 1 — Wall Display
+## Milestone 2 — Display Registry, recognition, diagnostics
 
 ```text
-Homey UI (pairing views + Advanced settings)
-        │
+Homey Devices (source of truth)
+        │  onInit / onSettings / onDeleted
         ▼
-drivers/wall_display/driver.ts    PairingFlow.bind(session)
+DisplayRegistry (runtime only)
+        ▲
+HTTP GET /  ──► DisplayRequestHandler
+        │           │
+        │           ├─ IP normalize + findByIp
+        │           ├─ Shelly hardware identity check (optional)
+        │           └─ technical HTML page
         │
-        ▼
-lib/pairing/PairingFlow           session state (IP, identify result, adapter)
-        │
-        ▼
-lib/adapters/AdapterRegistry      first matching auto-identify adapter wins
-        ├── ShellyWallDisplayAdapter   GET /rpc/Shelly.GetDeviceInfo
-        └── GenericWebDisplayAdapter   never probes
-        │
-        ▼
-Homey.createDevice({ data, store, settings })
-        │
-        ▼
-drivers/wall_display/device.ts    onInit / onSettings
+HTTP GET /diagnostics ──► diagnostics HTML (if enabled)
 ```
 
-### Driver / Device
+### Drivers (type chosen before pairing)
 
-| Component | Responsibility |
+| Driver id | Pairing | Matching |
+| --- | --- | --- |
+| `shelly_wall_display` | IP → `Shelly.GetDeviceInfo` → confirm | IP + hardware id |
+| `generic_web_display` | IP → create | IP only |
+
+There is no longer a single generic `wall_display` driver with an `adapterType` setting. Homey “Add device” lists both drivers.
+
+Shared core lives under `lib/` (registry, session, HTTP pages, adapters, pairing). Drivers only wire Homey lifecycle + pairing mode.
+
+### DisplayRegistry
+
+- Rebuilt from Homey Devices as they `onInit`
+- Updated on settings changes; removed on `onDeleted`
+- Holds runtime-only fields: `lastSeenAt`, session, last match status
+- Never persists runtime state
+
+### Online strategy
+
+A display is **online** if `lastSeenAt` is within the last **5 minutes** (`DISPLAY_ONLINE_TIMEOUT_MS`). Online state is derived only from successful recognition on `/` (or equivalent touch). No separate heartbeat.
+
+### HTTP routes
+
+| Path | Behavior |
 | --- | --- |
-| `WallDisplayDriver` | Homey driver lifecycle + `onPair` wiring |
-| `PairingFlow` | Pairing session state machine; no Homey HTML |
-| `WallDisplayDevice` | Reads official `data` / `store` / `settings`; validates setting changes |
-| `AdapterRegistry` | Adapter lookup and identification order |
-| `ShellyWallDisplayAdapter` | Shelly RPC only |
-| `GenericWebDisplayAdapter` | Manual fallback; no protocol |
-
-The driver does not know Shelly HTTP details. The Shelly adapter does not know Homey pairing views.
-
-### Pairing flow
-
-Official custom pairing uses a **single** view (`enter_ip.html`) with in-page steps
-(IP → confirm **or** manual adapter). Pairing HTML must **not** load `/homey.js`
-(Homey injects the API). After init, `Homey.setNavigationClose()` makes chrome
-Close-only; the primary CTA is the in-page **Collegati** / **Connect** button.
-
+| `GET /` | Recognize client by IP (+ Shelly identity when applicable) |
+| `GET /diagnostics` | Runtime diagnostics if `diagnosticsEnabled` is true; otherwise **403** with a localized disabled page |
+| other | 404 |
 
 ### Persistence (official Homey only)
 
-| Data | Homey API | Why |
-| --- | --- | --- |
-| Stable device id | `data.id` | Identity; must not be the IP ([pairing docs](https://apps.developer.homey.app/the-basics/devices/pairing)) |
-| IP, layout, adapter label, detected info | Device **settings** | User-visible Advanced settings ([device settings](https://apps.developer.homey.app/the-basics/devices/settings)) |
-| `adapterId`, `adapterAutoDetected`, `configuration` | Device **store** | Structured config not suited to a single setting field ([device store](https://apps.developer.homey.app/the-basics/devices)) |
-| HTTP port | App `ManagerSettings` | Unchanged from M0 |
-
-After pairing, `configuration` is a stored snapshot. Layout changes update that snapshot; they do not re-query the adapter.
-
-### Settings UI
-
-Device configuration uses **only** `driver.settings.compose.json` types (`text`, `label`, `dropdown`, `group`). No custom device settings HTML.
-
-- **IP** — `text`, editable, highlighted
-- **Adapter** — `label` (read-only in Homey UI; set at pairing)
-- **Manufacturer / model / firmware / serial** — `label`
-- **Layout** — `dropdown` (`2x2`, `3x3`, `2x4`, `3x6`); `onSettings` rejects layouts not listed in the stored configuration
-
-App HTTP port settings remain the official custom app settings view (`/settings/index.html`). That is app-level, not device-level.
-
-### Adapters
-
-Each adapter:
-
-- declares `canAutoIdentify`
-- implements `tryIdentify(ip)` for its own protocol (or returns `null` immediately)
-- declares supported layouts
-- produces an initial `DeviceConfiguration`
-
-Adding a future adapter means: new class + register it in `createDefaultAdapterRegistry()`. Pairing views already list adapters from the registry.
+| Data | Homey API |
+| --- | --- |
+| Stable device id | Device `data.id` |
+| IP, layout, Shelly labels | Device **settings** |
+| `adapterId`, configuration snapshot | Device **store** |
+| HTTP port, diagnostics enabled | App `ManagerSettings` |
 
 ### Localization
 
-- Manifest / driver / settings labels: `en` + `it` in compose JSON (Homey native)
-- Pairing views, errors, app settings: `/locales/en.json` and `/locales/it.json` with `data-i18n` and `this.homey.__`
+- Manifest / driver / settings labels: `en` + `it` in compose JSON
+- Pairing, HTTP pages, errors, app settings: `/locales/en.json` and `/locales/it.json`
 
 ### What is intentionally not here
 
-No dashboard renderer, no Vue, no widgets, no Flow, no WebSocket, no Homey ManagerDevices control API, no capability listeners for lights/switches.
+No dashboard renderer, no Vue, no widgets, no Flow, no WebSocket, no Homey ManagerDevices control API, no Shelly reboot/brightness/volume commands.

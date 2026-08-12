@@ -1,6 +1,5 @@
 /**
- * Shared contracts for Milestone 0.
- * Extension points only — no future milestone behavior is implemented here.
+ * Shared contracts for the Simple Dashboard Homey app.
  */
 
 export type LogLevel = 'info' | 'warn' | 'error';
@@ -45,17 +44,29 @@ export interface RequestInfo {
   timestamp: string;
 }
 
+export interface HttpResponse {
+  readonly statusCode: number;
+  readonly contentType: string;
+  readonly body: string;
+}
+
+export type RequestHandler = (
+  info: RequestInfo,
+) => HttpResponse | Promise<HttpResponse>;
+
 export interface HttpServerOptions {
   readonly host?: string;
   readonly logger: Logger;
-  readonly requestHandler: (info: RequestInfo) => string;
+  readonly requestHandler: RequestHandler;
 }
 
 export const SETTINGS_KEYS = {
   HTTP_PORT: 'httpPort',
+  DIAGNOSTICS_ENABLED: 'diagnosticsEnabled',
 } as const;
 
 export const DEFAULT_HTTP_PORT = 7999;
+export const DEFAULT_DIAGNOSTICS_ENABLED = true;
 
 export const MIN_TCP_PORT = 1;
 export const MAX_TCP_PORT = 65535;

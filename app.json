@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "dev.dadda.simpledashboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": [
@@ -12,8 +12,8 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Wall Display devices and a local HTTP welcome page for Homey Pro.",
-    "it": "Dispositivi Wall Display e pagina di benvenuto HTTP locale per Homey Pro."
+    "en": "Wall Display recognition, runtime registry, and diagnostics for Homey Pro.",
+    "it": "Riconoscimento Wall Display, registry runtime e diagnostica per Homey Pro."
   },
   "category": [
     "tools"
@@ -22,12 +22,14 @@
     "en": [
       "http",
       "dashboard",
-      "wall display"
+      "wall display",
+      "diagnostics"
     ],
     "it": [
       "http",
       "dashboard",
-      "wall display"
+      "wall display",
+      "diagnostica"
     ]
   },
   "permissions": [],
@@ -43,8 +45,8 @@
   "drivers": [
     {
       "name": {
-        "en": "Wall Display",
-        "it": "Wall Display"
+        "en": "Generic Web Display",
+        "it": "Generic Web Display"
       },
       "class": "other",
       "capabilities": [],
@@ -54,18 +56,18 @@
       "connectivity": [
         "lan"
       ],
-      "icon": "/drivers/wall_display/assets/icon.svg",
+      "icon": "/drivers/generic_web_display/assets/icon.svg",
       "images": {
-        "small": "/drivers/wall_display/assets/images/small.png",
-        "large": "/drivers/wall_display/assets/images/large.png",
-        "xlarge": "/drivers/wall_display/assets/images/xlarge.png"
+        "small": "/drivers/generic_web_display/assets/images/small.png",
+        "large": "/drivers/generic_web_display/assets/images/large.png",
+        "xlarge": "/drivers/generic_web_display/assets/images/xlarge.png"
       },
       "pair": [
         {
           "id": "enter_ip"
         }
       ],
-      "id": "wall_display",
+      "id": "generic_web_display",
       "settings": [
         {
           "type": "group",
@@ -83,8 +85,99 @@
               },
               "value": "",
               "hint": {
-                "en": "IPv4 address of the wall display. Changing this does not change the device identity.",
-                "it": "Indirizzo IPv4 del wall display. La modifica non cambia l'identità del dispositivo."
+                "en": "IPv4 address of the generic web display. Changing this does not change the device identity.",
+                "it": "Indirizzo IPv4 del display web generico. La modifica non cambia l'identità del dispositivo."
+              },
+              "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
+              "highlight": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Display",
+            "it": "Display"
+          },
+          "children": [
+            {
+              "id": "layout",
+              "type": "dropdown",
+              "label": {
+                "en": "Layout",
+                "it": "Layout"
+              },
+              "value": "2x4",
+              "hint": {
+                "en": "Only layouts supported by this Generic Web Display can be saved.",
+                "it": "È possibile salvare solo i layout supportati da questo Generic Web Display."
+              },
+              "highlight": true,
+              "values": [
+                {
+                  "id": "2x4",
+                  "label": {
+                    "en": "2 × 4",
+                    "it": "2 × 4"
+                  }
+                },
+                {
+                  "id": "3x6",
+                  "label": {
+                    "en": "3 × 6",
+                    "it": "3 × 6"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Shelly Wall Display",
+        "it": "Shelly Wall Display"
+      },
+      "class": "other",
+      "capabilities": [],
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "icon": "/drivers/shelly_wall_display/assets/icon.svg",
+      "images": {
+        "small": "/drivers/shelly_wall_display/assets/images/small.png",
+        "large": "/drivers/shelly_wall_display/assets/images/large.png",
+        "xlarge": "/drivers/shelly_wall_display/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "enter_ip"
+        }
+      ],
+      "id": "shelly_wall_display",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection",
+            "it": "Connessione"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "IP address",
+                "it": "Indirizzo IP"
+              },
+              "value": "",
+              "hint": {
+                "en": "IPv4 address of the Shelly Wall Display. Changing this does not change the device identity.",
+                "it": "Indirizzo IPv4 dello Shelly Wall Display. La modifica non cambia l'identità del dispositivo."
               },
               "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
               "highlight": true
@@ -98,19 +191,6 @@
             "it": "Dispositivo"
           },
           "children": [
-            {
-              "id": "adapter",
-              "type": "label",
-              "label": {
-                "en": "Adapter",
-                "it": "Adapter"
-              },
-              "value": "",
-              "hint": {
-                "en": "Set during pairing. Read-only when the device was auto-detected.",
-                "it": "Impostato durante il pairing. Sola lettura se il dispositivo è stato riconosciuto automaticamente."
-              }
-            },
             {
               "id": "manufacturer",
               "type": "label",
@@ -165,8 +245,8 @@
               },
               "value": "2x2",
               "hint": {
-                "en": "Only layouts supported by this device configuration can be saved.",
-                "it": "È possibile salvare solo i layout supportati dalla configurazione di questo dispositivo."
+                "en": "Only layouts supported by this Shelly Wall Display can be saved.",
+                "it": "È possibile salvare solo i layout supportati da questo Shelly Wall Display."
               },
               "highlight": true,
               "values": [
@@ -182,20 +262,6 @@
                   "label": {
                     "en": "3 × 3",
                     "it": "3 × 3"
-                  }
-                },
-                {
-                  "id": "2x4",
-                  "label": {
-                    "en": "2 × 4",
-                    "it": "2 × 4"
-                  }
-                },
-                {
-                  "id": "3x6",
-                  "label": {
-                    "en": "3 × 6",
-                    "it": "3 × 6"
                   }
                 }
               ]

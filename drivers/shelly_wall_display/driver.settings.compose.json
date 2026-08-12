@@ -15,8 +15,8 @@
         },
         "value": "",
         "hint": {
-          "en": "IPv4 address of the wall display. Changing this does not change the device identity.",
-          "it": "Indirizzo IPv4 del wall display. La modifica non cambia l'identità del dispositivo."
+          "en": "IPv4 address of the Shelly Wall Display. Changing this does not change the device identity.",
+          "it": "Indirizzo IPv4 dello Shelly Wall Display. La modifica non cambia l'identità del dispositivo."
         },
         "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
         "highlight": true
@@ -30,19 +30,6 @@
       "it": "Dispositivo"
     },
     "children": [
-      {
-        "id": "adapter",
-        "type": "label",
-        "label": {
-          "en": "Adapter",
-          "it": "Adapter"
-        },
-        "value": "",
-        "hint": {
-          "en": "Set during pairing. Read-only when the device was auto-detected.",
-          "it": "Impostato durante il pairing. Sola lettura se il dispositivo è stato riconosciuto automaticamente."
-        }
-      },
       {
         "id": "manufacturer",
         "type": "label",
@@ -97,8 +84,8 @@
         },
         "value": "2x2",
         "hint": {
-          "en": "Only layouts supported by this device configuration can be saved.",
-          "it": "È possibile salvare solo i layout supportati dalla configurazione di questo dispositivo."
+          "en": "Only layouts supported by this Shelly Wall Display can be saved.",
+          "it": "È possibile salvare solo i layout supportati da questo Shelly Wall Display."
         },
         "highlight": true,
         "values": [
@@ -114,20 +101,6 @@
             "label": {
               "en": "3 × 3",
               "it": "3 × 3"
-            }
-          },
-          {
-            "id": "2x4",
-            "label": {
-              "en": "2 × 4",
-              "it": "2 × 4"
-            }
-          },
-          {
-            "id": "3x6",
-            "label": {
-              "en": "3 × 6",
-              "it": "3 × 6"
             }
           }
         ]

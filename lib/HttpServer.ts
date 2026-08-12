@@ -1,5 +1,6 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { normalizeClientIp } from './display/ipNormalize';
 import type {
   HttpServerOptions,
   Logger,
@@ -52,6 +53,7 @@ export class HttpServer {
   private server: http.Server | null = null;
   private activePort: number | null = null;
   private restartChain: Promise<void> = Promise.resolve();
+  private startedAt: Date | null = null;
 
   public constructor(options: HttpServerOptions) {
     this.logger = options.logger;
@@ -67,6 +69,14 @@ export class HttpServer {
     return this.server?.listening === true;
   }
 
+  public getUptimeSeconds(now: Date = new Date()): number {
+    if (!this.startedAt || !this.isListening()) {
+      return 0;
+    }
+
+    return Math.max(0, (now.getTime() - this.startedAt.getTime()) / 1000);
+  }
+
   public async start(port: number): Promise<void> {
     if (this.isListening()) {
       await this.stop();
@@ -75,7 +85,7 @@ export class HttpServer {
     const server = http.createServer(
       { requireHostHeader: false },
       (request, response) => {
-        this.handleRequest(request, response);
+        void this.handleRequest(request, response);
       },
     );
 
@@ -100,6 +110,7 @@ export class HttpServer {
     } catch (error) {
       this.server = null;
       this.activePort = null;
+      this.startedAt = null;
 
       if (isErrnoException(error) && error.code === 'EADDRINUSE') {
         const portError = new PortInUseError(port);
@@ -120,6 +131,7 @@ export class HttpServer {
 
     const address = server.address();
     this.activePort = resolveBoundPort(address, port);
+    this.startedAt = new Date();
     this.logger.info('HTTP server started', {
       host: this.host,
       port: this.activePort,
@@ -130,6 +142,7 @@ export class HttpServer {
     const server = this.server;
     if (!server) {
       this.activePort = null;
+      this.startedAt = null;
       return;
     }
 
@@ -150,6 +163,7 @@ export class HttpServer {
     } finally {
       this.server = null;
       this.activePort = null;
+      this.startedAt = null;
     }
   }
 
@@ -167,24 +181,23 @@ export class HttpServer {
     await this.restartChain;
   }
 
-  private handleRequest(
+  private async handleRequest(
     request: http.IncomingMessage,
     response: http.ServerResponse,
-  ): void {
-    const info = extractRequestInfo(request);
-
-    if (request.method === 'GET' && (info.url === '/' || info.url.startsWith('/?'))) {
-      const body = this.requestHandler(info);
-      response.writeHead(200, {
-        'Content-Type': 'text/html; charset=utf-8',
+  ): Promise<void> {
+    try {
+      const info = extractRequestInfo(request);
+      const result = await this.requestHandler(info);
+      response.writeHead(result.statusCode, {
+        'Content-Type': result.contentType,
         'Cache-Control': 'no-store',
       });
-      response.end(body);
-      return;
+      response.end(result.body);
+    } catch (error) {
+      this.logger.error('HTTP request handler failed', error);
+      response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      response.end('Internal Server Error');
     }
-
-    response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    response.end('Not Found');
   }
 }
 
@@ -195,9 +208,10 @@ function extractRequestInfo(request: http.IncomingMessage): RequestInfo {
     : forwarded?.split(',')[0]?.trim();
 
   const socketIp = request.socket.remoteAddress ?? 'unknown';
+  const rawIp = forwardedIp && forwardedIp.length > 0 ? forwardedIp : socketIp;
 
   return {
-    clientIp: forwardedIp && forwardedIp.length > 0 ? forwardedIp : socketIp,
+    clientIp: normalizeClientIp(rawIp),
     userAgent: headerToString(request.headers['user-agent']) || 'unknown',
     method: request.method ?? 'UNKNOWN',
     url: request.url ?? '/',

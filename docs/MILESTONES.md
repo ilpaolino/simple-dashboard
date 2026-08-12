@@ -2,49 +2,49 @@
 
 ## Milestone 0 — Local HTTP server PoC
 
-**Status:** Done.
-
-Local HTTP server on Homey Pro, Simple Dashboard HTML welcome page, app setting for HTTP port. Details: [MILESTONE-0.md](MILESTONE-0.md).
+**Status:** Done. Details: [MILESTONE-0.md](MILESTONE-0.md).
 
 ## Milestone 1 — Wall Display device, pairing, native Homey integration
 
-**Status:** Done.
+**Status:** Done (superseded driver layout by M2). Details: [MILESTONE-1.md](MILESTONE-1.md).
+
+The single `wall_display` driver from M1 was split in M2 into `shelly_wall_display` and `generic_web_display`. Adapters, store/settings patterns, and pairing foundations remain.
+
+## Milestone 2 — Display Registry, Device Recognition & Diagnostics
+
+**Status:** Done. Details: [MILESTONE-2.md](MILESTONE-2.md).
 
 ### In scope (implemented)
 
-- Homey driver **Wall Display**
-- Pairing: IP → auto-identify → confirm, or manual adapter
-- Adapters: Shelly Wall Display, Generic Web Display
-- Device identity ≠ IP
-- Initial adapter configuration stored independently
-- Native Homey Advanced settings: IP, adapter (label), layout, detected info
-- Localization EN + IT
+- `DisplayRegistry` runtime, Homey as source of truth
+- Separate Homey drivers: Shelly Wall Display, Generic Web Display
+- IP routing + Shelly hardware identity validation
+- Technical root page / unconfigured / mismatch
+- `DisplaySession` + online/lastSeen (RAM only)
+- `/diagnostics` + `Enable diagnostics` app setting
+- EN + IT localization
 - Automated tests + manual checklist
 
 ### Out of scope (explicitly deferred)
 
 - Dashboard UI / Vue / widgets
-- Using the stored layout for any rendering
+- Using layout to render a grid
 - Flow cards
 - WebSocket / realtime
 - Controlling Homey devices from the display
-- Shelly authentication / digest auth during probe
-- mDNS / SSDP discovery (IP is entered manually)
-- Repair / unpair custom views
-- Changing adapter after pairing
-- Homey Cloud / Bridge
+- Shelly reboot / brightness / volume
+- Shelly authentication during probe
+- mDNS / SSDP discovery
 
 ## Later milestones (not started)
-
-Planned only as direction, not as interfaces beyond existing adapter/config extension points:
 
 - Dashboard layout rendering
 - Widget model
 - Homey device/capability bindings
 - Live updates
-- Display-specific provisioning beyond pairing
+- Display hardware controls beyond recognition
 
-## Manual test checklist (Milestone 1)
+## Manual test checklist (Milestone 2)
 
 ### Setup
 
@@ -55,63 +55,32 @@ Planned only as direction, not as interfaces beyond existing adapter/config exte
 - [ ] `homey app validate` passes
 - [ ] App runs with `homey app run --remote`
 
-### Pairing Shelly succeeded
+### Registry and recognition
 
-- [ ] Add device → Simple Dashboard → Wall Display
-- [ ] Enter a reachable Shelly Wall Display IPv4
-- [ ] Continue button shows loading while probing
-- [ ] Confirm view shows manufacturer, model, firmware, UUID/serial
-- [ ] Confirm creates the Homey device
-- [ ] Homey logs show `Pairing probe started` and `matched`
+- [ ] App start — no crash; HTTP listening on configured port
+- [ ] Add **Shelly Wall Display** and **Generic Web Display** appear as distinct devices
+- [ ] Registry populated after pairing (check `/diagnostics`)
+- [ ] Shelly configured → `http://IP_HOMEY:7999/` shows correct name, type, IP, ID, layout
+- [ ] Generic configured → root shows correct device and layout
+- [ ] Unknown IP → “Display not configured” / “Display non configurato”
+- [ ] Remove device in Homey → next request from that IP is unconfigured
+- [ ] Restart app → no orphans; lastSeen reset; registry rebuilt from Homey Devices
 
-### Pairing unknown device
+### Shelly mismatch
 
-- [ ] Enter an IP that is not a Shelly Wall Display (or unreachable)
-- [ ] Continue button shows loading while probing
-- [ ] Manual adapter view appears
-- [ ] Both **Shelly Wall Display** and **Generic Web Display** are listed
-- [ ] Homey logs show `Pairing probe started` and `unrecognized`
+- [ ] Configure Shelly with IP A and id ABC
+- [ ] Put a different Shelly (id XYZ) on IP A (or mock)
+- [ ] Root shows “Different device detected” / “Dispositivo diverso rilevato”
 
-### Manual adapter selection
+### Diagnostics
 
-- [ ] Select Generic Web Display and add the device
-- [ ] Repeat with Shelly Wall Display on an unrecognized IP (device is created without detected info)
-
-### Device creation and persistence
-
-- [ ] Device appears in Homey with name Wall Display (or detected name)
-- [ ] Advanced settings show the entered IP
-- [ ] Adapter label matches the chosen/detected adapter
-- [ ] Layout dropdown is present
-- [ ] Detected info labels are filled for Shelly, or “Not available” / “Non disponibile” for generic
-- [ ] Reopen settings after leaving the device — values persist
-
-### IP setting
-
-- [ ] Change IP in Advanced settings to another valid IPv4 and save
-- [ ] Device still exists with the **same** Homey device (identity unchanged)
-- [ ] Invalid IP is rejected with a translated error
-
-### Unique id
-
-- [ ] Shelly: `data.id` is the Shelly device id (not the IP)
-- [ ] Generic: `data.id` is a UUID (not the IP)
-- [ ] Pairing the same Shelly again is rejected as a duplicate by Homey
-
-### Layout
-
-- [ ] Shelly device can save `2x2` and `3x3`
-- [ ] Shelly device cannot save `2x4` / `3x6` (error shown)
-- [ ] Generic device can save `2x4` and `3x6`
-- [ ] Generic device cannot save `2x2` / `3x3`
+- [ ] `/diagnostics` accessible when enabled
+- [ ] Shows server, port, uptime, displays, online/offline, lastSeen, layout, match status
+- [ ] Disable **Enable diagnostics** / **Abilita diagnostica** → `/diagnostics` returns disabled (403)
+- [ ] After disconnect/timeout, display becomes offline
+- [ ] After app restart, previous lastSeen is not restored
 
 ### Translations
 
-- [ ] Homey language English: pairing titles, buttons, errors, settings labels
+- [ ] Homey language English: pairing, settings, HTTP pages
 - [ ] Homey language Italian: same strings in Italian
-- [ ] App settings (HTTP port) still translated in both languages
-
-### Milestone 0 regression
-
-- [ ] `http://<HOMEY_IP>:7999/` still serves the Simple Dashboard welcome page
-- [ ] Changing the app HTTP port still restarts the server

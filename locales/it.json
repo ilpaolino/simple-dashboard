@@ -1,9 +1,11 @@
 {
   "settings": {
     "title": "Impostazioni Simple Dashboard",
-    "subtitle": "Configura il server HTTP locale",
+    "subtitle": "Configura il server HTTP locale e la diagnostica",
     "httpPort": "Porta HTTP",
     "httpPortHelp": "La porta predefinita è 7999. Il server si riavvia automaticamente quando la porta cambia.",
+    "diagnosticsEnabled": "Abilita diagnostica",
+    "diagnosticsEnabledHelp": "Se abilitata, /diagnostics mostra lo stato runtime dei display configurati. Disabilitala per nascondere la pagina.",
     "save": "Salva",
     "saved": "Impostazioni salvate. Il server HTTP si riavvierà se la porta è cambiata.",
     "invalidPort": "Inserisci una porta TCP valida tra 1 e 65535."
@@ -14,6 +16,8 @@
   },
   "device": {
     "defaultName": "Wall Display",
+    "defaultNameShelly": "Shelly Wall Display",
+    "defaultNameGeneric": "Generic Web Display",
     "notAvailable": "Non disponibile"
   },
   "pair": {
@@ -26,32 +30,104 @@
       "ipHelp": "Esempio: 192.168.1.50",
       "continue": "Collegati"
     },
+    "shelly": {
+      "subtitle": "Inserisci l'indirizzo IPv4 dello Shelly Wall Display."
+    },
+    "generic": {
+      "subtitle": "Inserisci l'indirizzo IPv4 del display web generico.",
+      "add": "Aggiungi dispositivo"
+    },
     "confirm": {
       "title": "Dispositivo trovato",
       "subtitle": "Conferma che questo è il wall display da aggiungere.",
       "legend": "Informazioni rilevate",
-      "adapter": "Adapter",
+      "adapter": "Tipo",
       "manufacturer": "Produttore",
       "model": "Modello",
       "firmware": "Firmware",
       "serial": "UUID / Seriale",
       "confirm": "Aggiungi dispositivo"
+    }
+  },
+  "pages": {
+    "recognized": {
+      "title": "Wall Display riconosciuto",
+      "heading": "Wall Display riconosciuto",
+      "lead": "Questo client corrisponde a un display configurato in Homey.",
+      "name": "Nome",
+      "type": "Tipo",
+      "ip": "IP",
+      "hardwareId": "ID",
+      "layout": "Layout",
+      "timestamp": "Timestamp",
+      "status": "Riconoscimento"
     },
-    "selectAdapter": {
-      "title": "Dispositivo sconosciuto",
-      "subtitle": "Il dispositivo non è stato riconosciuto automaticamente. Scegli un adapter.",
-      "legend": "Adapter",
-      "choose": "Scegli adapter",
-      "continue": "Aggiungi dispositivo"
+    "unconfigured": {
+      "title": "Display non configurato",
+      "heading": "Display non configurato",
+      "lead": "Aggiungi o configura questo Display tramite Homey.",
+      "ip": "IP rilevato",
+      "userAgent": "User Agent",
+      "timestamp": "Timestamp"
+    },
+    "mismatch": {
+      "title": "Dispositivo diverso rilevato",
+      "heading": "Dispositivo diverso rilevato",
+      "lead": "L'identità hardware su questo IP non corrisponde al dispositivo Homey.",
+      "ip": "IP",
+      "expectedId": "ID atteso",
+      "actualId": "ID rilevato",
+      "timestamp": "Timestamp"
+    },
+    "probeFailed": {
+      "title": "Verifica identità non riuscita",
+      "heading": "Verifica identità non riuscita",
+      "lead": "Impossibile verificare il display su questo IP. Controlla alimentazione e rete.",
+      "name": "Nome",
+      "ip": "IP",
+      "timestamp": "Timestamp"
+    },
+    "diagnostics": {
+      "title": "Diagnostica",
+      "heading": "Diagnostica",
+      "lead": "Stato runtime del server HTTP e dei display configurati.",
+      "server": "Server HTTP",
+      "serverListening": "In ascolto",
+      "serverStopped": "Fermo",
+      "port": "Porta",
+      "uptime": "Uptime",
+      "displayCount": "Display configurati",
+      "displays": "Display",
+      "online": "Stato",
+      "lastSeen": "Ultimo accesso",
+      "recentErrors": "Errori recenti",
+      "noErrors": "Nessun errore recente.",
+      "noDisplays": "Nessun display configurato."
+    },
+    "diagnosticsDisabled": {
+      "title": "Diagnostica disabilitata",
+      "heading": "Diagnostica disabilitata",
+      "lead": "Abilita la diagnostica nelle impostazioni dell'app Simple Dashboard per visualizzare questa pagina."
+    },
+    "status": {
+      "recognized": "Riconosciuto",
+      "hardware_mismatch": "Mismatch hardware",
+      "unconfigured": "Non configurato",
+      "probe_failed": "Probe non riuscito",
+      "online": "Online",
+      "offline": "Offline",
+      "never": "Mai",
+      "none": "—"
     }
   },
   "errors": {
     "invalidIp": "Inserisci un indirizzo IPv4 valido.",
     "unsupportedLayout": "Questo layout non è supportato dalla configurazione del dispositivo.",
-    "adapterReadOnly": "L'adapter non può essere modificato dopo il pairing.",
-    "unknownAdapter": "Seleziona un adapter valido.",
+    "adapterReadOnly": "Il tipo di display non può essere modificato dopo il pairing.",
+    "unknownAdapter": "Seleziona un tipo di display valido.",
     "deviceNotIdentified": "Nessun dispositivo identificato da confermare.",
     "invalidConfiguration": "La configurazione memorizzata del dispositivo manca o non è valida.",
-    "createDeviceFailed": "Impossibile aggiungere il dispositivo. Riprova."
+    "createDeviceFailed": "Impossibile aggiungere il dispositivo. Riprova.",
+    "notShellyWallDisplay": "Nessuno Shelly Wall Display trovato a questo indirizzo IP."
   }
 }

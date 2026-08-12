@@ -1,7 +1,7 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.2.0",
-  "description": "Simple Dashboard — Wall Display devices and local HTTP welcome page for Homey Pro",
+  "version": "0.3.0",
+  "description": "Simple Dashboard — display registry, recognition, and diagnostics for Homey Pro",
   "main": "app.js",
   "scripts": {
     "build": "tsc",
@@ -16,7 +16,8 @@
   "keywords": [
     "homey",
     "welcome-wall",
-    "http-server"
+    "http-server",
+    "wall-display"
   ],
   "author": "ilpaolino",
   "license": "ISC",

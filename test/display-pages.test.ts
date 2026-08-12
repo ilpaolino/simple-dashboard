@@ -1,0 +1,94 @@
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import {
+  renderRecognizedPage,
+  renderUnconfiguredPage,
+  renderMismatchPage,
+} from '../lib/http/pages/displayPages';
+import { DISPLAY_TYPE_IDS } from '../lib/display/types';
+import { LAYOUT_IDS } from '../lib/adapters/types';
+
+const translate = (key: string): string => {
+  const map: Record<string, string> = {
+    'pages.recognized.title': 'Wall Display recognized',
+    'pages.recognized.heading': 'Wall Display recognized',
+    'pages.recognized.lead': 'Matched',
+    'pages.recognized.name': 'Name',
+    'pages.recognized.type': 'Type',
+    'pages.recognized.ip': 'IP',
+    'pages.recognized.hardwareId': 'ID',
+    'pages.recognized.layout': 'Layout',
+    'pages.recognized.timestamp': 'Timestamp',
+    'pages.recognized.status': 'Recognition',
+    'pages.status.recognized': 'Recognized',
+    'pages.unconfigured.title': 'Display not configured',
+    'pages.unconfigured.heading': 'Display not configured',
+    'pages.unconfigured.lead': 'Add in Homey',
+    'pages.unconfigured.ip': 'Detected IP',
+    'pages.unconfigured.userAgent': 'User Agent',
+    'pages.unconfigured.timestamp': 'Timestamp',
+    'pages.mismatch.title': 'Different device detected',
+    'pages.mismatch.heading': 'Different device detected',
+    'pages.mismatch.lead': 'Mismatch',
+    'pages.mismatch.ip': 'IP',
+    'pages.mismatch.expectedId': 'Expected ID',
+    'pages.mismatch.actualId': 'Detected ID',
+    'pages.mismatch.timestamp': 'Timestamp',
+  };
+  return map[key] ?? key;
+};
+
+describe('display pages', () => {
+  it('renders a recognized technical page with layout and hardware id', () => {
+    const html = renderRecognizedPage({
+      lang: 'en',
+      translate,
+      typeLabel: 'Shelly Wall Display',
+      timestamp: '2026-08-13T00:00:00.000Z',
+      matchStatus: 'recognized',
+      display: {
+        displayId: 'shellywalldisplay-1',
+        name: 'Kitchen',
+        typeId: DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY,
+        ipAddress: '192.168.1.30',
+        hardwareId: 'shellywalldisplay-1',
+        layoutId: LAYOUT_IDS.GRID_3X3,
+      },
+    });
+
+    assert.match(html, /Wall Display recognized/);
+    assert.match(html, /Kitchen/);
+    assert.match(html, /192\.168\.1\.30/);
+    assert.match(html, /shellywalldisplay-1/);
+    assert.match(html, /3x3/);
+  });
+
+  it('renders an unconfigured page and escapes user agent HTML', () => {
+    const html = renderUnconfiguredPage({
+      lang: 'en',
+      translate,
+      clientIp: '192.168.1.50',
+      userAgent: '<script>x</script>',
+      timestamp: '2026-08-13T00:00:00.000Z',
+    });
+
+    assert.match(html, /Display not configured/);
+    assert.match(html, /192\.168\.1\.50/);
+    assert.match(html, /&lt;script&gt;x&lt;\/script&gt;/);
+  });
+
+  it('renders a hardware mismatch page', () => {
+    const html = renderMismatchPage({
+      lang: 'it',
+      translate,
+      clientIp: '192.168.1.30',
+      expectedId: 'ABC123',
+      actualId: 'XYZ999',
+      timestamp: '2026-08-13T00:00:00.000Z',
+    });
+
+    assert.match(html, /Different device detected/);
+    assert.match(html, /ABC123/);
+    assert.match(html, /XYZ999/);
+  });
+});

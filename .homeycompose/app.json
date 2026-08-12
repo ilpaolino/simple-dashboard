@@ -1,6 +1,6 @@
 {
   "id": "dev.dadda.simpledashboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -9,13 +9,13 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Wall Display devices and a local HTTP welcome page for Homey Pro.",
-    "it": "Dispositivi Wall Display e pagina di benvenuto HTTP locale per Homey Pro."
+    "en": "Wall Display recognition, runtime registry, and diagnostics for Homey Pro.",
+    "it": "Riconoscimento Wall Display, registry runtime e diagnostica per Homey Pro."
   },
   "category": ["tools"],
   "tags": {
-    "en": ["http", "dashboard", "wall display"],
-    "it": ["http", "dashboard", "wall display"]
+    "en": ["http", "dashboard", "wall display", "diagnostics"],
+    "it": ["http", "dashboard", "wall display", "diagnostica"]
   },
   "permissions": [],
   "images": {

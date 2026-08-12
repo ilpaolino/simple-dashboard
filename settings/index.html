@@ -13,7 +13,7 @@
     <header class="homey-header">
       <h1 class="homey-title" data-i18n="settings.title">Simple Dashboard Settings</h1>
       <p class="homey-subtitle" data-i18n="settings.subtitle">
-        Configure the local HTTP server
+        Configure the local HTTP server and diagnostics
       </p>
     </header>
 
@@ -39,6 +39,33 @@
       </div>
     </fieldset>
 
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend" data-i18n="settings.diagnosticsEnabled">
+        Enable diagnostics
+      </legend>
+
+      <div class="homey-form-group">
+        <label class="homey-form-checkbox">
+          <input
+            class="homey-form-checkbox-input"
+            id="diagnosticsEnabled"
+            type="checkbox"
+            checked
+          />
+          <span class="homey-form-checkbox-checkmark"></span>
+          <span
+            class="homey-form-checkbox-text"
+            data-i18n="settings.diagnosticsEnabled"
+          >
+            Enable diagnostics
+          </span>
+        </label>
+        <p class="homey-form-help" data-i18n="settings.diagnosticsEnabledHelp">
+          When enabled, /diagnostics shows runtime status for configured displays.
+        </p>
+      </div>
+    </fieldset>
+
     <button id="save" class="homey-button-primary-full" data-i18n="settings.save">
       Save
     </button>
@@ -48,6 +75,7 @@
         Homey.ready();
 
         var portElement = document.getElementById('httpPort');
+        var diagnosticsElement = document.getElementById('diagnosticsEnabled');
         var saveElement = document.getElementById('save');
 
         Homey.get('httpPort', function (err, httpPort) {
@@ -63,6 +91,23 @@
           portElement.value = String(httpPort);
         });
 
+        Homey.get('diagnosticsEnabled', function (err, diagnosticsEnabled) {
+          if (err) {
+            return Homey.alert(err);
+          }
+
+          if (
+            diagnosticsEnabled === undefined ||
+            diagnosticsEnabled === null ||
+            diagnosticsEnabled === ''
+          ) {
+            diagnosticsElement.checked = true;
+            return;
+          }
+
+          diagnosticsElement.checked = diagnosticsEnabled === true;
+        });
+
         saveElement.addEventListener('click', function () {
           var parsed = Number(portElement.value);
           if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
@@ -74,7 +119,17 @@
               return Homey.alert(err);
             }
 
-            Homey.alert(Homey.__('settings.saved'));
+            Homey.set(
+              'diagnosticsEnabled',
+              diagnosticsElement.checked,
+              function (diagErr) {
+                if (diagErr) {
+                  return Homey.alert(diagErr);
+                }
+
+                Homey.alert(Homey.__('settings.saved'));
+              },
+            );
           });
         });
       }

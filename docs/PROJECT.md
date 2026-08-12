@@ -4,19 +4,21 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It will become a dashboard host for wall displays (Shelly Wall Display and generic web displays). The HTTP welcome page from Milestone 0 remains the LAN reachability proof. Milestone 1 adds the first Homey **Wall Display** device, IP pairing, adapters, and native device settings.
+It hosts a local HTTP endpoint for wall displays. Milestone 2 connects Homey Devices to HTTP clients through a runtime `DisplayRegistry`, separate drivers for Shelly and Generic displays, hardware identity checks, and a permanent `/diagnostics` page.
 
 ## Current status
 
-**Milestone 1 is implemented.** Milestone 0 behavior is preserved.
+**Milestone 2 is implemented.** Milestone 0–1 behavior is preserved where still relevant (HTTP server, settings, adapters, pairing).
 
 | Area | Status |
 | --- | --- |
 | Local HTTP server on Homey Pro | Done (M0) |
-| App settings for HTTP port | Done (M0) |
-| Wall Display driver + device | Done (M1) |
-| IP pairing + auto-identify + manual adapter | Done (M1) |
-| Native Homey device settings (IP, adapter, layout, detected info) | Done (M1) |
+| App settings (HTTP port + diagnostics) | Done (M0/M2) |
+| Separate drivers: Shelly + Generic | Done (M2) |
+| DisplayRegistry (runtime, Homey SoT) | Done (M2) |
+| IP matching + Shelly hardware validation | Done (M2) |
+| Technical root page / unconfigured / mismatch | Done (M2) |
+| Diagnostics page | Done (M2) |
 | Dashboard / Vue / widgets | Not started |
 | Flow cards | Not started |
 | WebSocket / realtime | Not started |
@@ -27,7 +29,7 @@ It will become a dashboard host for wall displays (Shelly Wall Display and gener
 1. Read this file, then [ARCHITECTURE.md](ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md).
 2. Check [MILESTONES.md](MILESTONES.md) for what is in / out of scope.
 3. Check [TODO.md](TODO.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before writing new code.
-4. Reuse `lib/adapters`, `lib/device`, `lib/pairing`. Do not duplicate pairing or settings UIs.
+4. Reuse `lib/display`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer for displays.
 
 ## Runtime constraints
 
@@ -51,14 +53,18 @@ homey app run --remote
 
 | Path | Role |
 | --- | --- |
-| `app.ts` | Homey App lifecycle; HTTP server wiring (M0) |
-| `lib/` | Shared domain: HTTP server, adapters, pairing, device config |
-| `drivers/wall_display/` | Homey driver, device, pairing views, native settings |
-| `settings/index.html` | Official Homey **app** settings view (HTTP port) |
-| `locales/` | `en` + `it` for pairing, errors, app settings |
+| `app.ts` | Homey App lifecycle; HTTP + DisplayRegistry host |
+| `lib/display/` | Registry, session, IP normalize, hardware identity |
+| `lib/http/` | Request handler + technical / diagnostics HTML |
+| `lib/adapters/` | Shelly + Generic protocol adapters |
+| `lib/pairing/` | Shared pairing state machine |
+| `drivers/shelly_wall_display/` | Shelly driver, device, pairing, settings |
+| `drivers/generic_web_display/` | Generic driver, device, pairing, settings |
+| `settings/index.html` | Official Homey **app** settings view |
+| `locales/` | `en` + `it` |
 | `.homeycompose/app.json` | Compose source for the app manifest |
 | `docs/` | Project memory |
 
 ## Identity rule
 
-The Homey device identity is `data.id` (Shelly device id when detected, otherwise a generated UUID). **The IP address is a setting**, not the identity.
+The Homey device identity is `data.id` (Shelly device id when detected, otherwise a generated UUID). **The IP address is a setting used only for runtime routing**, not the identity.

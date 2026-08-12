@@ -1,26 +1,29 @@
 import Homey from 'homey';
-import { createDefaultAdapterRegistry } from '../../lib/adapters/AdapterRegistry';
+import { AdapterRegistry } from '../../lib/adapters/AdapterRegistry';
+import { GenericWebDisplayAdapter } from '../../lib/adapters/GenericWebDisplayAdapter';
+import { ADAPTER_IDS } from '../../lib/adapters/types';
 import { AppLogger } from '../../lib/Logger';
 import { PairingFlow } from '../../lib/pairing/PairingFlow';
 
 /**
- * Wall Display driver — pairing only in this milestone.
+ * Generic Web Display driver — IP-only pairing, no Shelly protocol.
  * @see https://apps.developer.homey.app/the-basics/devices
- * @see https://apps.developer.homey.app/advanced/custom-views/custom-pairing-views
  */
-class WallDisplayDriver extends Homey.Driver {
+class GenericWebDisplayDriver extends Homey.Driver {
   private logger!: AppLogger;
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
-    this.logger.info('Wall Display driver initialized');
+    this.logger.info('Generic Web Display driver initialized');
   }
 
   public async onPair(session: Homey.Driver.PairSession): Promise<void> {
-    this.logger.info('Wall Display pairing session started');
+    this.logger.info('Generic Web Display pairing session started');
 
     const flow = new PairingFlow({
-      registry: createDefaultAdapterRegistry(),
+      registry: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+      mode: 'ip_only',
+      adapterId: ADAPTER_IDS.GENERIC_WEB_DISPLAY,
       translate: (key: string) => this.homey.__(key),
       logger: this.logger,
     });
@@ -43,4 +46,4 @@ class WallDisplayDriver extends Homey.Driver {
   }
 }
 
-module.exports = WallDisplayDriver;
+module.exports = GenericWebDisplayDriver;

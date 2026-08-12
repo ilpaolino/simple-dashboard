@@ -1,9 +1,11 @@
 {
   "settings": {
     "title": "Simple Dashboard Settings",
-    "subtitle": "Configure the local HTTP server",
+    "subtitle": "Configure the local HTTP server and diagnostics",
     "httpPort": "HTTP port",
     "httpPortHelp": "Default port is 7999. The server restarts automatically when the port changes.",
+    "diagnosticsEnabled": "Enable diagnostics",
+    "diagnosticsEnabledHelp": "When enabled, /diagnostics shows runtime status for configured displays. Disable to hide that page.",
     "save": "Save",
     "saved": "Settings saved. The HTTP server will restart if the port changed.",
     "invalidPort": "Enter a valid TCP port between 1 and 65535."
@@ -14,6 +16,8 @@
   },
   "device": {
     "defaultName": "Wall Display",
+    "defaultNameShelly": "Shelly Wall Display",
+    "defaultNameGeneric": "Generic Web Display",
     "notAvailable": "Not available"
   },
   "pair": {
@@ -26,32 +30,104 @@
       "ipHelp": "Example: 192.168.1.50",
       "continue": "Connect"
     },
+    "shelly": {
+      "subtitle": "Enter the IPv4 address of the Shelly Wall Display."
+    },
+    "generic": {
+      "subtitle": "Enter the IPv4 address of the generic web display.",
+      "add": "Add device"
+    },
     "confirm": {
       "title": "Device found",
       "subtitle": "Confirm that this is the wall display you want to add.",
       "legend": "Detected information",
-      "adapter": "Adapter",
+      "adapter": "Type",
       "manufacturer": "Manufacturer",
       "model": "Model",
       "firmware": "Firmware",
       "serial": "UUID / Serial",
       "confirm": "Add device"
+    }
+  },
+  "pages": {
+    "recognized": {
+      "title": "Wall Display recognized",
+      "heading": "Wall Display recognized",
+      "lead": "This client matches a configured Homey display.",
+      "name": "Name",
+      "type": "Type",
+      "ip": "IP",
+      "hardwareId": "ID",
+      "layout": "Layout",
+      "timestamp": "Timestamp",
+      "status": "Recognition"
     },
-    "selectAdapter": {
-      "title": "Unknown device",
-      "subtitle": "The device could not be recognized automatically. Choose an adapter.",
-      "legend": "Adapter",
-      "choose": "Choose adapter",
-      "continue": "Add device"
+    "unconfigured": {
+      "title": "Display not configured",
+      "heading": "Display not configured",
+      "lead": "Add or configure this display in Homey.",
+      "ip": "Detected IP",
+      "userAgent": "User Agent",
+      "timestamp": "Timestamp"
+    },
+    "mismatch": {
+      "title": "Different device detected",
+      "heading": "Different device detected",
+      "lead": "The hardware identity at this IP does not match the Homey device.",
+      "ip": "IP",
+      "expectedId": "Expected ID",
+      "actualId": "Detected ID",
+      "timestamp": "Timestamp"
+    },
+    "probeFailed": {
+      "title": "Identity check failed",
+      "heading": "Identity check failed",
+      "lead": "The display could not be verified at this IP. Check power and network.",
+      "name": "Name",
+      "ip": "IP",
+      "timestamp": "Timestamp"
+    },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "heading": "Diagnostics",
+      "lead": "Runtime status of the HTTP server and configured displays.",
+      "server": "HTTP server",
+      "serverListening": "Listening",
+      "serverStopped": "Stopped",
+      "port": "Port",
+      "uptime": "Uptime",
+      "displayCount": "Configured displays",
+      "displays": "Displays",
+      "online": "Status",
+      "lastSeen": "Last seen",
+      "recentErrors": "Recent errors",
+      "noErrors": "No recent errors.",
+      "noDisplays": "No displays configured."
+    },
+    "diagnosticsDisabled": {
+      "title": "Diagnostics disabled",
+      "heading": "Diagnostics disabled",
+      "lead": "Enable diagnostics in the Simple Dashboard app settings to view this page."
+    },
+    "status": {
+      "recognized": "Recognized",
+      "hardware_mismatch": "Hardware mismatch",
+      "unconfigured": "Not configured",
+      "probe_failed": "Probe failed",
+      "online": "Online",
+      "offline": "Offline",
+      "never": "Never",
+      "none": "—"
     }
   },
   "errors": {
     "invalidIp": "Enter a valid IPv4 address.",
     "unsupportedLayout": "This layout is not supported by the device configuration.",
-    "adapterReadOnly": "The adapter cannot be changed after pairing.",
-    "unknownAdapter": "Select a valid adapter.",
+    "adapterReadOnly": "The display type cannot be changed after pairing.",
+    "unknownAdapter": "Select a valid display type.",
     "deviceNotIdentified": "No identified device is available to confirm.",
     "invalidConfiguration": "The stored device configuration is missing or invalid.",
-    "createDeviceFailed": "The device could not be added. Try again."
+    "createDeviceFailed": "The device could not be added. Try again.",
+    "notShellyWallDisplay": "No Shelly Wall Display was found at this IP address."
   }
 }

@@ -1,6 +1,6 @@
 # Simple Dashboard
 
-Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display devices and a local HTTP welcome page.
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition, runtime registry, and diagnostics.
 
 This milestone does **not** include a dashboard UI, Vue, widgets, Flow cards, WebSockets, or Homey device control.
 
@@ -37,10 +37,16 @@ A plain `homey app run` uses a local Docker container. **LAN access (browser / S
 homey app run --remote
 ```
 
-Welcome page:
+Recognition page:
 
 ```text
 http://<HOMEY_LAN_IP>:7999/
+```
+
+Diagnostics:
+
+```text
+http://<HOMEY_LAN_IP>:7999/diagnostics
 ```
 
 ### Install persistently (without live logs)
@@ -49,22 +55,21 @@ http://<HOMEY_LAN_IP>:7999/
 homey app install
 ```
 
-## Pair a Wall Display
+## Pair a display
 
 1. Open the Homey mobile/web app
-2. Add device → **Simple Dashboard** → **Wall Display**
-3. Enter the display IPv4 address
-4. If the device is a Shelly Wall Display, confirm manufacturer / model / firmware / serial
-5. If it is not recognized, choose **Shelly Wall Display** or **Generic Web Display**
-6. Open the new device → **Advanced settings**
-7. Verify IP, adapter, detected info, and layout
-8. Change the IP and save — the device identity must stay the same
+2. Add device → **Simple Dashboard**
+3. Choose **Shelly Wall Display** or **Generic Web Display**
+4. Enter the display IPv4 address
+5. Shelly: confirm detected hardware info, then add
+6. Generic: add after entering the IP
+7. Open Advanced settings → verify IP and layout
 
-## Configure the HTTP port
+## Configure HTTP port and diagnostics
 
-1. Open the Homey mobile/web app
-2. Go to **More → Apps → Simple Dashboard → Configure / Settings**
-3. Set **HTTP port** (1–65535)
+1. More → Apps → Simple Dashboard → Configure / Settings
+2. Set **HTTP port**
+3. Toggle **Enable diagnostics** / **Abilita diagnostica**
 4. Save
 
 ## Useful Homey CLI commands

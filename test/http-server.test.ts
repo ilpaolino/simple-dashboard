@@ -6,8 +6,7 @@ import {
   HttpServer,
   PortInUseError,
 } from '../lib/HttpServer';
-import { renderWelcomePage } from '../lib/WelcomePage';
-import type { HomeyLogSink } from '../lib/types';
+import type { HomeyLogSink, HttpResponse, RequestInfo } from '../lib/types';
 
 function createLogger(): AppLogger {
   const sink: HomeyLogSink = {
@@ -15,6 +14,14 @@ function createLogger(): AppLogger {
     error() {},
   };
   return new AppLogger(sink);
+}
+
+function stubHandler(info: RequestInfo): HttpResponse {
+  return {
+    statusCode: 200,
+    contentType: 'text/html; charset=utf-8',
+    body: `<html><body>OK ${info.clientIp}</body></html>`,
+  };
 }
 
 async function getFreePort(): Promise<number> {
@@ -48,12 +55,12 @@ describe('HttpServer', () => {
     }
   });
 
-  it('serves Simple Dashboard HTML on /', async () => {
+  it('serves handler HTML on /', async () => {
     const port = await getFreePort();
     const server = new HttpServer({
       host: '127.0.0.1',
       logger: createLogger(),
-      requestHandler: renderWelcomePage,
+      requestHandler: stubHandler,
     });
     servers.push(server);
 
@@ -63,11 +70,9 @@ describe('HttpServer', () => {
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(body, /Simple Dashboard/);
-    assert.match(body, /Client IP/);
-    assert.match(body, /User Agent/);
-    assert.match(body, /Method/);
-    assert.match(body, /Timestamp/);
+    assert.match(body, /OK /);
+    assert.equal(server.isListening(), true);
+    assert.ok(server.getUptimeSeconds() >= 0);
   });
 
   it('restarts on a new port and closes the previous socket', async () => {
@@ -76,7 +81,7 @@ describe('HttpServer', () => {
     const server = new HttpServer({
       host: '127.0.0.1',
       logger: createLogger(),
-      requestHandler: renderWelcomePage,
+      requestHandler: stubHandler,
     });
     servers.push(server);
 
@@ -102,7 +107,7 @@ describe('HttpServer', () => {
     const server = new HttpServer({
       host: '127.0.0.1',
       logger: createLogger(),
-      requestHandler: renderWelcomePage,
+      requestHandler: stubHandler,
     });
     servers.push(server);
 

@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { GenericWebDisplayAdapter } from '../lib/adapters/GenericWebDisplayAdapter';
+import { ShellyWallDisplayAdapter } from '../lib/adapters/ShellyWallDisplayAdapter';
 import { ADAPTER_IDS, LAYOUT_IDS } from '../lib/adapters/types';
 import { resolveDeviceId } from '../lib/device/identity';
 import { buildPairingDevice } from '../lib/device/pairingPayload';
+import type { JsonHttpClient } from '../lib/http/JsonHttpClient';
+
+class UnusedHttpClient implements JsonHttpClient {
+  public async getJson(): Promise<unknown> {
+    throw new Error('unused');
+  }
+}
 
 describe('device identity', () => {
   it('prefers the detected unique id over IP', () => {
@@ -24,14 +32,14 @@ describe('device identity', () => {
 });
 
 describe('buildPairingDevice', () => {
-  it('stores IP in settings and identity in data.id', () => {
+  it('stores IP in settings and identity in data.id for Generic', () => {
     const device = buildPairingDevice({
       ip: '192.168.1.50',
       adapter: new GenericWebDisplayAdapter(),
       adapterName: 'Generic Web Display',
       adapterAutoDetected: false,
       notAvailable: 'Not available',
-      defaultName: 'Wall Display',
+      defaultName: 'Generic Web Display',
       createId: () => 'generated-uuid',
     });
 
@@ -42,13 +50,13 @@ describe('buildPairingDevice', () => {
     assert.equal(device.store.adapterAutoDetected, false);
     assert.equal(device.settings.layout, LAYOUT_IDS.GRID_2X4);
     assert.equal(device.store.configuration.layoutId, LAYOUT_IDS.GRID_2X4);
-    assert.equal(device.settings.manufacturer, 'Not available');
+    assert.equal(device.settings.manufacturer, undefined);
   });
 
-  it('uses detected unique id and information when available', () => {
+  it('stores Shelly detected info in settings and hardware id in data.id', () => {
     const device = buildPairingDevice({
       ip: '10.0.0.8',
-      adapter: new GenericWebDisplayAdapter(),
+      adapter: new ShellyWallDisplayAdapter(new UnusedHttpClient()),
       adapterName: 'Shelly Wall Display',
       adapterAutoDetected: true,
       info: {
@@ -60,7 +68,7 @@ describe('buildPairingDevice', () => {
         name: 'Kitchen Display',
       },
       notAvailable: 'Not available',
-      defaultName: 'Wall Display',
+      defaultName: 'Shelly Wall Display',
     });
 
     assert.equal(device.data.id, 'shellywalldisplay-aabbccddeeff');
@@ -68,6 +76,7 @@ describe('buildPairingDevice', () => {
     assert.equal(device.settings.ip, '10.0.0.8');
     assert.equal(device.settings.model, 'SAWD-5A1XX10EU0');
     assert.equal(device.settings.firmware, '2.3.0');
+    assert.equal(device.settings.layout, LAYOUT_IDS.GRID_2X2);
     assert.equal(device.store.adapterAutoDetected, true);
   });
 });

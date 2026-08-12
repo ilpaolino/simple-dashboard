@@ -1,0 +1,65 @@
+[
+  {
+    "type": "group",
+    "label": {
+      "en": "Connection",
+      "it": "Connessione"
+    },
+    "children": [
+      {
+        "id": "ip",
+        "type": "text",
+        "label": {
+          "en": "IP address",
+          "it": "Indirizzo IP"
+        },
+        "value": "",
+        "hint": {
+          "en": "IPv4 address of the generic web display. Changing this does not change the device identity.",
+          "it": "Indirizzo IPv4 del display web generico. La modifica non cambia l'identità del dispositivo."
+        },
+        "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
+        "highlight": true
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "label": {
+      "en": "Display",
+      "it": "Display"
+    },
+    "children": [
+      {
+        "id": "layout",
+        "type": "dropdown",
+        "label": {
+          "en": "Layout",
+          "it": "Layout"
+        },
+        "value": "2x4",
+        "hint": {
+          "en": "Only layouts supported by this Generic Web Display can be saved.",
+          "it": "È possibile salvare solo i layout supportati da questo Generic Web Display."
+        },
+        "highlight": true,
+        "values": [
+          {
+            "id": "2x4",
+            "label": {
+              "en": "2 × 4",
+              "it": "2 × 4"
+            }
+          },
+          {
+            "id": "3x6",
+            "label": {
+              "en": "3 × 6",
+              "it": "3 × 6"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

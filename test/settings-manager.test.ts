@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import { AppLogger } from '../lib/Logger';
 import { SettingsManager } from '../lib/SettingsManager';
 import {
+  DEFAULT_DIAGNOSTICS_ENABLED,
   DEFAULT_HTTP_PORT,
   SETTINGS_KEYS,
   type HomeyLogSink,
@@ -38,11 +39,15 @@ describe('SettingsManager', () => {
     assert.equal(manager.getHttpPort(), DEFAULT_HTTP_PORT);
   });
 
-  it('persists default port when missing', () => {
+  it('persists defaults when missing', () => {
     const settings = new MemorySettings();
     const manager = new SettingsManager(settings, createLogger());
-    manager.ensureDefaultPort();
+    manager.ensureDefaults();
     assert.equal(settings.get(SETTINGS_KEYS.HTTP_PORT), DEFAULT_HTTP_PORT);
+    assert.equal(
+      settings.get(SETTINGS_KEYS.DIAGNOSTICS_ENABLED),
+      DEFAULT_DIAGNOSTICS_ENABLED,
+    );
   });
 
   it('falls back to default on invalid stored port', () => {
@@ -50,6 +55,15 @@ describe('SettingsManager', () => {
     settings.set(SETTINGS_KEYS.HTTP_PORT, 'not-a-port');
     const manager = new SettingsManager(settings, createLogger());
     assert.equal(manager.getHttpPort(), DEFAULT_HTTP_PORT);
+  });
+
+  it('reads diagnostics enabled setting', () => {
+    const settings = new MemorySettings();
+    const manager = new SettingsManager(settings, createLogger());
+    assert.equal(manager.isDiagnosticsEnabled(), DEFAULT_DIAGNOSTICS_ENABLED);
+
+    settings.set(SETTINGS_KEYS.DIAGNOSTICS_ENABLED, false);
+    assert.equal(manager.isDiagnosticsEnabled(), false);
   });
 
   it('notifies listeners when httpPort changes', async () => {
