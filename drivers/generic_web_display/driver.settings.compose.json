@@ -39,23 +39,37 @@
         },
         "value": "2x4",
         "hint": {
-          "en": "Only layouts supported by this Generic Web Display can be saved.",
-          "it": "È possibile salvare solo i layout supportati da questo Generic Web Display."
+          "en": "Portrait and landscape variants of the same grid. Only layouts supported by this Generic Web Display can be saved.",
+          "it": "Varianti verticale e orizzontale della stessa griglia. È possibile salvare solo i layout supportati da questo Generic Web Display."
         },
         "highlight": true,
         "values": [
           {
             "id": "2x4",
             "label": {
-              "en": "2 × 4",
-              "it": "2 × 4"
+              "en": "2 × 4 (portrait)",
+              "it": "2 × 4 (verticale)"
+            }
+          },
+          {
+            "id": "4x2",
+            "label": {
+              "en": "4 × 2 (landscape)",
+              "it": "4 × 2 (orizzontale)"
             }
           },
           {
             "id": "3x6",
             "label": {
-              "en": "3 × 6",
-              "it": "3 × 6"
+              "en": "3 × 6 (portrait)",
+              "it": "3 × 6 (verticale)"
+            }
+          },
+          {
+            "id": "6x3",
+            "label": {
+              "en": "6 × 3 (landscape)",
+              "it": "6 × 3 (orizzontale)"
             }
           }
         ]

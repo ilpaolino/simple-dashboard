@@ -1,72 +1,92 @@
 # Architecture
 
-## Milestone 0–1 foundations (still true)
+## Milestone 0–2 foundations (still true)
 
 `WelcomeWallApp` owns Homey app lifecycle. It starts `HttpServer` on the configured port. Logging goes through `AppLogger`. App-level persistence uses `SettingsManager` + `this.homey.settings`.
 
 Adapters (`ShellyWallDisplayAdapter`, `GenericWebDisplayAdapter`) remain the only place protocol details live. Pairing orchestration stays in `PairingFlow`.
 
-## Milestone 2 — Display Registry, recognition, diagnostics
+Drivers `shelly_wall_display` and `generic_web_display` stay thin. `DisplayRegistry` is a runtime projection of Homey Devices (source of truth).
+
+## Milestone 3 — Vanilla Grid Rendering Engine
 
 ```text
-Homey Devices (source of truth)
-        │  onInit / onSettings / onDeleted
+Homey Device Settings (layout)
+        │
         ▼
-DisplayRegistry (runtime only)
-        ▲
+DisplayRegistry (DisplaySnapshot.layoutId)
+        │
 HTTP GET /  ──► DisplayRequestHandler
         │           │
-        │           ├─ IP normalize + findByIp
-        │           ├─ Shelly hardware identity check (optional)
-        │           └─ technical HTML page
+        │           ├─ IP + optional Shelly hardware check
+        │           ├─ resolveLayoutId → GridConfig
+        │           ├─ DashboardBootstrap DTO
+        │           └─ dashboard HTML (+ /dashboard.css, /dashboard.js)
         │
-HTTP GET /diagnostics ──► diagnostics HTML (if enabled)
+        ▼
+Vanilla frontend (page load once)
+        │
+        ├─ read viewport
+        ├─ calculateGridGeometry (square cells, margin, gap)
+        ├─ createGridCells (stable ids)
+        └─ CSS Grid render (centered) — layout immutable after this
 ```
-
-### Drivers (type chosen before pairing)
-
-| Driver id | Pairing | Matching |
-| --- | --- | --- |
-| `shelly_wall_display` | IP → `Shelly.GetDeviceInfo` → confirm | IP + hardware id |
-| `generic_web_display` | IP → create | IP only |
-
-There is no longer a single generic `wall_display` driver with an `adapterType` setting. Homey “Add device” lists both drivers.
-
-Shared core lives under `lib/` (registry, session, HTTP pages, adapters, pairing). Drivers only wire Homey lifecycle + pairing mode.
-
-### DisplayRegistry
-
-- Rebuilt from Homey Devices as they `onInit`
-- Updated on settings changes; removed on `onDeleted`
-- Holds runtime-only fields: `lastSeenAt`, session, last match status
-- Never persists runtime state
-
-### Online strategy
-
-A display is **online** if `lastSeenAt` is within the last **5 minutes** (`DISPLAY_ONLINE_TIMEOUT_MS`). Online state is derived only from successful recognition on `/` (or equivalent touch). No separate heartbeat.
 
 ### HTTP routes
 
 | Path | Behavior |
 | --- | --- |
-| `GET /` | Recognize client by IP (+ Shelly identity when applicable) |
-| `GET /diagnostics` | Runtime diagnostics if `diagnosticsEnabled` is true; otherwise **403** with a localized disabled page |
+| `GET /` | Recognize client; serve dashboard grid or error/unconfigured pages |
+| `GET /dashboard.css` | Built vanilla stylesheet |
+| `GET /dashboard.js` | Built vanilla grid engine (IIFE) |
+| `GET /diagnostics` | Runtime diagnostics if enabled; otherwise **403** |
 | other | 404 |
+
+### Backend → frontend contract
+
+The frontend never calls Homey APIs. It only receives:
+
+```ts
+interface DashboardBootstrap {
+  readonly displayId: string;
+  readonly layout: { readonly rows: number; readonly columns: number };
+}
+```
+
+Embedded in the HTML as `<script type="application/json" id="dashboard-bootstrap">`.
+
+### Grid geometry (pure TypeScript)
+
+Implemented in `lib/dashboard/` and shared with the frontend bundle:
+
+- Fixed safety margin (`SAFETY_MARGIN_PX`)
+- Gap = clamp(cellSize × `GAP_RATIO`, `GAP_MIN_PX`, `GAP_MAX_PX`)
+- Largest square cell that fits available viewport
+- Grid centered in the remaining space
+- Calculated **once** at page load (no resize listeners)
+
+### Supported layouts
+
+Layout ids are `{columns}x{rows}`. Non-square grids include both orientations; square grids do not need a duplicate.
+
+| Driver | Layouts |
+| --- | --- |
+| Shelly Wall Display | `2x2`, `3x3` |
+| Generic Web Display | `2x4` / `4x2`, `3x6` / `6x3` |
+
+### Future span model
+
+`GridPlacement { row, column, rowSpan, columnSpan }` exists for future multi-cell widgets. Milestone 3 only renders 1×1 diagnostic cells.
 
 ### Persistence (official Homey only)
 
-| Data | Homey API |
-| --- | --- |
-| Stable device id | Device `data.id` |
-| IP, layout, Shelly labels | Device **settings** |
-| `adapterId`, configuration snapshot | Device **store** |
-| HTTP port, diagnostics enabled | App `ManagerSettings` |
+Unchanged from Milestone 2: device `data` / `store` / `settings`, app `ManagerSettings`. Layout remains a Homey device setting — no second layout store.
 
 ### Localization
 
 - Manifest / driver / settings labels: `en` + `it` in compose JSON
-- Pairing, HTTP pages, errors, app settings: `/locales/en.json` and `/locales/it.json`
+- Pairing, HTTP pages, dashboard errors, diagnostics: `/locales/en.json` and `/locales/it.json`
 
 ### What is intentionally not here
 
-No dashboard renderer, no Vue, no widgets, no Flow, no WebSocket, no Homey ManagerDevices control API, no Shelly reboot/brightness/volume commands.
+No widgets, no Homey capability control, no Flow, no WebSocket, no visual editor, no multi-page navigation, no dynamic resize, no Vue/React/Angular/Svelte.

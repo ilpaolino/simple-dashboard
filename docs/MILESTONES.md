@@ -8,79 +8,65 @@
 
 **Status:** Done (superseded driver layout by M2). Details: [MILESTONE-1.md](MILESTONE-1.md).
 
-The single `wall_display` driver from M1 was split in M2 into `shelly_wall_display` and `generic_web_display`. Adapters, store/settings patterns, and pairing foundations remain.
-
 ## Milestone 2 — Display Registry, Device Recognition & Diagnostics
 
 **Status:** Done. Details: [MILESTONE-2.md](MILESTONE-2.md).
 
+## Milestone 3 — Vanilla Grid Rendering Engine
+
+**Status:** Done. Details: [MILESTONE-3.md](MILESTONE-3.md).
+
 ### In scope (implemented)
 
-- `DisplayRegistry` runtime, Homey as source of truth
-- Separate Homey drivers: Shelly Wall Display, Generic Web Display
-- IP routing + Shelly hardware identity validation
-- Technical root page / unconfigured / mismatch
-- `DisplaySession` + online/lastSeen (RAM only)
-- `/diagnostics` + `Enable diagnostics` app setting
-- EN + IT localization
-- Automated tests + manual checklist
+- Layout from Homey Device Settings → `DisplayRegistry` → `DashboardBootstrap`
+- Vanilla HTML/CSS/TypeScript frontend (no UI frameworks)
+- Square cells, centered grid, fixed safety margin, proportional clamped gap
+- Diagnostic cell labels with stable internal cell ids
+- `GridPlacement` types for future spans (not rendered yet)
+- Layout immutable after initial render
+- Invalid layout + unconfigured display error pages (EN/IT)
+- Diagnostics: layout, grid size, last rendered, layout error, process memory
+- Automated geometry/span/handler tests + performance measurement script
 
 ### Out of scope (explicitly deferred)
 
-- Dashboard UI / Vue / widgets
-- Using layout to render a grid
-- Flow cards
+- Real Homey widgets (lights, covers, thermostats, sensors, …)
 - WebSocket / realtime
-- Controlling Homey devices from the display
-- Shelly reboot / brightness / volume
-- Shelly authentication during probe
-- mDNS / SSDP discovery
+- Flow cards
+- Overlays / popups / cameras
+- Drag & drop / visual editor
+- Multi-page dashboards
+- Dynamic resize / orientation listeners
+- Configurable safety margin
 
 ## Later milestones (not started)
 
-- Dashboard layout rendering
-- Widget model
-- Homey device/capability bindings
+- Widget model + Homey capability bindings
 - Live updates
 - Display hardware controls beyond recognition
 
-## Manual test checklist (Milestone 2)
+## Manual test checklist (Milestone 3)
 
-### Setup
-
-- [ ] `npm install` succeeds
-- [ ] `npm run assets` succeeds
-- [ ] `npm test` passes
-- [ ] `npm run typecheck` passes
-- [ ] `homey app validate` passes
-- [ ] App runs with `homey app run --remote`
-
-### Registry and recognition
-
-- [ ] App start — no crash; HTTP listening on configured port
-- [ ] Add **Shelly Wall Display** and **Generic Web Display** appear as distinct devices
-- [ ] Registry populated after pairing (check `/diagnostics`)
-- [ ] Shelly configured → `http://IP_HOMEY:7999/` shows correct name, type, IP, ID, layout
-- [ ] Generic configured → root shows correct device and layout
-- [ ] Unknown IP → “Display not configured” / “Display non configurato”
-- [ ] Remove device in Homey → next request from that IP is unconfigured
-- [ ] Restart app → no orphans; lastSeen reset; registry rebuilt from Homey Devices
-
-### Shelly mismatch
-
-- [ ] Configure Shelly with IP A and id ABC
-- [ ] Put a different Shelly (id XYZ) on IP A (or mock)
-- [ ] Root shows “Different device detected” / “Dispositivo diverso rilevato”
-
-### Diagnostics
-
-- [ ] `/diagnostics` accessible when enabled
-- [ ] Shows server, port, uptime, displays, online/offline, lastSeen, layout, match status
-- [ ] Disable **Enable diagnostics** / **Abilita diagnostica** → `/diagnostics` returns disabled (403)
-- [ ] After disconnect/timeout, display becomes offline
-- [ ] After app restart, previous lastSeen is not restored
-
-### Translations
-
-- [ ] Homey language English: pairing, settings, HTTP pages
-- [ ] Homey language Italian: same strings in Italian
+- [ ] Build completed (`npm run build`)
+- [ ] TypeScript strict without errors (`npm run typecheck`)
+- [ ] Lint completed (`npm run lint`)
+- [ ] Automated tests completed (`npm test`)
+- [ ] App started on Homey Pro (`homey app run --remote`)
+- [ ] Shelly Wall Display recognized
+- [ ] Grid 2×2 displayed
+- [ ] Grid 3×3 displayed
+- [ ] Cells are square
+- [ ] Gap is uniform
+- [ ] Grid is centered
+- [ ] Safety margin present
+- [ ] No overflow
+- [ ] No dynamic resize (reload required after orientation change)
+- [ ] Generic Display with vertical layout (2×4 / 3×6)
+- [ ] Generic Display with horizontal layout (4×2 / 6×3)
+- [ ] Invalid configuration handled
+- [ ] Unknown display handled
+- [ ] Diagnostics updated
+- [ ] Italian UI
+- [ ] English UI
+- [ ] Bundle size documented
+- [ ] RAM observed/documented via diagnostics (`process.memoryUsage`)

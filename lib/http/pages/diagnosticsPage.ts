@@ -2,6 +2,7 @@ import type { DisplayRegistry } from '../../display/DisplayRegistry';
 import { resolveOnlineStatus } from '../../display/onlineStatus';
 import type { DiagnosticsRecentError } from '../../display/types';
 import { DISPLAY_TYPE_IDS } from '../../display/types';
+import { formatGridSize, resolveLayoutId } from '../../dashboard/layoutParse';
 import { escapeHtml, TECHNICAL_PAGE_STYLES } from './html';
 
 export interface DiagnosticsPageInput {
@@ -38,6 +39,25 @@ function matchLabel(
   return translate(`pages.status.${status}`);
 }
 
+function gridSizeLabel(
+  layoutId: string,
+  translate: (key: string) => string,
+): string {
+  const resolved = resolveLayoutId(layoutId);
+  if (!resolved.ok) {
+    return translate('pages.status.invalidLayout');
+  }
+  return formatGridSize(resolved.config);
+}
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return '—';
+  }
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MiB`;
+}
+
 export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
   const t = input.translate;
   const now = input.now ?? new Date();
@@ -62,6 +82,14 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       label: t('pages.diagnostics.displayCount'),
       value: String(displays.length),
     },
+    {
+      label: t('pages.diagnostics.memoryRss'),
+      value: formatBytes(process.memoryUsage().rss),
+    },
+    {
+      label: t('pages.diagnostics.memoryHeap'),
+      value: formatBytes(process.memoryUsage().heapUsed),
+    },
   ];
 
   const summaryHtml = summaryRows
@@ -77,6 +105,12 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       const lastSeen = entry.runtime.lastSeenAt
         ? entry.runtime.lastSeenAt.toISOString()
         : t('pages.status.never');
+      const lastRendered = entry.runtime.lastRenderedAt
+        ? entry.runtime.lastRenderedAt.toISOString()
+        : t('pages.status.never');
+      const layoutError = entry.runtime.lastLayoutErrorKey
+        ? t(entry.runtime.lastLayoutErrorKey)
+        : t('pages.status.none');
       return `<tr>
         <td>${escapeHtml(entry.config.name)}</td>
         <td>${escapeHtml(typeLabel(entry.config.typeId, t))}</td>
@@ -84,6 +118,9 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
         <td>${escapeHtml(t(`pages.status.${online}`))}</td>
         <td>${escapeHtml(lastSeen)}</td>
         <td>${escapeHtml(entry.config.layoutId)}</td>
+        <td>${escapeHtml(gridSizeLabel(entry.config.layoutId, t))}</td>
+        <td>${escapeHtml(lastRendered)}</td>
+        <td>${escapeHtml(layoutError)}</td>
         <td>${escapeHtml(matchLabel(entry.runtime.lastMatchStatus, t))}</td>
         <td>${escapeHtml(entry.config.hardwareId ?? t('device.notAvailable'))}</td>
       </tr>`;
@@ -132,12 +169,15 @@ ${TECHNICAL_PAGE_STYLES}
           <th>${escapeHtml(t('pages.diagnostics.online'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.lastSeen'))}</th>
           <th>${escapeHtml(t('pages.recognized.layout'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.gridSize'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.lastRendered'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.layoutError'))}</th>
           <th>${escapeHtml(t('pages.recognized.status'))}</th>
           <th>${escapeHtml(t('pages.recognized.hardwareId'))}</th>
         </tr>
       </thead>
       <tbody>
-        ${tableRows || `<tr><td colspan="8">${escapeHtml(t('pages.diagnostics.noDisplays'))}</td></tr>`}
+        ${tableRows || `<tr><td colspan="11">${escapeHtml(t('pages.diagnostics.noDisplays'))}</td></tr>`}
       </tbody>
     </table>
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentErrors'))}</h1>

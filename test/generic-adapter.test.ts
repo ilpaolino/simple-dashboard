@@ -10,13 +10,15 @@ describe('GenericWebDisplayAdapter', () => {
     assert.equal(await adapter.tryIdentify('192.168.1.50'), null);
   });
 
-  it('creates a 2x4 / 3x6 initial configuration', () => {
+  it('creates a 2x4 / 4x2 / 3x6 / 6x3 initial configuration', () => {
     const adapter = new GenericWebDisplayAdapter();
     const configuration = adapter.createInitialConfiguration();
     assert.equal(configuration.layoutId, LAYOUT_IDS.GRID_2X4);
     assert.deepEqual(configuration.supportedLayoutIds, [
       LAYOUT_IDS.GRID_2X4,
+      LAYOUT_IDS.GRID_4X2,
       LAYOUT_IDS.GRID_3X6,
+      LAYOUT_IDS.GRID_6X3,
     ]);
   });
 });

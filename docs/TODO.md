@@ -1,17 +1,18 @@
 # TODO
 
-## Milestone 2 follow-up (optional, not blocking)
+## Milestone 3 follow-up (optional, not blocking)
 
-- [ ] Exercise recognition against a physical Shelly Wall Display on the LAN
-- [ ] Confirm offline transition after 5 minutes without requests
+- [ ] Measure RSS/heap on Homey Pro via `/diagnostics` and paste numbers into [MILESTONE-3.md](MILESTONE-3.md)
+- [ ] Exercise 2×2 / 3×3 on a physical Shelly Wall Display
+- [ ] Exercise 2×4 / 3×6 on a Generic browser in portrait
+- [ ] Exercise 4×2 / 6×3 on a Generic browser in landscape
 - [ ] If Homey CLI compose rewrites `app.json`, commit the generated file as-is
 
 ## Next milestone (do not start here)
 
 Only when a later milestone is requested:
 
-- [ ] Dashboard rendering that **reads** the stored layout (do not invent a second layout store)
-- [ ] Widget model on top of `DeviceConfiguration`
+- [ ] Widget model on top of `GridPlacement` / cell ids
 - [ ] Homey capability / device bindings
 - [ ] Realtime channel (WebSocket or equivalent), reusing `HttpServer` if possible
 - [ ] Flow cards
@@ -23,6 +24,6 @@ Only when a later milestone is requested:
 
 - Homey Devices remain the only persistence for display configuration
 - Keep `DisplayRegistry` runtime-only
-- Reuse adapters / pairing / request handler — do not fork per driver
+- Keep frontend vanilla (no UI frameworks) unless an explicit milestone overturns that decision
+- Reuse `lib/dashboard` geometry and cell identity — do not fork per widget
 - Persist only via Homey `data`, `store`, `settings`, or app `ManagerSettings`
-- Do not add Vue/dashboard code until that milestone is explicit

@@ -5,6 +5,10 @@ import {
   renderUnconfiguredPage,
   renderMismatchPage,
 } from '../lib/http/pages/displayPages';
+import {
+  renderDashboardPage,
+  renderInvalidLayoutPage,
+} from '../lib/http/pages/dashboardPage';
 import { DISPLAY_TYPE_IDS } from '../lib/display/types';
 import { LAYOUT_IDS } from '../lib/adapters/types';
 
@@ -34,6 +38,9 @@ const translate = (key: string): string => {
     'pages.mismatch.expectedId': 'Expected ID',
     'pages.mismatch.actualId': 'Detected ID',
     'pages.mismatch.timestamp': 'Timestamp',
+    'pages.invalidLayout.title': 'Invalid display configuration',
+    'pages.invalidLayout.heading': 'Invalid display configuration',
+    'pages.invalidLayout.lead': 'Bad layout',
   };
   return map[key] ?? key;
 };
@@ -61,6 +68,29 @@ describe('display pages', () => {
     assert.match(html, /192\.168\.1\.30/);
     assert.match(html, /shellywalldisplay-1/);
     assert.match(html, /3x3/);
+  });
+
+  it('renders dashboard bootstrap without HTML-escaping JSON quotes', () => {
+    const html = renderDashboardPage({
+      lang: 'en',
+      title: 'Dashboard',
+      bootstrap: {
+        displayId: 'disp-1',
+        layout: { rows: 3, columns: 3 },
+      },
+    });
+
+    assert.match(html, /dashboard-bootstrap/);
+    assert.match(html, /"displayId":"disp-1"/);
+    assert.match(html, /"rows":3/);
+    assert.match(html, /"columns":3/);
+    assert.match(html, /dashboard\.css/);
+    assert.match(html, /dashboard\.js/);
+  });
+
+  it('renders an invalid layout page', () => {
+    const html = renderInvalidLayoutPage({ lang: 'it', translate });
+    assert.match(html, /Invalid display configuration/);
   });
 
   it('renders an unconfigured page and escapes user agent HTML', () => {

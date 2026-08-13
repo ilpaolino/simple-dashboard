@@ -1,11 +1,17 @@
 import type { JsonHttpClient } from '../http/JsonHttpClient';
-import { LAYOUT_IDS, type DetectedDeviceInfo, type DeviceConfiguration, type LayoutDefinition, type WallDisplayAdapter } from './types';
-import { ADAPTER_IDS } from './types';
+import {
+  ADAPTER_IDS,
+  LAYOUT_IDS,
+  SHELLY_LAYOUT_IDS,
+  layoutDefinitionsFor,
+  type DetectedDeviceInfo,
+  type DeviceConfiguration,
+  type LayoutDefinition,
+  type WallDisplayAdapter,
+} from './types';
 
-const SHELLY_WALL_DISPLAY_LAYOUTS: readonly LayoutDefinition[] = [
-  { id: LAYOUT_IDS.GRID_2X2, columns: 2, rows: 2 },
-  { id: LAYOUT_IDS.GRID_3X3, columns: 3, rows: 3 },
-];
+const SHELLY_WALL_DISPLAY_LAYOUTS: readonly LayoutDefinition[] =
+  layoutDefinitionsFor(SHELLY_LAYOUT_IDS);
 
 interface ShellyDeviceInfo {
   readonly id: string;

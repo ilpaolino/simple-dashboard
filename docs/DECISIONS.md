@@ -1,54 +1,98 @@
 # Decisions
 
-Architectural choices for Milestone 2. Earlier decisions remain in [MILESTONE-0.md](MILESTONE-0.md) and the Milestone 1 section below where still applicable.
+Architectural choices for Milestone 3. Earlier decisions remain in force below and in [MILESTONE-0.md](MILESTONE-0.md) / [MILESTONE-1.md](MILESTONE-1.md) / [MILESTONE-2.md](MILESTONE-2.md).
 
-## Homey is Source of Truth
+## Vanilla frontend
 
-**Choice:** `DisplayRegistry` is an in-memory projection of Homey Devices. Devices register on `onInit`, update on `onSettings`, and unregister on `onDeleted`.
+**Choice:** Dashboard UI is HTML + CSS + TypeScript only. No Vue, React, Angular, Svelte, or UI component libraries. Source lives in `frontend/`; build emits a single IIFE `assets/dashboard/dashboard.js` plus `dashboard.css`.
 
-**Why:** Homey already persists devices via official `data` / `store` / `settings`. A second persisted registry would create orphans and drift. After restart the registry is empty until Homey Devices re-init.
+**Why:** Wall displays (especially Shelly Wall Display WebViews) benefit from a tiny bundle, low RAM, fast startup, and minimal dependencies. Framework convenience is explicitly out of scope.
 
-## Runtime state is not persisted
+**Build note:** `esbuild` is a **devDependency** only (bundle `frontend/main.ts` + shared `lib/dashboard` math into one browser file). It is not shipped to Homey (`.homeyignore` excludes `node_modules/` and `scripts/`).
 
-**Choice:** `lastSeenAt`, online/offline, `DisplaySession`, match status, and diagnostics error buffer live only in RAM.
+## Square grid cells
 
-**Why:** The milestone requires that after Homey/app restart every display starts without runtime state and becomes online only on a new HTTP request.
+**Choice:** Every cell is always square. The engine never stretches cells to fill the viewport.
 
-## Separate Homey Drivers
+**Why:** Predictable geometry for future widgets and consistent touch targets across aspect ratios.
 
-**Choice:** Two drivers — `shelly_wall_display` and `generic_web_display`. The former Wall Display mega-driver with manual adapter selection is removed.
+## Centered grid
 
-**Why:** Homey’s Add Device flow is the documented place to choose device type before pairing ([Devices](https://apps.developer.homey.app/the-basics/devices)). Sharing code stays in `lib/`; drivers stay thin.
+**Choice:** After computing the maximum fitting square cell size, the grid is centered horizontally and vertically within the safe area. Unused space remains empty.
 
-## IP is routing, not identity
+**Why:** Prefer geometric predictability over using 100% of the screen.
 
-**Choice:** Client IP (normalized, including `::ffff:` stripping) selects the configured display at request time. Identity remains `data.id`.
+## Proportional gap
 
-**Why:** Homey pairing docs forbid using IP as the unique device property ([Pairing](https://apps.developer.homey.app/the-basics/devices/pairing)). IP can change; hardware id / UUID must not.
+**Choice:** `gap = clamp(cellSize × 0.08, 4px, 20px)`.
 
-## Hardware identity validation
+**Why:** Gaps stay visible on small displays and do not explode on large ones. Limits are fixed constants for this milestone.
 
-**Choice:** For Shelly, after IP match the app calls official `GET /rpc/Shelly.GetDeviceInfo` and compares the reported id with Homey `data.id`. Mismatch → localized “Different device detected” page (not treated as the configured display). Generic skips this when no hardware id exists.
+## Fixed safety margin
 
-**Why:** LAN IP reuse / wrong device on a reserved address must not silently serve another display’s page. Shelly RPC is the documented Gen2 identity API ([Shelly.GetDeviceInfo](https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Shelly#shellygetdeviceinfo)).
+**Choice:** Outer margin is a centralized constant (`SAFETY_MARGIN_PX = 12`). Not configurable via Homey settings yet.
 
-## Diagnostics is a permanent feature
+**Why:** Avoids edge clipping on embedded browsers / viewport differences without adding settings surface area.
 
-**Choice:** `/diagnostics` is a product page (not a temporary debug tool). Controlled by app setting `diagnosticsEnabled` (default `true`). When disabled, the route returns **403** with a clear localized message and no registry dump.
+## Layout immutable after initial render
 
-**Why:** Advanced users and testers need LAN-visible runtime status without Homey developer tools. Disabling must be safe and coherent.
+**Choice:** Geometry is calculated once on page load. No permanent `resize` or `orientationchange` listeners. Orientation/viewport changes require a page reload.
 
-## Online timeout without heartbeat
+**Why:** Lower runtime complexity and CPU/RAM on fixed wall mounts; predictable layout for debugging.
 
-**Choice:** Online if last successful recognition is within 5 minutes.
+## Widget span compatibility
 
-**Why:** Displays already poll `/` as their browser page; a separate heartbeat would be unused complexity in this milestone.
+**Choice:** Data model includes `GridPlacement` with `rowSpan` / `columnSpan`. Milestone 3 does not render multi-cell widgets, but types and structural tests ensure 1×2 / 2×1 / 2×2 placements can fit later without rewriting the engine contracts.
 
-## Pairing modes per driver
+**Why:** Avoid a future rewrite of cell identity and layout math when widgets arrive.
 
-**Choice:** `PairingFlow` supports `identify_required` (Shelly) and `ip_only` (Generic). Shelly no longer offers “pick Generic” on failure.
+## DashboardBootstrap DTO
 
-**Why:** Type is already chosen by selecting the Homey driver. Mixing types in one pairing session would reintroduce the old mega-driver UX.
+**Choice:** Backend sends only `displayId` + `{ rows, columns }`. No Homey APIs, device names, or adapter details in the frontend payload.
+
+**Why:** Clear backend/frontend separation; minimal attack/data surface on the LAN page.
+
+## Portrait and landscape layout ids
+
+**Choice:** Layout ids are `{columns}x{rows}`. Non-square grids ship both orientations (`2x4` / `4x2`, `3x6` / `6x3`). Square grids (`2x2`, `3x3`) are orientation-invariant, so they are not duplicated. Orientation is chosen in Homey Device Settings; the dashboard does not auto-rotate.
+
+**Why:** Wall displays may be mounted portrait or landscape. The grid engine already sizes square cells to the viewport; the user still needs an explicit column/row count that matches the mount.
+
+**Migration:** Generic devices paired before landscape variants existed store only `2x4` / `3x6`. On device `onInit` (and when saving a layout) the stored `supportedLayoutIds` is expanded so the new options are selectable without re-pairing.
+
+## Process memory on diagnostics
+
+**Choice:** `/diagnostics` shows Node `process.memoryUsage()` RSS and heapUsed. Homey Apps SDK does not expose a dedicated “app RAM” metric; this is the official Node API available in the Homey Node runtime.
+
+**Why:** Milestone performance budget requires an honest, non-invented measurement path.
+
+---
+
+## Milestone 2 decisions still in force
+
+### Homey is Source of Truth
+
+`DisplayRegistry` is an in-memory projection of Homey Devices.
+
+### Runtime state is not persisted
+
+`lastSeenAt`, sessions, match status, `lastRenderedAt`, layout errors live only in RAM.
+
+### Separate Homey Drivers
+
+`shelly_wall_display` and `generic_web_display`.
+
+### IP is routing, not identity
+
+### Hardware identity validation (Shelly)
+
+Official `GET /rpc/Shelly.GetDeviceInfo`.
+
+### Diagnostics is a permanent feature
+
+### Online timeout without heartbeat (5 minutes)
+
+### Pairing modes per driver
 
 ---
 
@@ -56,32 +100,16 @@ Architectural choices for Milestone 2. Earlier decisions remain in [MILESTONE-0.
 
 ### Homey Compose for drivers
 
-`.homeycompose/app.json` + `drivers/*/driver.compose.json` + `driver.settings.compose.json` ([Homey Compose](https://apps.developer.homey.app/advanced/homey-compose), [Device settings](https://apps.developer.homey.app/the-basics/devices/settings)).
-
 ### Custom pairing: injected Homey, no `/homey.js`
-
-Pairing HTML must not load `/homey.js`. Use `Homey.setNavigationClose()` and in-page CTAs ([Custom pairing views](https://apps.developer.homey.app/advanced/custom-views/custom-pairing-views)).
 
 ### `Homey.createDevice` instead of `add_devices`
 
-Documented API for custom pairing without `list_devices` ([createDevice](https://apps.developer.homey.app/advanced/custom-views/custom-pairing-views)).
-
 ### Native device settings only
-
-Types: `group`, `text`, `label`, `dropdown`. No custom device settings HTML.
 
 ### Device class `other`, empty capabilities, `connectivity: lan`
 
-No wall-dashboard class; no control capabilities in this milestone.
-
 ### Adapter isolation / Shelly.GetDeviceInfo / configuration snapshot
-
-Unchanged from Milestone 1.
 
 ### Localization EN + IT
 
-Official Homey i18n ([Internationalization](https://apps.developer.homey.app/the-basics/app/internationalization)).
-
 ### TypeScript strict, no `any`
-
-([TypeScript guide](https://apps.developer.homey.app/guides/tools/typescript)).

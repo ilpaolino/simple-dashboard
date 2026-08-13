@@ -4,8 +4,10 @@ import {
   getDisplayId,
   isDisplayAppHost,
 } from '../../lib/device/DisplayAppHost';
+import { withExpandedSupportedLayouts } from '../../lib/device/configuration';
 import { parseWallDisplayStore } from '../../lib/device/types';
 import { validateDeviceSettingsChange } from '../../lib/device/settingsValidation';
+import { canonicalLayoutIdsForAdapter } from '../../lib/adapters/types';
 import { DISPLAY_TYPE_IDS } from '../../lib/display/types';
 import { AppLogger } from '../../lib/Logger';
 
@@ -18,6 +20,7 @@ class GenericWebDisplayDevice extends Homey.Device {
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
+    await this.syncSupportedLayouts();
     const snapshot = buildDisplaySnapshot({
       device: this,
       typeId: DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY,
@@ -74,6 +77,28 @@ class GenericWebDisplayDevice extends Homey.Device {
     if (snapshot && isDisplayAppHost(this.homey.app)) {
       this.homey.app.updateDisplay(snapshot);
     }
+  }
+
+  /**
+   * Existing Generic devices may still store only 2x4/3x6. Expand the snapshot
+   * so landscape variants become selectable without re-pairing.
+   */
+  private async syncSupportedLayouts(): Promise<void> {
+    const store = parseWallDisplayStore(this.getStore());
+    if (!store) {
+      return;
+    }
+
+    const expanded = withExpandedSupportedLayouts(
+      store.configuration,
+      canonicalLayoutIdsForAdapter(store.adapterId),
+    );
+
+    if (expanded === store.configuration) {
+      return;
+    }
+
+    await this.setStoreValue('configuration', expanded);
   }
 
   public async onDeleted(): Promise<void> {

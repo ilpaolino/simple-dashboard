@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { LAYOUT_IDS } from '../lib/adapters/types';
-import { isLayoutSupported, withLayout } from '../lib/device/configuration';
+import {
+  isLayoutSupported,
+  withExpandedSupportedLayouts,
+  withLayout,
+} from '../lib/device/configuration';
 import { validateDeviceSettingsChange } from '../lib/device/settingsValidation';
 import type { WallDisplayStore } from '../lib/device/types';
 import { ADAPTER_IDS } from '../lib/adapters/types';
@@ -69,6 +73,36 @@ describe('validateDeviceSettingsChange', () => {
     });
     assert.deepEqual(result, { ok: false, errorKey: 'errors.unsupportedLayout' });
   });
+
+  it('accepts landscape variants on an older Generic configuration', () => {
+    const genericStore: WallDisplayStore = {
+      adapterId: ADAPTER_IDS.GENERIC_WEB_DISPLAY,
+      adapterAutoDetected: false,
+      configuration: {
+        version: 1,
+        layoutId: LAYOUT_IDS.GRID_2X4,
+        supportedLayoutIds: [LAYOUT_IDS.GRID_2X4, LAYOUT_IDS.GRID_3X6],
+        recommended: { capabilities: [] },
+      },
+    };
+
+    const result = validateDeviceSettingsChange({
+      changedKeys: ['layout'],
+      newSettings: { layout: LAYOUT_IDS.GRID_4X2 },
+      store: genericStore,
+    });
+
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.updatedConfiguration?.layoutId, LAYOUT_IDS.GRID_4X2);
+      assert.deepEqual(result.updatedConfiguration?.supportedLayoutIds, [
+        LAYOUT_IDS.GRID_2X4,
+        LAYOUT_IDS.GRID_4X2,
+        LAYOUT_IDS.GRID_3X6,
+        LAYOUT_IDS.GRID_6X3,
+      ]);
+    }
+  });
 });
 
 describe('configuration helpers', () => {
@@ -76,5 +110,30 @@ describe('configuration helpers', () => {
     assert.equal(isLayoutSupported(store.configuration, LAYOUT_IDS.GRID_2X2), true);
     assert.equal(isLayoutSupported(store.configuration, LAYOUT_IDS.GRID_2X4), false);
     assert.equal(withLayout(store.configuration, LAYOUT_IDS.GRID_3X3).layoutId, LAYOUT_IDS.GRID_3X3);
+  });
+
+  it('expands older Generic layout lists with landscape variants', () => {
+    const expanded = withExpandedSupportedLayouts(
+      {
+        version: 1,
+        layoutId: LAYOUT_IDS.GRID_2X4,
+        supportedLayoutIds: [LAYOUT_IDS.GRID_2X4, LAYOUT_IDS.GRID_3X6],
+        recommended: { capabilities: [] },
+      },
+      [
+        LAYOUT_IDS.GRID_2X4,
+        LAYOUT_IDS.GRID_4X2,
+        LAYOUT_IDS.GRID_3X6,
+        LAYOUT_IDS.GRID_6X3,
+      ],
+    );
+
+    assert.equal(expanded.layoutId, LAYOUT_IDS.GRID_2X4);
+    assert.deepEqual(expanded.supportedLayoutIds, [
+      LAYOUT_IDS.GRID_2X4,
+      LAYOUT_IDS.GRID_4X2,
+      LAYOUT_IDS.GRID_3X6,
+      LAYOUT_IDS.GRID_6X3,
+    ]);
   });
 });

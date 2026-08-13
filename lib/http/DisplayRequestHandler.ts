@@ -1,16 +1,21 @@
 import type { AdapterRegistry } from '../adapters/AdapterRegistry';
-import { DISPLAY_TYPE_IDS } from '../display/types';
+import { createDashboardBootstrap } from '../dashboard';
+import { formatGridSize, resolveLayoutId } from '../dashboard/layoutParse';
 import type { DisplayRegistry } from '../display/DisplayRegistry';
 import { normalizeClientIp } from '../display/ipNormalize';
 import { verifyHardwareIdentity } from '../display/hardwareIdentity';
 import type { DiagnosticsLog } from '../diagnostics/DiagnosticsLog';
 import type { HttpResponse, Logger, RequestInfo } from '../types';
+import { DashboardAssetStore } from './DashboardAssetStore';
 import { renderDiagnosticsPage } from './pages/diagnosticsPage';
+import {
+  renderDashboardPage,
+  renderInvalidLayoutPage,
+} from './pages/dashboardPage';
 import {
   renderDiagnosticsDisabledPage,
   renderMismatchPage,
   renderProbeFailedPage,
-  renderRecognizedPage,
   renderUnconfiguredPage,
 } from './pages/displayPages';
 
@@ -25,20 +30,32 @@ export interface DisplayRequestHandlerOptions {
   readonly isServerListening: () => boolean;
   readonly getPort: () => number | null;
   readonly getUptimeSeconds: () => number;
+  readonly assets?: DashboardAssetStore;
 }
 
 /**
- * Routes LAN HTTP requests for recognition and diagnostics.
- * Dashboard rendering is intentionally out of scope.
+ * Routes LAN HTTP requests for recognition, dashboard bootstrap, and diagnostics.
  */
 export class DisplayRequestHandler {
-  public constructor(private readonly options: DisplayRequestHandlerOptions) {}
+  private readonly assets: DashboardAssetStore;
+
+  public constructor(private readonly options: DisplayRequestHandlerOptions) {
+    this.assets = options.assets ?? new DashboardAssetStore();
+  }
 
   public async handle(info: RequestInfo): Promise<HttpResponse> {
     const path = pathOnly(info.url);
 
     if (info.method !== 'GET') {
       return textResponse(405, 'Method Not Allowed');
+    }
+
+    if (path === '/dashboard.css') {
+      return this.assets.tryGet('dashboard.css') ?? textResponse(404, 'Not Found');
+    }
+
+    if (path === '/dashboard.js') {
+      return this.assets.tryGet('dashboard.js') ?? textResponse(404, 'Not Found');
     }
 
     if (path === '/diagnostics') {
@@ -171,40 +188,58 @@ export class DisplayRequestHandler {
       }
     }
 
+    const layout = resolveLayoutId(config.layoutId);
+    if (!layout.ok) {
+      this.options.registry.setMatchResult(
+        config.displayId,
+        'recognized',
+        'pages.invalidLayout.heading',
+      );
+      this.options.registry.markLayoutError(
+        config.displayId,
+        'pages.invalidLayout.heading',
+      );
+      this.options.diagnosticsLog.record({
+        at: new Date(),
+        messageKey: 'pages.invalidLayout.heading',
+        displayId: config.displayId,
+        ipAddress: clientIp,
+      });
+      this.options.logger.error('Invalid display layout configuration', {
+        displayId: config.displayId,
+        layoutId: config.layoutId,
+        clientIp,
+      });
+
+      return htmlResponse(
+        200,
+        renderInvalidLayoutPage({ lang, translate }),
+      );
+    }
+
     this.options.registry.touch(config.displayId, clientIp);
     this.options.registry.setMatchResult(config.displayId, 'recognized');
+    this.options.registry.markDashboardRendered(config.displayId);
 
-    this.options.logger.info('Display recognized', {
+    const bootstrap = createDashboardBootstrap(config.displayId, layout.config);
+
+    this.options.logger.info('Display dashboard rendered', {
       displayId: config.displayId,
       typeId: config.typeId,
+      layoutId: config.layoutId,
+      grid: formatGridSize(layout.config),
       clientIp,
     });
 
     return htmlResponse(
       200,
-      renderRecognizedPage({
+      renderDashboardPage({
         lang,
-        translate,
-        display: config,
-        typeLabel: typeLabel(config.typeId, translate),
-        timestamp: info.timestamp,
-        matchStatus: 'recognized',
+        title: translate('pages.dashboard.title'),
+        bootstrap,
       }),
     );
   }
-}
-
-function typeLabel(
-  typeId: string,
-  translate: (key: string) => string,
-): string {
-  if (typeId === DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY) {
-    return translate('adapters.shelly_wall_display');
-  }
-  if (typeId === DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY) {
-    return translate('adapters.generic_web_display');
-  }
-  return typeId;
 }
 
 function pathOnly(url: string): string {

@@ -1,6 +1,8 @@
 Simple Dashboard
 
-Homey Pro app: Wall Display devices plus a local HTTP welcome page (default port 7999).
+Homey Pro app for wall displays: recognition, diagnostics, and a vanilla grid dashboard (default HTTP port 7999).
 
-Pair a Wall Display by IP address from the Homey app. Open http://<homey-ip>:7999 from a browser or display to verify the welcome page.
-Change the HTTP port in the app settings; the server restarts automatically.
+Pair a Shelly Wall Display or Generic Web Display by IP from the Homey app.
+Open http://<homey-ip>:7999 from the display browser to view the layout grid.
+Open http://<homey-ip>:7999/diagnostics for runtime status (when enabled).
+Change the HTTP port or diagnostics toggle in the app settings.

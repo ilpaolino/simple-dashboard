@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP endpoint for wall displays. Milestone 2 connects Homey Devices to HTTP clients through a runtime `DisplayRegistry`, separate drivers for Shelly and Generic displays, hardware identity checks, and a permanent `/diagnostics` page.
+It hosts a local HTTP endpoint for wall displays. Milestone 3 adds a **vanilla** (HTML + CSS + TypeScript) **Grid Rendering Engine**: Homey device layout settings flow through `DisplayRegistry` into a minimal `DashboardBootstrap` DTO and render a centered square-cell grid on the recognized client.
 
 ## Current status
 
-**Milestone 2 is implemented.** Milestone 0–1 behavior is preserved where still relevant (HTTP server, settings, adapters, pairing).
+**Milestone 3 is implemented.** Milestone 0–2 behavior is preserved (HTTP server, settings, drivers, registry, recognition, diagnostics).
 
 | Area | Status |
 | --- | --- |
@@ -17,34 +17,36 @@ It hosts a local HTTP endpoint for wall displays. Milestone 2 connects Homey Dev
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Technical root page / unconfigured / mismatch | Done (M2) |
-| Diagnostics page | Done (M2) |
-| Dashboard / Vue / widgets | Not started |
+| Diagnostics page | Done (M2/M3) |
+| Vanilla grid rendering from device layout | Done (M3) |
+| Widgets / Homey controls | Not started |
 | Flow cards | Not started |
 | WebSocket / realtime | Not started |
-| Homey device control from the display | Not started |
 
 ## How to resume after a break
 
 1. Read this file, then [ARCHITECTURE.md](ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md).
 2. Check [MILESTONES.md](MILESTONES.md) for what is in / out of scope.
 3. Check [TODO.md](TODO.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before writing new code.
-4. Reuse `lib/display`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer for displays.
+4. Reuse `lib/display`, `lib/dashboard`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer for displays or layouts.
 
 ## Runtime constraints
 
 - Must run **on Homey Pro** (`homey app run --remote` or `homey app install`) for LAN bind and for probing a display by IP.
 - Compatibility: Homey `>=12.9.0` (Node.js 22).
 - TypeScript strict mode, compiled to `.homeybuild/`.
+- Frontend is built separately into `assets/dashboard/` (IIFE, no runtime framework).
 
 ## Local commands
 
 ```bash
 npm install
 npm run assets
+npm run build
 npm test
 npm run typecheck
 npm run lint
+npm run measure:frontend
 homey app validate
 homey app run --remote
 ```
@@ -54,8 +56,11 @@ homey app run --remote
 | Path | Role |
 | --- | --- |
 | `app.ts` | Homey App lifecycle; HTTP + DisplayRegistry host |
+| `lib/dashboard/` | Grid types, geometry math, cell ids, bootstrap DTO |
 | `lib/display/` | Registry, session, IP normalize, hardware identity |
-| `lib/http/` | Request handler + technical / diagnostics HTML |
+| `lib/http/` | Request handler, dashboard HTML, static assets, diagnostics |
+| `frontend/` | Vanilla dashboard source (excluded from Homey package) |
+| `assets/dashboard/` | Built `dashboard.css` / `dashboard.js` served on LAN |
 | `lib/adapters/` | Shelly + Generic protocol adapters |
 | `lib/pairing/` | Shared pairing state machine |
 | `drivers/shelly_wall_display/` | Shelly driver, device, pairing, settings |

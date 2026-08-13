@@ -1,6 +1,14 @@
 import { parseIpv4 } from '../ip/ipv4';
-import { isLayoutId, isLayoutSupported, withLayout } from './configuration';
-import type { DeviceConfiguration } from '../adapters/types';
+import {
+  isLayoutId,
+  isLayoutSupported,
+  withExpandedSupportedLayouts,
+  withLayout,
+} from './configuration';
+import {
+  canonicalLayoutIdsForAdapter,
+  type DeviceConfiguration,
+} from '../adapters/types';
 import type { WallDisplayStore } from './types';
 
 export type SettingsValue = boolean | string | number | undefined | null;
@@ -48,12 +56,17 @@ export function validateDeviceSettingsChange(
     return { ok: false, errorKey: 'errors.unsupportedLayout' };
   }
 
-  if (!isLayoutSupported(input.store.configuration, layout)) {
+  const expanded = withExpandedSupportedLayouts(
+    input.store.configuration,
+    canonicalLayoutIdsForAdapter(input.store.adapterId),
+  );
+
+  if (!isLayoutSupported(expanded, layout)) {
     return { ok: false, errorKey: 'errors.unsupportedLayout' };
   }
 
   return {
     ok: true,
-    updatedConfiguration: withLayout(input.store.configuration, layout),
+    updatedConfiguration: withLayout(expanded, layout),
   };
 }

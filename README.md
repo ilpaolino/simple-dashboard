@@ -1,8 +1,8 @@
 # Simple Dashboard
 
-Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition, runtime registry, and diagnostics.
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard.
 
-This milestone does **not** include a dashboard UI, Vue, widgets, Flow cards, WebSockets, or Homey device control.
+This milestone does **not** include widgets, Flow cards, WebSockets, or Homey device control from the display.
 
 ## Requirements
 
@@ -25,8 +25,10 @@ homey login
 cd /path/to/simple-dashboard
 npm install
 npm run assets
+npm run build
 npm test
 npm run typecheck
+npm run measure:frontend
 ```
 
 ## Run on Homey Pro
@@ -37,7 +39,7 @@ A plain `homey app run` uses a local Docker container. **LAN access (browser / S
 homey app run --remote
 ```
 
-Recognition page:
+Dashboard (recognized display):
 
 ```text
 http://<HOMEY_LAN_IP>:7999/
@@ -63,7 +65,8 @@ homey app install
 4. Enter the display IPv4 address
 5. Shelly: confirm detected hardware info, then add
 6. Generic: add after entering the IP
-7. Open Advanced settings → verify IP and layout
+7. Open Advanced settings → set layout (Shelly: 2x2 / 3x3 — Generic: 2x4 / 4x2 / 3x6 / 6x3)
+8. Open the dashboard URL from the display browser and reload after layout changes
 
 ## Configure HTTP port and diagnostics
 
@@ -79,21 +82,16 @@ homey app install
 | `homey app run --remote` | Run on Homey with live logs |
 | `homey app install` | Install on Homey |
 | `homey app validate` | Validate the app package |
-| `homey app quit` | Stop a remote `run` session |
-
-## Local automated tests
-
-```bash
-npm test
-npm run typecheck
-```
+| `homey app build` | Build the app archive |
 
 ## Documentation
 
-See [`docs/PROJECT.md`](docs/PROJECT.md) to resume the project. Milestone details:
+Persistent project memory lives in [`docs/`](docs/):
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [docs/DECISIONS.md](docs/DECISIONS.md)
-- [docs/MILESTONES.md](docs/MILESTONES.md)
-- [docs/TODO.md](docs/TODO.md)
-- [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
+- [PROJECT.md](docs/PROJECT.md)
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [DECISIONS.md](docs/DECISIONS.md)
+- [MILESTONES.md](docs/MILESTONES.md)
+- [MILESTONE-3.md](docs/MILESTONE-3.md)
+- [TODO.md](docs/TODO.md)
+- [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)

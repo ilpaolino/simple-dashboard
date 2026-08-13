@@ -1,9 +1,16 @@
-import { ADAPTER_IDS, LAYOUT_IDS, type DetectedDeviceInfo, type DeviceConfiguration, type LayoutDefinition, type WallDisplayAdapter } from './types';
+import {
+  ADAPTER_IDS,
+  GENERIC_LAYOUT_IDS,
+  LAYOUT_IDS,
+  layoutDefinitionsFor,
+  type DetectedDeviceInfo,
+  type DeviceConfiguration,
+  type LayoutDefinition,
+  type WallDisplayAdapter,
+} from './types';
 
-const GENERIC_WEB_DISPLAY_LAYOUTS: readonly LayoutDefinition[] = [
-  { id: LAYOUT_IDS.GRID_2X4, columns: 2, rows: 4 },
-  { id: LAYOUT_IDS.GRID_3X6, columns: 3, rows: 6 },
-];
+const GENERIC_WEB_DISPLAY_LAYOUTS: readonly LayoutDefinition[] =
+  layoutDefinitionsFor(GENERIC_LAYOUT_IDS);
 
 /**
  * Fallback adapter. It never probes a remote protocol.

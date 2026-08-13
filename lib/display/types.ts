@@ -50,6 +50,10 @@ export interface DisplayRuntimeState {
   session: DisplaySession | null;
   lastMatchStatus: MatchStatus | null;
   lastErrorKey: string | null;
+  /** Last successful dashboard HTML serve for this display. */
+  lastRenderedAt: Date | null;
+  /** Localization key for the last layout configuration error, if any. */
+  lastLayoutErrorKey: string | null;
 }
 
 export interface RegisteredDisplay {

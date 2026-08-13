@@ -50,6 +50,14 @@
     }
   },
   "pages": {
+    "dashboard": {
+      "title": "Dashboard"
+    },
+    "invalidLayout": {
+      "title": "Invalid display configuration",
+      "heading": "Invalid display configuration",
+      "lead": "The layout stored for this display is not valid. Check the device settings in Homey."
+    },
     "recognized": {
       "title": "Wall Display recognized",
       "heading": "Wall Display recognized",
@@ -100,6 +108,11 @@
       "displays": "Displays",
       "online": "Status",
       "lastSeen": "Last seen",
+      "gridSize": "Grid size",
+      "lastRendered": "Last rendered",
+      "layoutError": "Layout error",
+      "memoryRss": "Process RSS",
+      "memoryHeap": "Heap used",
       "recentErrors": "Recent errors",
       "noErrors": "No recent errors.",
       "noDisplays": "No displays configured."
@@ -117,7 +130,8 @@
       "online": "Online",
       "offline": "Offline",
       "never": "Never",
-      "none": "—"
+      "none": "—",
+      "invalidLayout": "Invalid"
     }
   },
   "errors": {

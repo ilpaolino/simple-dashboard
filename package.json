@@ -1,14 +1,16 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.3.0",
-  "description": "Simple Dashboard — display registry, recognition, and diagnostics for Homey Pro",
+  "version": "0.4.0",
+  "description": "Simple Dashboard — vanilla grid rendering for Homey Pro wall displays",
   "main": "app.js",
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "build": "tsc && npm run build:frontend",
+    "build:frontend": "node scripts/build-frontend.mjs",
+    "typecheck": "tsc --noEmit && tsc -p frontend --noEmit",
     "test": "node --import tsx --test test/**/*.test.ts",
     "assets": "node scripts/generate-assets.mjs",
-    "lint": "tsc --noEmit"
+    "lint": "npm run typecheck",
+    "measure:frontend": "node scripts/measure-frontend.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -17,7 +19,8 @@
     "homey",
     "welcome-wall",
     "http-server",
-    "wall-display"
+    "wall-display",
+    "dashboard"
   ],
   "author": "ilpaolino",
   "license": "ISC",
@@ -29,6 +32,7 @@
     "@types/homey": "npm:homey-apps-sdk-v3-types",
     "@types/node": "^22.13.10",
     "@types/source-map-support": "^0.5.10",
+    "esbuild": "^0.25.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }

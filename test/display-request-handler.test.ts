@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, it } from 'node:test';
 import { AdapterRegistry } from '../lib/adapters/AdapterRegistry';
 import { GenericWebDisplayAdapter } from '../lib/adapters/GenericWebDisplayAdapter';
@@ -7,9 +10,11 @@ import { ADAPTER_IDS, LAYOUT_IDS } from '../lib/adapters/types';
 import { DiagnosticsLog } from '../lib/diagnostics/DiagnosticsLog';
 import { DisplayRegistry } from '../lib/display/DisplayRegistry';
 import { DISPLAY_TYPE_IDS } from '../lib/display/types';
+import { DashboardAssetStore } from '../lib/http/DashboardAssetStore';
 import { DisplayRequestHandler } from '../lib/http/DisplayRequestHandler';
 import type { JsonHttpClient } from '../lib/http/JsonHttpClient';
 import type { Logger, RequestInfo } from '../lib/types';
+import type { LayoutId } from '../lib/adapters/types';
 
 class MockJsonHttpClient implements JsonHttpClient {
   public constructor(private readonly payload: unknown | Error) {}
@@ -41,6 +46,13 @@ function request(overrides: Partial<RequestInfo> = {}): RequestInfo {
   };
 }
 
+function createTempAssets(): DashboardAssetStore {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dashboard-assets-'));
+  fs.writeFileSync(path.join(dir, 'dashboard.css'), '/* test */');
+  fs.writeFileSync(path.join(dir, 'dashboard.js'), '/* test */');
+  return new DashboardAssetStore(dir);
+}
+
 describe('DisplayRequestHandler', () => {
   it('returns unconfigured for unknown IPs', async () => {
     const registry = new DisplayRegistry();
@@ -55,6 +67,7 @@ describe('DisplayRequestHandler', () => {
       isServerListening: () => true,
       getPort: () => 7999,
       getUptimeSeconds: () => 12,
+      assets: createTempAssets(),
     });
 
     const response = await handler.handle(request({ clientIp: '10.0.0.9' }));
@@ -62,7 +75,7 @@ describe('DisplayRequestHandler', () => {
     assert.match(response.body, /pages\.unconfigured\.heading/);
   });
 
-  it('recognizes a Generic display by IP', async () => {
+  it('serves a dashboard bootstrap for a Generic display', async () => {
     const registry = new DisplayRegistry();
     registry.rebuild([
       {
@@ -86,16 +99,57 @@ describe('DisplayRequestHandler', () => {
       isServerListening: () => true,
       getPort: () => 7999,
       getUptimeSeconds: () => 12,
+      assets: createTempAssets(),
     });
 
     const response = await handler.handle(
       request({ clientIp: '192.168.1.40' }),
     );
     assert.equal(response.statusCode, 200);
-    assert.match(response.body, /pages\.recognized\.heading/);
-    assert.match(response.body, /Office/);
-    assert.match(response.body, /2x4/);
+    assert.match(response.body, /dashboard-bootstrap/);
+    assert.match(response.body, /"rows":4/);
+    assert.match(response.body, /"columns":2/);
+    assert.match(response.body, /dashboard\.js/);
     assert.equal(registry.getOnlineStatus('gen-1'), 'online');
+    assert.ok(registry.getById('gen-1')?.runtime.lastRenderedAt);
+  });
+
+  it('serves an invalid layout page for corrupt layout ids', async () => {
+    const registry = new DisplayRegistry();
+    registry.rebuild([
+      {
+        displayId: 'gen-bad',
+        name: 'Broken',
+        typeId: DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY,
+        ipAddress: '192.168.1.41',
+        hardwareId: null,
+        layoutId: '9x9' as LayoutId,
+      },
+    ]);
+
+    const handler = new DisplayRequestHandler({
+      registry,
+      adapters: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+      diagnosticsLog: new DiagnosticsLog(),
+      logger: silentLogger,
+      translate,
+      getLanguage: () => 'en',
+      isDiagnosticsEnabled: () => true,
+      isServerListening: () => true,
+      getPort: () => 7999,
+      getUptimeSeconds: () => 12,
+      assets: createTempAssets(),
+    });
+
+    const response = await handler.handle(
+      request({ clientIp: '192.168.1.41' }),
+    );
+    assert.equal(response.statusCode, 200);
+    assert.match(response.body, /pages\.invalidLayout\.heading/);
+    assert.equal(
+      registry.getById('gen-bad')?.runtime.lastLayoutErrorKey,
+      'pages.invalidLayout.heading',
+    );
   });
 
   it('rejects Shelly hardware mismatches', async () => {
@@ -130,6 +184,7 @@ describe('DisplayRequestHandler', () => {
       isServerListening: () => true,
       getPort: () => 7999,
       getUptimeSeconds: () => 12,
+      assets: createTempAssets(),
     });
 
     const response = await handler.handle(request());
@@ -155,6 +210,7 @@ describe('DisplayRequestHandler', () => {
       isServerListening: () => true,
       getPort: () => 7999,
       getUptimeSeconds: () => 12,
+      assets: createTempAssets(),
     });
 
     const response = await handler.handle(
@@ -188,6 +244,7 @@ describe('DisplayRequestHandler', () => {
       isServerListening: () => true,
       getPort: () => 7999,
       getUptimeSeconds: () => 42,
+      assets: createTempAssets(),
     });
 
     const response = await handler.handle(request({ url: '/diagnostics' }));
@@ -195,5 +252,31 @@ describe('DisplayRequestHandler', () => {
     assert.match(response.body, /pages\.diagnostics\.heading/);
     assert.match(response.body, /7999/);
     assert.match(response.body, /Office/);
+    assert.match(response.body, /pages\.diagnostics\.gridSize/);
+    assert.match(response.body, /2x4/);
+  });
+
+  it('serves dashboard static assets', async () => {
+    const assets = createTempAssets();
+    const handler = new DisplayRequestHandler({
+      registry: new DisplayRegistry(),
+      adapters: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+      diagnosticsLog: new DiagnosticsLog(),
+      logger: silentLogger,
+      translate,
+      getLanguage: () => 'en',
+      isDiagnosticsEnabled: () => true,
+      isServerListening: () => true,
+      getPort: () => 7999,
+      getUptimeSeconds: () => 1,
+      assets,
+    });
+
+    const css = await handler.handle(request({ url: '/dashboard.css' }));
+    const js = await handler.handle(request({ url: '/dashboard.js' }));
+    assert.equal(css.statusCode, 200);
+    assert.match(css.contentType, /text\/css/);
+    assert.equal(js.statusCode, 200);
+    assert.match(js.contentType, /javascript/);
   });
 });

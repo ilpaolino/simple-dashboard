@@ -16,6 +16,8 @@ function emptyRuntime(): RegisteredDisplay['runtime'] {
     session: null,
     lastMatchStatus: null,
     lastErrorKey: null,
+    lastRenderedAt: null,
+    lastLayoutErrorKey: null,
   };
 }
 
@@ -112,6 +114,31 @@ export class DisplayRegistry {
 
     entry.runtime.lastMatchStatus = status;
     entry.runtime.lastErrorKey = errorKey;
+  }
+
+  public markDashboardRendered(
+    displayId: string,
+    at: Date = new Date(),
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.lastRenderedAt = at;
+    entry.runtime.lastLayoutErrorKey = null;
+  }
+
+  public markLayoutError(
+    displayId: string,
+    errorKey: string,
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.lastLayoutErrorKey = errorKey;
   }
 
   public getOnlineStatus(
