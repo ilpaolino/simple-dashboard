@@ -1,10 +1,10 @@
-import {
-  calculateGridGeometry,
-  createGridCells,
-  SAFETY_MARGIN_PX,
-  type DashboardBootstrap,
-  type GridConfig,
-} from '../lib/dashboard/index';
+import type { DashboardBootstrap } from '../lib/dashboard/index';
+import { isWidgetTypeId } from '../lib/widgets/registry';
+import { isTitleWidgetConfig } from '../lib/widgets/title/definition';
+import { isDateTimeWidgetConfig } from '../lib/widgets/date-time/definition';
+import type { WidgetInstance, WidgetPlacement } from '../lib/widgets/types';
+import { isDashboardTheme } from '../lib/widgets/types';
+import { DashboardRenderer } from './layout/DashboardRenderer';
 
 const BOOTSTRAP_ELEMENT_ID = 'dashboard-bootstrap';
 
@@ -32,77 +32,118 @@ function isDashboardBootstrap(value: unknown): value is DashboardBootstrap {
     return false;
   }
 
+  if (typeof candidate.displayName !== 'string' || candidate.displayName.trim() === '') {
+    return false;
+  }
+
+  if (typeof candidate.typeLabel !== 'string' || candidate.typeLabel.trim() === '') {
+    return false;
+  }
+
+  if (typeof candidate.layoutId !== 'string' || candidate.layoutId.trim() === '') {
+    return false;
+  }
+
+  if (typeof candidate.locale !== 'string' || candidate.locale.trim() === '') {
+    return false;
+  }
+
   if (typeof candidate.layout !== 'object' || candidate.layout === null) {
     return false;
   }
 
   const layout = candidate.layout as Record<string, unknown>;
+  if (
+    typeof layout.rows !== 'number' ||
+    typeof layout.columns !== 'number' ||
+    !Number.isInteger(layout.rows) ||
+    !Number.isInteger(layout.columns) ||
+    layout.rows <= 0 ||
+    layout.columns <= 0
+  ) {
+    return false;
+  }
+
+  if (!Array.isArray(candidate.widgets)) {
+    return false;
+  }
+
+  if (!isEmptyStateCopy(candidate.emptyState)) {
+    return false;
+  }
+
+  if (!isDashboardTheme(candidate.theme)) {
+    return false;
+  }
+
+  return candidate.widgets.every(isWidgetInstance);
+}
+
+function isEmptyStateCopy(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
   return (
-    typeof layout.rows === 'number' &&
-    typeof layout.columns === 'number' &&
-    Number.isInteger(layout.rows) &&
-    Number.isInteger(layout.columns) &&
-    layout.rows > 0 &&
-    layout.columns > 0
+    typeof candidate.heading === 'string' &&
+    typeof candidate.lead === 'string' &&
+    typeof candidate.nameLabel === 'string' &&
+    typeof candidate.typeLabel === 'string' &&
+    typeof candidate.idLabel === 'string' &&
+    typeof candidate.layoutLabel === 'string' &&
+    typeof candidate.gridLabel === 'string'
   );
 }
 
-function readViewport(): { width: number; height: number } {
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
+function isWidgetInstance(value: unknown): value is WidgetInstance {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.id !== 'string' || candidate.id.trim() === '') {
+    return false;
+  }
+
+  if (!isWidgetTypeId(candidate.type)) {
+    return false;
+  }
+
+  if (!isPlacement(candidate.placement)) {
+    return false;
+  }
+
+  if (candidate.type === 'title') {
+    return isTitleWidgetConfig(candidate.config);
+  }
+
+  return isDateTimeWidgetConfig(candidate.config);
 }
 
-/**
- * Renders the diagnostic grid once. No resize / orientation listeners by design.
- */
-function renderGrid(config: GridConfig): void {
-  const viewport = readViewport();
-  const geometry = calculateGridGeometry(viewport, config, SAFETY_MARGIN_PX);
-  const cells = createGridCells(config);
+function isPlacement(value: unknown): value is WidgetPlacement {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
 
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.row === 'number' &&
+    typeof candidate.column === 'number' &&
+    typeof candidate.rowSpan === 'number' &&
+    typeof candidate.columnSpan === 'number'
+  );
+}
+
+function main(): void {
+  const bootstrap = readBootstrap();
   const root = document.getElementById('dashboard-root');
   if (!root) {
     throw new Error('Missing dashboard root element');
   }
 
-  root.replaceChildren();
-
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-  grid.style.setProperty('--cell-size', `${geometry.cellSize}px`);
-  grid.style.setProperty('--grid-gap', `${geometry.gap}px`);
-  grid.style.setProperty('--grid-columns', String(config.columns));
-  grid.style.setProperty('--grid-rows', String(config.rows));
-  grid.style.left = `${geometry.offsetX}px`;
-  grid.style.top = `${geometry.offsetY}px`;
-  grid.style.width = `${geometry.gridWidth}px`;
-  grid.style.height = `${geometry.gridHeight}px`;
-  grid.setAttribute('role', 'grid');
-  grid.setAttribute(
-    'aria-label',
-    `Dashboard grid ${config.columns} by ${config.rows}`,
-  );
-
-  for (const cell of cells) {
-    const cellElement = document.createElement('div');
-    cellElement.className = 'grid-cell';
-    cellElement.dataset.cellId = cell.id;
-    cellElement.dataset.row = String(cell.row);
-    cellElement.dataset.column = String(cell.column);
-    cellElement.setAttribute('role', 'gridcell');
-    // Diagnostic label only — logical identity remains data-cell-id.
-    cellElement.textContent = `${cell.row + 1},${cell.column + 1}`;
-    grid.appendChild(cellElement);
-  }
-
-  root.appendChild(grid);
-}
-
-function main(): void {
-  const bootstrap = readBootstrap();
-  renderGrid(bootstrap.layout);
+  const renderer = new DashboardRenderer(root);
+  renderer.applyBootstrap(bootstrap);
 }
 
 try {

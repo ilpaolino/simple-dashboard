@@ -1,7 +1,7 @@
 {
   "settings": {
     "title": "Simple Dashboard Settings",
-    "subtitle": "Configure the local HTTP server and diagnostics",
+    "subtitle": "Configure the local HTTP server, diagnostics, and dashboard widgets",
     "httpPort": "HTTP port",
     "httpPortHelp": "Default port is 7999. The server restarts automatically when the port changes.",
     "diagnosticsEnabled": "Enable diagnostics",
@@ -9,6 +9,64 @@
     "save": "Save",
     "saved": "Settings saved. The HTTP server will restart if the port changed.",
     "invalidPort": "Enter a valid TCP port between 1 and 65535."
+  },
+  "editor": {
+    "title": "Dashboard Editor",
+    "subtitle": "Configure widgets for a Wall Display. Reload the display to apply changes.",
+    "selectDisplay": "Select display",
+    "theme": "Display appearance",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "themeHelp": "Widgets on this display inherit the dashboard theme. Each display has its own setting.",
+    "gridPreview": "Grid preview",
+    "widgets": "Widgets",
+    "addWidget": "Add Widget",
+    "removeWidget": "Remove Widget",
+    "editWidget": "Edit Widget",
+    "widgetType": "Widget Type",
+    "position": "Position",
+    "positionRow": "Row",
+    "positionColumn": "Column",
+    "size": "Size",
+    "alignment": "Alignment",
+    "alignmentLeft": "Left",
+    "alignmentCenter": "Center",
+    "alignmentRight": "Right",
+    "titleText": "Text",
+    "chrome": "Border and background",
+    "chromeHelp": "Show a card with border and background behind the widget.",
+    "mode": "Mode",
+    "modeTime": "Time",
+    "modeDate": "Date",
+    "modeDateTime": "Date & Time",
+    "occupied": "Occupied",
+    "available": "Available",
+    "preview": "Preview",
+    "noWidgets": "No widgets configured yet.",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirmRemove": "Remove this widget from the dashboard?",
+    "save": "Save",
+    "saved": "Dashboard saved. Reload the Wall Display to apply the new configuration.",
+    "errors": {
+      "displayNotFound": "Display not found.",
+      "outOfBounds": "Invalid position: the widget is outside the grid.",
+      "overlap": "Overlapping widgets are not allowed.",
+      "unsupportedSpan": "This size is not supported for the selected widget.",
+      "invalidPosition": "Invalid position.",
+      "unknownType": "Unknown widget type.",
+      "duplicateId": "Duplicate widget id.",
+      "invalidConfig": "Invalid widget configuration."
+    }
+  },
+  "widgets": {
+    "title": {
+      "name": "Title"
+    },
+    "dateTime": {
+      "name": "Date & Time"
+    }
   },
   "adapters": {
     "shelly_wall_display": "Shelly Wall Display",
@@ -18,7 +76,8 @@
     "defaultName": "Wall Display",
     "defaultNameShelly": "Shelly Wall Display",
     "defaultNameGeneric": "Generic Web Display",
-    "notAvailable": "Not available"
+    "notAvailable": "Not available",
+    "dashboardEditorNote": "Grid and widget configuration is managed from the Wall Display app settings."
   },
   "pair": {
     "back": "Back",
@@ -52,6 +111,10 @@
   "pages": {
     "dashboard": {
       "title": "Dashboard"
+    },
+    "dashboardEmpty": {
+      "heading": "No widgets configured",
+      "lead": "Configure the grid and widgets from the Wall Display app settings in Homey."
     },
     "invalidLayout": {
       "title": "Invalid display configuration",
@@ -111,6 +174,10 @@
       "gridSize": "Grid size",
       "lastRendered": "Last rendered",
       "layoutError": "Layout error",
+      "widgetCount": "Widgets",
+      "widgetTypes": "Widget types",
+      "dashboardError": "Dashboard error",
+      "lastDashboardLoaded": "Last configuration loaded",
       "memoryRss": "Process RSS",
       "memoryHeap": "Heap used",
       "recentErrors": "Recent errors",

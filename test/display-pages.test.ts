@@ -11,6 +11,7 @@ import {
 } from '../lib/http/pages/dashboardPage';
 import { DISPLAY_TYPE_IDS } from '../lib/display/types';
 import { LAYOUT_IDS } from '../lib/adapters/types';
+import { emptyDashboardConfiguration } from '../lib/widgets';
 
 const translate = (key: string): string => {
   const map: Record<string, string> = {
@@ -60,6 +61,7 @@ describe('display pages', () => {
         ipAddress: '192.168.1.30',
         hardwareId: 'shellywalldisplay-1',
         layoutId: LAYOUT_IDS.GRID_3X3,
+        dashboard: emptyDashboardConfiguration(),
       },
     });
 
@@ -76,14 +78,32 @@ describe('display pages', () => {
       title: 'Dashboard',
       bootstrap: {
         displayId: 'disp-1',
+        displayName: 'Kitchen',
+        typeLabel: 'Shelly Wall Display',
+        layoutId: '3x3',
         layout: { rows: 3, columns: 3 },
+        widgets: [],
+        theme: 'dark',
+        locale: 'en',
+        emptyState: {
+          heading: 'No widgets configured',
+          lead: 'Configure from app settings',
+          nameLabel: 'Name',
+          typeLabel: 'Type',
+          idLabel: 'ID',
+          layoutLabel: 'Layout',
+          gridLabel: 'Grid size',
+        },
       },
     });
 
     assert.match(html, /dashboard-bootstrap/);
     assert.match(html, /"displayId":"disp-1"/);
+    assert.match(html, /"displayName":"Kitchen"/);
     assert.match(html, /"rows":3/);
     assert.match(html, /"columns":3/);
+    assert.match(html, /data-theme="dark"/);
+    assert.match(html, /"theme":"dark"/);
     assert.match(html, /dashboard\.css/);
     assert.match(html, /dashboard\.js/);
   });

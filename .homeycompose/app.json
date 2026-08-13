@@ -1,6 +1,6 @@
 {
   "id": "dev.dadda.simpledashboard",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -9,13 +9,13 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla grid dashboard for Homey Pro wall displays with recognition and diagnostics.",
-    "it": "Dashboard a griglia vanilla per wall display Homey Pro, con riconoscimento e diagnostica."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays with an App Settings editor.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro, con editor nelle Impostazioni app."
   },
   "category": ["tools"],
   "tags": {
-    "en": ["http", "dashboard", "wall display", "diagnostics"],
-    "it": ["http", "dashboard", "wall display", "diagnostica"]
+    "en": ["http", "dashboard", "wall display", "widgets", "diagnostics"],
+    "it": ["http", "dashboard", "wall display", "widget", "diagnostica"]
   },
   "permissions": [],
   "images": {
@@ -26,5 +26,19 @@
   "author": {
     "name": "ilpaolino"
   },
-  "brandColor": "#1F4B5C"
+  "brandColor": "#1F4B5C",
+  "api": {
+    "listDisplays": {
+      "method": "GET",
+      "path": "/displays"
+    },
+    "getDashboard": {
+      "method": "GET",
+      "path": "/displays/:displayId/dashboard"
+    },
+    "saveDashboard": {
+      "method": "PUT",
+      "path": "/displays/:displayId/dashboard"
+    }
+  }
 }

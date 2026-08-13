@@ -3,6 +3,7 @@ import { resolveOnlineStatus } from '../../display/onlineStatus';
 import type { DiagnosticsRecentError } from '../../display/types';
 import { DISPLAY_TYPE_IDS } from '../../display/types';
 import { formatGridSize, resolveLayoutId } from '../../dashboard/layoutParse';
+import { widgetTypesInConfiguration } from '../../widgets';
 import { escapeHtml, TECHNICAL_PAGE_STYLES } from './html';
 
 export interface DiagnosticsPageInput {
@@ -111,6 +112,17 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       const layoutError = entry.runtime.lastLayoutErrorKey
         ? t(entry.runtime.lastLayoutErrorKey)
         : t('pages.status.none');
+      const dashboardError = entry.runtime.lastDashboardErrorKey
+        ? t(entry.runtime.lastDashboardErrorKey)
+        : t('pages.status.none');
+      const lastDashboardLoaded = entry.runtime.lastDashboardLoadedAt
+        ? entry.runtime.lastDashboardLoadedAt
+        : t('pages.status.never');
+      const widgetTypes = widgetTypesInConfiguration(entry.config.dashboard);
+      const widgetTypesLabel =
+        widgetTypes.length === 0
+          ? t('pages.status.none')
+          : widgetTypes.join(', ');
       return `<tr>
         <td>${escapeHtml(entry.config.name)}</td>
         <td>${escapeHtml(typeLabel(entry.config.typeId, t))}</td>
@@ -119,8 +131,12 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
         <td>${escapeHtml(lastSeen)}</td>
         <td>${escapeHtml(entry.config.layoutId)}</td>
         <td>${escapeHtml(gridSizeLabel(entry.config.layoutId, t))}</td>
+        <td>${escapeHtml(String(entry.config.dashboard.widgets.length))}</td>
+        <td>${escapeHtml(widgetTypesLabel)}</td>
         <td>${escapeHtml(lastRendered)}</td>
+        <td>${escapeHtml(lastDashboardLoaded)}</td>
         <td>${escapeHtml(layoutError)}</td>
+        <td>${escapeHtml(dashboardError)}</td>
         <td>${escapeHtml(matchLabel(entry.runtime.lastMatchStatus, t))}</td>
         <td>${escapeHtml(entry.config.hardwareId ?? t('device.notAvailable'))}</td>
       </tr>`;
@@ -170,14 +186,18 @@ ${TECHNICAL_PAGE_STYLES}
           <th>${escapeHtml(t('pages.diagnostics.lastSeen'))}</th>
           <th>${escapeHtml(t('pages.recognized.layout'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.gridSize'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.widgetCount'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.widgetTypes'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.lastRendered'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.lastDashboardLoaded'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.layoutError'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.dashboardError'))}</th>
           <th>${escapeHtml(t('pages.recognized.status'))}</th>
           <th>${escapeHtml(t('pages.recognized.hardwareId'))}</th>
         </tr>
       </thead>
       <tbody>
-        ${tableRows || `<tr><td colspan="11">${escapeHtml(t('pages.diagnostics.noDisplays'))}</td></tr>`}
+        ${tableRows || `<tr><td colspan="15">${escapeHtml(t('pages.diagnostics.noDisplays'))}</td></tr>`}
       </tbody>
     </table>
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentErrors'))}</h1>

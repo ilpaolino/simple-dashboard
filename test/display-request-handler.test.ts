@@ -7,6 +7,7 @@ import { AdapterRegistry } from '../lib/adapters/AdapterRegistry';
 import { GenericWebDisplayAdapter } from '../lib/adapters/GenericWebDisplayAdapter';
 import { ShellyWallDisplayAdapter } from '../lib/adapters/ShellyWallDisplayAdapter';
 import { ADAPTER_IDS, LAYOUT_IDS } from '../lib/adapters/types';
+import { emptyDashboardConfiguration } from '../lib/widgets';
 import { DiagnosticsLog } from '../lib/diagnostics/DiagnosticsLog';
 import { DisplayRegistry } from '../lib/display/DisplayRegistry';
 import { DISPLAY_TYPE_IDS } from '../lib/display/types';
@@ -85,6 +86,7 @@ describe('DisplayRequestHandler', () => {
         ipAddress: '192.168.1.40',
         hardwareId: null,
         layoutId: LAYOUT_IDS.GRID_2X4,
+        dashboard: emptyDashboardConfiguration(),
       },
     ]);
 
@@ -124,6 +126,7 @@ describe('DisplayRequestHandler', () => {
         ipAddress: '192.168.1.41',
         hardwareId: null,
         layoutId: '9x9' as LayoutId,
+        dashboard: emptyDashboardConfiguration(),
       },
     ]);
 
@@ -162,6 +165,7 @@ describe('DisplayRequestHandler', () => {
         ipAddress: '192.168.1.30',
         hardwareId: 'shellywalldisplay-abc',
         layoutId: LAYOUT_IDS.GRID_3X3,
+        dashboard: emptyDashboardConfiguration(),
       },
     ]);
 
@@ -230,6 +234,7 @@ describe('DisplayRequestHandler', () => {
         ipAddress: '192.168.1.40',
         hardwareId: null,
         layoutId: LAYOUT_IDS.GRID_2X4,
+        dashboard: emptyDashboardConfiguration(),
       },
     ]);
 

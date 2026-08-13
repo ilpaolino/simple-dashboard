@@ -4,6 +4,7 @@ import { DisplayRegistry } from '../lib/display/DisplayRegistry';
 import { DISPLAY_ONLINE_TIMEOUT_MS, DISPLAY_TYPE_IDS } from '../lib/display/types';
 import type { DisplaySnapshot } from '../lib/display/types';
 import { LAYOUT_IDS } from '../lib/adapters/types';
+import { emptyDashboardConfiguration } from '../lib/widgets';
 
 function shelly(overrides: Partial<DisplaySnapshot> = {}): DisplaySnapshot {
   return {
@@ -13,6 +14,7 @@ function shelly(overrides: Partial<DisplaySnapshot> = {}): DisplaySnapshot {
     ipAddress: '192.168.1.30',
     hardwareId: 'shellywalldisplay-1',
     layoutId: LAYOUT_IDS.GRID_3X3,
+    dashboard: emptyDashboardConfiguration(),
     ...overrides,
   };
 }
@@ -25,6 +27,7 @@ function generic(overrides: Partial<DisplaySnapshot> = {}): DisplaySnapshot {
     ipAddress: '192.168.1.40',
     hardwareId: null,
     layoutId: LAYOUT_IDS.GRID_2X4,
+    dashboard: emptyDashboardConfiguration(),
     ...overrides,
   };
 }

@@ -1,7 +1,13 @@
 /**
  * Dashboard grid contracts shared by Homey backend and vanilla frontend.
- * Widget multi-cell spans are modeled but not rendered in this milestone.
  */
+
+import type {
+  DashboardConfiguration,
+  DashboardTheme,
+  WidgetInstance,
+  WidgetPlacement,
+} from '../widgets/types';
 
 export interface GridConfig {
   readonly rows: number;
@@ -9,7 +15,7 @@ export interface GridConfig {
 }
 
 /**
- * Logical cell identity. Display labels are diagnostics only.
+ * Logical cell identity. Used for occupancy and diagnostics.
  */
 export interface GridCell {
   readonly row: number;
@@ -18,23 +24,41 @@ export interface GridCell {
 }
 
 /**
- * Future placement for widgets that may span multiple cells.
- * Rendering of spans is intentionally not implemented yet.
+ * Alias kept for geometry helpers. Prefer {@link WidgetPlacement} for widgets.
  */
-export interface GridPlacement {
-  readonly row: number;
-  readonly column: number;
-  readonly rowSpan: number;
-  readonly columnSpan: number;
+export type GridPlacement = WidgetPlacement;
+
+/**
+ * Localized copy for the empty-dashboard state (no widgets configured).
+ * Resolved on Homey so the browser does not embed locale files.
+ */
+export interface DashboardEmptyStateCopy {
+  readonly heading: string;
+  readonly lead: string;
+  readonly nameLabel: string;
+  readonly typeLabel: string;
+  readonly idLabel: string;
+  readonly layoutLabel: string;
+  readonly gridLabel: string;
 }
 
 /**
  * Minimal DTO sent to the frontend. No Homey API surface.
+ * `applyConfiguration` on the client can re-apply this shape later (reload-only today).
  */
 export interface DashboardBootstrap {
   readonly displayId: string;
+  readonly displayName: string;
+  readonly typeLabel: string;
+  readonly layoutId: string;
   readonly layout: GridConfig;
+  readonly widgets: readonly WidgetInstance[];
+  readonly theme: DashboardTheme;
+  readonly locale: string;
+  readonly emptyState: DashboardEmptyStateCopy;
 }
+
+export type { DashboardConfiguration, DashboardTheme, WidgetInstance, WidgetPlacement };
 
 export interface ViewportSize {
   readonly width: number;

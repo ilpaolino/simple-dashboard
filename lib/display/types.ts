@@ -1,5 +1,7 @@
 import type { LayoutId } from '../adapters/types';
 import { ADAPTER_IDS } from '../adapters/types';
+import type { DashboardConfiguration } from '../widgets/types';
+import { emptyDashboardConfiguration } from '../widgets/types';
 
 /**
  * Homey driver ids — also used as display type ids.
@@ -33,6 +35,8 @@ export interface DisplaySnapshot {
   /** Hardware identity when the driver supports it (e.g. Shelly id). */
   readonly hardwareId: string | null;
   readonly layoutId: LayoutId;
+  /** Per-device widget configuration from Device Store. */
+  readonly dashboard: DashboardConfiguration;
 }
 
 /**
@@ -54,6 +58,10 @@ export interface DisplayRuntimeState {
   lastRenderedAt: Date | null;
   /** Localization key for the last layout configuration error, if any. */
   lastLayoutErrorKey: string | null;
+  /** Localization key for invalid widget placement / config, if any. */
+  lastDashboardErrorKey: string | null;
+  /** ISO timestamp of last successfully loaded dashboard configuration. */
+  lastDashboardLoadedAt: string | null;
 }
 
 export interface RegisteredDisplay {
@@ -80,3 +88,5 @@ export function isDisplayTypeId(value: unknown): value is DisplayTypeId {
     value === DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY
   );
 }
+
+export { emptyDashboardConfiguration };

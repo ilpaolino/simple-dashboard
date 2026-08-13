@@ -15,5 +15,9 @@
     "rootDir": "..",
     "noEmit": true
   },
-  "include": ["./main.ts", "../lib/dashboard/**/*.ts"]
+  "include": [
+    "./**/*.ts",
+    "../lib/dashboard/**/*.ts",
+    "../lib/widgets/**/*.ts"
+  ]
 }

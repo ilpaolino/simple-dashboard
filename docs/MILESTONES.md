@@ -16,57 +16,70 @@
 
 **Status:** Done. Details: [MILESTONE-3.md](MILESTONE-3.md).
 
+## Milestone 4 — Widget Engine & Dashboard Editor
+
+**Status:** Done. Details: [MILESTONE-4.md](MILESTONE-4.md).
+
 ### In scope (implemented)
 
-- Layout from Homey Device Settings → `DisplayRegistry` → `DashboardBootstrap`
-- Vanilla HTML/CSS/TypeScript frontend (no UI frameworks)
-- Square cells, centered grid, fixed safety margin, proportional clamped gap
-- Diagnostic cell labels with stable internal cell ids
-- `GridPlacement` types for future spans (not rendered yet)
-- Layout immutable after initial render
-- Invalid layout + unconfigured display error pages (EN/IT)
-- Diagnostics: layout, grid size, last rendered, layout error, process memory
-- Automated geometry/span/handler tests + performance measurement script
+- Custom App Settings Dashboard Editor (Homey Style Library + Web API)
+- Per-device widget persistence via Device Store
+- Explicit `WidgetPlacement` with overlap / bounds validation
+- Multi-cell widgets as single rectangles
+- `WidgetRegistry` + isolated Title / DateTime widgets
+- Browser-local DateTime updates (`Intl` + timer cleanup)
+- Diagnostics: widget count/types, dashboard errors, last loaded config
+- Device Settings note pointing to App Settings
+- Automated registry / placement / config / renderer tests
 
 ### Out of scope (explicitly deferred)
 
-- Real Homey widgets (lights, covers, thermostats, sensors, …)
-- WebSocket / realtime
-- Flow cards
-- Overlays / popups / cameras
-- Drag & drop / visual editor
-- Multi-page dashboards
-- Dynamic resize / orientation listeners
-- Configurable safety margin
+- Homey capability control (lights, covers, sensors, thermostats, …)
+- WebSocket / realtime push
+- Flow cards / notifications
+- Drag & drop / advanced visual editor
+- Overlays / cameras
+- Dynamic resize listeners
 
 ## Later milestones (not started)
 
-- Widget model + Homey capability bindings
-- Live updates
+- Homey device bindings for widgets
+- Live configuration / state channel
+- Additional widget types
 - Display hardware controls beyond recognition
 
-## Manual test checklist (Milestone 3)
+## Manual test checklist (Milestone 4)
 
-- [ ] Build completed (`npm run build`)
-- [ ] TypeScript strict without errors (`npm run typecheck`)
-- [ ] Lint completed (`npm run lint`)
-- [ ] Automated tests completed (`npm test`)
-- [ ] App started on Homey Pro (`homey app run --remote`)
-- [ ] Shelly Wall Display recognized
-- [ ] Grid 2×2 displayed
-- [ ] Grid 3×3 displayed
-- [ ] Cells are square
-- [ ] Gap is uniform
-- [ ] Grid is centered
-- [ ] Safety margin present
-- [ ] No overflow
-- [ ] No dynamic resize (reload required after orientation change)
-- [ ] Generic Display with vertical layout (2×4 / 3×6)
-- [ ] Generic Display with horizontal layout (4×2 / 6×3)
-- [ ] Invalid configuration handled
-- [ ] Unknown display handled
-- [ ] Diagnostics updated
-- [ ] Italian UI
-- [ ] English UI
-- [ ] Bundle size documented
-- [ ] RAM observed/documented via diagnostics (`process.memoryUsage`)
+- [ ] Build completed
+- [ ] TypeScript strict without errors
+- [ ] lint completed
+- [ ] test automatici completed
+- [ ] App Settings Dashboard Editor accessible
+- [ ] selezione Display
+- [ ] griglia corretta visualizzata
+- [ ] celle occupate/libere visibili
+- [ ] aggiunta TitleWidget 2x1
+- [ ] aggiunta TitleWidget 3x1
+- [ ] allineamento left
+- [ ] allineamento center
+- [ ] allineamento right
+- [ ] aggiunta DateTimeWidget 1x1
+- [ ] aggiunta DateTimeWidget 2x1
+- [ ] mode time
+- [ ] mode date
+- [ ] mode date-time
+- [ ] data/ora si aggiornano senza reload
+- [ ] widget multi-cella senza divisioni interne
+- [ ] collisione impedita
+- [ ] widget fuori griglia impedito
+- [ ] modifica widget
+- [ ] rimozione widget
+- [ ] refresh Wall Display applica nuova configurazione
+- [ ] seconda applyConfiguration funziona
+- [ ] nessun timer orfano
+- [ ] Device Settings mostra nota verso App Settings
+- [ ] UI italiana
+- [ ] UI inglese
+- [ ] diagnostics aggiornata
+- [ ] bundle size documentata
+- [ ] dipendenze documentate

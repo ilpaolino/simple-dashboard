@@ -4,11 +4,13 @@ import { resolveLayoutId, formatGridSize, isValidGridConfig } from './layoutPars
 import { SAFETY_MARGIN_PX } from './constants';
 import type {
   DashboardBootstrap,
+  DashboardEmptyStateCopy,
   GridConfig,
   GridCell,
   GridGeometry,
   ViewportSize,
 } from './types';
+import { emptyDashboardConfiguration, resolveDashboardTheme } from '../widgets/types';
 
 export {
   createGridCells,
@@ -30,28 +32,65 @@ export {
 } from './constants';
 export type {
   DashboardBootstrap,
+  DashboardConfiguration,
+  DashboardEmptyStateCopy,
+  DashboardTheme,
   GridConfig,
   GridCell,
   GridGeometry,
   GridPlacement,
   ViewportSize,
+  WidgetInstance,
+  WidgetPlacement,
   LayoutResolveResult,
 } from './types';
 
+export interface CreateDashboardBootstrapInput {
+  readonly displayId: string;
+  readonly displayName: string;
+  readonly typeLabel: string;
+  readonly layoutId: string;
+  readonly layout: GridConfig;
+  readonly widgets?: DashboardBootstrap['widgets'];
+  readonly theme?: DashboardBootstrap['theme'];
+  readonly locale?: string;
+  readonly emptyState: DashboardEmptyStateCopy;
+}
+
 export function createDashboardBootstrap(
-  displayId: string,
-  config: GridConfig,
+  input: CreateDashboardBootstrapInput,
 ): DashboardBootstrap {
-  if (!isValidGridConfig(config)) {
+  if (!isValidGridConfig(input.layout)) {
     throw new Error('Invalid grid configuration for bootstrap');
   }
 
   return {
-    displayId,
+    displayId: input.displayId,
+    displayName: input.displayName,
+    typeLabel: input.typeLabel,
+    layoutId: input.layoutId,
     layout: {
-      rows: config.rows,
-      columns: config.columns,
+      rows: input.layout.rows,
+      columns: input.layout.columns,
     },
+    widgets: input.widgets ?? [],
+    theme: resolveDashboardTheme(input.theme),
+    locale: input.locale ?? 'en',
+    emptyState: input.emptyState,
+  };
+}
+
+export function createEmptyStateCopy(
+  translate: (key: string) => string,
+): DashboardEmptyStateCopy {
+  return {
+    heading: translate('pages.dashboardEmpty.heading'),
+    lead: translate('pages.dashboardEmpty.lead'),
+    nameLabel: translate('pages.recognized.name'),
+    typeLabel: translate('pages.recognized.type'),
+    idLabel: translate('pages.recognized.hardwareId'),
+    layoutLabel: translate('pages.recognized.layout'),
+    gridLabel: translate('pages.diagnostics.gridSize'),
   };
 }
 
@@ -81,7 +120,24 @@ export function buildDashboardModel(
     config: resolved.config,
     cells,
     geometry,
-    bootstrap: createDashboardBootstrap('preview', resolved.config),
+    bootstrap: createDashboardBootstrap({
+      displayId: 'preview',
+      displayName: 'Preview',
+      typeLabel: 'Preview',
+      layoutId,
+      layout: resolved.config,
+      widgets: emptyDashboardConfiguration().widgets,
+      locale: 'en',
+      emptyState: {
+        heading: 'No widgets configured',
+        lead: 'Configure this display from the Wall Display app settings.',
+        nameLabel: 'Name',
+        typeLabel: 'Type',
+        idLabel: 'ID',
+        layoutLabel: 'Layout',
+        gridLabel: 'Grid size',
+      },
+    }),
     gridSizeLabel: formatGridSize(resolved.config),
   };
 }

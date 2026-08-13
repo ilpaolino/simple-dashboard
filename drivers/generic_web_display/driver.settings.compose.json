@@ -73,6 +73,15 @@
             }
           }
         ]
+      },
+      {
+        "id": "dashboard_editor_note",
+        "type": "label",
+        "label": {
+          "en": "Grid and widget configuration is managed from the Wall Display app settings.",
+          "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni dell'app Wall Display."
+        },
+        "value": ""
       }
     ]
   }

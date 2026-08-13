@@ -1,6 +1,6 @@
 # Architecture
 
-## Milestone 0–2 foundations (still true)
+## Milestone 0–3 foundations (still true)
 
 `WelcomeWallApp` owns Homey app lifecycle. It starts `HttpServer` on the configured port. Logging goes through `AppLogger`. App-level persistence uses `SettingsManager` + `this.homey.settings`.
 
@@ -8,85 +8,104 @@ Adapters (`ShellyWallDisplayAdapter`, `GenericWebDisplayAdapter`) remain the onl
 
 Drivers `shelly_wall_display` and `generic_web_display` stay thin. `DisplayRegistry` is a runtime projection of Homey Devices (source of truth).
 
-## Milestone 3 — Vanilla Grid Rendering Engine
+## Milestone 4 — Widget Engine & Dashboard Editor
 
 ```text
-Homey Device Settings (layout)
+Homey App Settings (Dashboard Editor)
+        │  Homey.api → api.ts → WelcomeWallApp
+        ▼
+Homey Device Store key `dashboard`
         │
         ▼
-DisplayRegistry (DisplaySnapshot.layoutId)
+DisplayRegistry (DisplaySnapshot.dashboard)
         │
 HTTP GET /  ──► DisplayRequestHandler
         │           │
         │           ├─ IP + optional Shelly hardware check
         │           ├─ resolveLayoutId → GridConfig
+        │           ├─ validate widgets (bounds / overlap)
         │           ├─ DashboardBootstrap DTO
         │           └─ dashboard HTML (+ /dashboard.css, /dashboard.js)
         │
         ▼
-Vanilla frontend (page load once)
+Vanilla frontend
         │
-        ├─ read viewport
-        ├─ calculateGridGeometry (square cells, margin, gap)
-        ├─ createGridCells (stable ids)
-        └─ CSS Grid render (centered) — layout immutable after this
+        ├─ DashboardRenderer.applyConfiguration(config)
+        ├─ FrontendWidgetRegistry → Title / DateTime renderers
+        └─ multi-cell CSS grid-area (no internal cell dividers)
 ```
 
 ### HTTP routes
 
 | Path | Behavior |
 | --- | --- |
-| `GET /` | Recognize client; serve dashboard grid or error/unconfigured pages |
-| `GET /dashboard.css` | Built vanilla stylesheet |
-| `GET /dashboard.js` | Built vanilla grid engine (IIFE) |
+| `GET /` | Recognize client; serve dashboard with widgets or error/unconfigured pages |
+| `GET /dashboard.css` | Built vanilla stylesheet (tokens + widgets) |
+| `GET /dashboard.js` | Built vanilla grid + widget engine (IIFE) |
 | `GET /diagnostics` | Runtime diagnostics if enabled; otherwise **403** |
 | other | 404 |
 
-### Backend → frontend contract
+### Homey Web API (App Settings editor)
 
-The frontend never calls Homey APIs. It only receives:
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/displays` | List wall displays for the editor |
+| `GET` | `/displays/:displayId/dashboard` | Load grid + widgets + widget type metadata |
+| `PUT` | `/displays/:displayId/dashboard` | Validate and persist widget configuration |
+
+### Backend → frontend contract
 
 ```ts
 interface DashboardBootstrap {
   readonly displayId: string;
   readonly layout: { readonly rows: number; readonly columns: number };
+  readonly widgets: readonly WidgetInstance[];
+  readonly theme: 'dark' | 'light';
+  readonly locale: string;
 }
 ```
 
 Embedded in the HTML as `<script type="application/json" id="dashboard-bootstrap">`.
 
-### Grid geometry (pure TypeScript)
+### Widget model
 
-Implemented in `lib/dashboard/` and shared with the frontend bundle:
+- `WidgetPlacement { row, column, rowSpan, columnSpan }` — top-left origin, extends right/down
+- `WidgetInstance` — stable `id`, `type`, `placement`, typed `config`
+- `DashboardConfiguration { version: 1, widgets, optional theme }` — Device Store payload. `theme` (`dark` | `light`, default `dark`) is **per display**; widgets inherit CSS tokens and do not store a theme.
+- `WidgetRegistry` — type definitions (spans, defaults, config validation)
+- Frontend registry maps type → DOM renderer (no scattered `if (type === …)` in the renderer)
 
-- Fixed safety margin (`SAFETY_MARGIN_PX`)
-- Gap = clamp(cellSize × `GAP_RATIO`, `GAP_MIN_PX`, `GAP_MAX_PX`)
-- Largest square cell that fits available viewport
-- Grid centered in the remaining space
-- Calculated **once** at page load (no resize listeners)
+### Supported widgets (M4)
 
-### Supported layouts
+| Type | Spans | Config |
+| --- | --- | --- |
+| `title` | 2×1, 3×1 | `text`, `alignment`, optional `chrome` (`plain` / `card`) |
+| `date-time` | 1×1, 2×1 | `mode`: time / date / date-time; optional `chrome` (`plain` / `card`) |
 
-Layout ids are `{columns}x{rows}`. Non-square grids include both orientations; square grids do not need a duplicate.
+DateTime updates locally via `setInterval` in the browser. Timers are cleared on `destroy` / re-`applyConfiguration`.
 
-| Driver | Layouts |
-| --- | --- |
-| Shelly Wall Display | `2x2`, `3x3` |
-| Generic Web Display | `2x4` / `4x2`, `3x6` / `6x3` |
-
-### Future span model
-
-`GridPlacement { row, column, rowSpan, columnSpan }` exists for future multi-cell widgets. Milestone 3 only renders 1×1 diagnostic cells.
+When `widgets` is empty, the frontend still draws the grid cells and shows a localized empty-state panel with display metadata plus an invite to configure widgets from Homey App Settings.
 
 ### Persistence (official Homey only)
 
-Unchanged from Milestone 2: device `data` / `store` / `settings`, app `ManagerSettings`. Layout remains a Homey device setting — no second layout store.
+- Layout remains a Homey **device setting**
+- Widgets live in Homey **Device Store** key `dashboard`
+- App HTTP port / diagnostics remain app `ManagerSettings`
+- No parallel JSON/YAML/DB stores
+
+### Configuration update flow (M4)
+
+```text
+edit App Settings → save Device Store → refresh Wall Display → new bootstrap
+```
+
+No live push yet. `DashboardRenderer.applyConfiguration` is reusable for a future realtime channel.
 
 ### Localization
 
 - Manifest / driver / settings labels: `en` + `it` in compose JSON
-- Pairing, HTTP pages, dashboard errors, diagnostics: `/locales/en.json` and `/locales/it.json`
+- Pairing, HTTP pages, dashboard errors, diagnostics, editor: `/locales/en.json` and `/locales/it.json`
 
 ### What is intentionally not here
 
-No widgets, no Homey capability control, no Flow, no WebSocket, no visual editor, no multi-page navigation, no dynamic resize, no Vue/React/Angular/Svelte.
+No Homey capability control, no Flow, no WebSocket, no drag & drop, no advanced visual editor, no cameras/overlays, no Vue/React/Angular/Svelte.

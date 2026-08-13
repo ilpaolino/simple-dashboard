@@ -8,130 +8,369 @@
       src="/homey.js"
       data-origin="settings"
     ></script>
+    <style>
+      .editor-cell {
+        border: 1px solid #c5d0d5;
+        border-radius: 4px;
+        min-height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        text-align: center;
+        padding: 0.25rem;
+      }
+      .editor-cell--free {
+        background: #f4f7f8;
+        color: #6a7a82;
+      }
+      .editor-cell--occupied {
+        background: #d9e7ec;
+        color: #1f2a30;
+        font-weight: 600;
+      }
+      .editor-cell--preview {
+        background: #cfe8d8;
+        color: #1f2a30;
+        font-weight: 600;
+      }
+      .editor-cell--invalid {
+        background: #f3d4d4;
+        color: #8b2e2e;
+        font-weight: 600;
+      }
+      #gridPreview {
+        margin: 0.75rem 0 1rem;
+      }
+      .editor-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+      }
+      .editor-dialog[hidden] {
+        display: none !important;
+      }
+      .editor-dialog:not([hidden]) {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+      }
+      .editor-dialog__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(31, 42, 48, 0.45);
+      }
+      .editor-dialog__panel {
+        position: relative;
+        z-index: 1;
+        box-sizing: border-box;
+        width: min(36rem, calc(100% - 2rem));
+        max-height: calc(100% - 2rem);
+        overflow: auto;
+        margin: 1rem auto;
+        padding: 1.25rem 1.25rem 1rem;
+        border: 1px solid #c5d0d5;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 12px 36px rgba(31, 42, 48, 0.22);
+      }
+      .editor-dialog__title {
+        margin: 0 0 0.35rem;
+        font-size: 1.15rem;
+        font-weight: 650;
+      }
+      .editor-dialog__subtitle {
+        margin: 0 0 1rem;
+        color: #5b6b73;
+        font-size: 0.9rem;
+      }
+      .editor-dialog__error {
+        color: #8b2e2e;
+        margin: 0 0 0.75rem;
+      }
+      .editor-section-title {
+        margin: 0 0 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 650;
+      }
+    </style>
   </head>
   <body>
-    <header class="homey-header">
-      <h1 class="homey-title" data-i18n="settings.title">Simple Dashboard Settings</h1>
-      <p class="homey-subtitle" data-i18n="settings.subtitle">
-        Configure the local HTTP server and diagnostics
-      </p>
-    </header>
-
-    <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend" data-i18n="settings.httpPort">HTTP port</legend>
-
-      <div class="homey-form-group">
-        <label class="homey-form-label" for="httpPort" data-i18n="settings.httpPort">
-          HTTP port
-        </label>
-        <input
-          class="homey-form-input"
-          id="httpPort"
-          type="number"
-          min="1"
-          max="65535"
-          step="1"
-          value="7999"
-        />
-        <p class="homey-form-help" data-i18n="settings.httpPortHelp">
-          Default port is 7999. The server restarts automatically when the port changes.
+    <form class="homey-form" id="settingsForm" action="#" method="post">
+      <header class="homey-header">
+        <h1 class="homey-title" data-i18n="settings.title">Simple Dashboard Settings</h1>
+        <p class="homey-subtitle" data-i18n="settings.subtitle">
+          Configure the local HTTP server, diagnostics, and dashboard widgets
         </p>
-      </div>
-    </fieldset>
+      </header>
 
-    <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend" data-i18n="settings.diagnosticsEnabled">
-        Enable diagnostics
-      </legend>
+      <fieldset class="homey-form-fieldset">
+        <legend class="homey-form-legend" data-i18n="settings.httpPort">HTTP port</legend>
 
-      <div class="homey-form-group">
-        <label class="homey-form-checkbox">
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="httpPort" data-i18n="settings.httpPort">
+            HTTP port
+          </label>
           <input
-            class="homey-form-checkbox-input"
-            id="diagnosticsEnabled"
-            type="checkbox"
-            checked
+            class="homey-form-input"
+            id="httpPort"
+            type="number"
+            min="1"
+            max="65535"
+            step="1"
+            value="7999"
           />
-          <span class="homey-form-checkbox-checkmark"></span>
-          <span
-            class="homey-form-checkbox-text"
-            data-i18n="settings.diagnosticsEnabled"
-          >
-            Enable diagnostics
-          </span>
-        </label>
-        <p class="homey-form-help" data-i18n="settings.diagnosticsEnabledHelp">
-          When enabled, /diagnostics shows runtime status for configured displays.
+          <p class="homey-form-help" data-i18n="settings.httpPortHelp">
+            Default port is 7999. The server restarts automatically when the port changes.
+          </p>
+        </div>
+      </fieldset>
+
+      <fieldset class="homey-form-fieldset">
+        <legend class="homey-form-legend" data-i18n="settings.diagnosticsEnabled">
+          Enable diagnostics
+        </legend>
+
+        <div class="homey-form-group">
+          <label class="homey-form-checkbox">
+            <input
+              class="homey-form-checkbox-input"
+              id="diagnosticsEnabled"
+              type="checkbox"
+              checked
+            />
+            <span class="homey-form-checkbox-checkmark"></span>
+            <span
+              class="homey-form-checkbox-text"
+              data-i18n="settings.diagnosticsEnabled"
+            >
+              Enable diagnostics
+            </span>
+          </label>
+          <p class="homey-form-help" data-i18n="settings.diagnosticsEnabledHelp">
+            When enabled, /diagnostics shows runtime status for configured displays.
+          </p>
+        </div>
+      </fieldset>
+
+      <button
+        id="saveServer"
+        type="button"
+        class="homey-button-primary-full"
+        data-i18n="settings.save"
+      >
+        Save
+      </button>
+
+      <header class="homey-header" style="margin-top: 2rem">
+        <h1 class="homey-title" data-i18n="editor.title">Dashboard Editor</h1>
+        <p class="homey-subtitle" data-i18n="editor.subtitle">
+          Configure widgets for a Wall Display. Reload the display to apply changes.
         </p>
+      </header>
+
+      <fieldset class="homey-form-fieldset">
+        <legend class="homey-form-legend" data-i18n="editor.selectDisplay">
+          Select display
+        </legend>
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="displaySelect" data-i18n="editor.selectDisplay">
+            Select display
+          </label>
+          <select class="homey-form-select" id="displaySelect">
+            <option value="" data-i18n="editor.selectDisplay">Select display</option>
+          </select>
+        </div>
+      </fieldset>
+    </form>
+
+    <div id="dashboardDialog" class="editor-dialog" hidden aria-hidden="true">
+      <div class="editor-dialog__backdrop" data-dashboard-dismiss></div>
+      <div
+        class="editor-dialog__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dashboardDialogTitle"
+      >
+        <h2 id="dashboardDialogTitle" class="editor-dialog__title" data-i18n="editor.title">
+          Dashboard Editor
+        </h2>
+        <p id="dashboardDialogSubtitle" class="editor-dialog__subtitle"></p>
+
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="dashboardTheme" data-i18n="editor.theme">
+            Display appearance
+          </label>
+          <select class="homey-form-select" id="dashboardTheme">
+            <option value="dark" data-i18n="editor.themeDark">Dark</option>
+            <option value="light" data-i18n="editor.themeLight">Light</option>
+          </select>
+          <p class="homey-form-help" data-i18n="editor.themeHelp">
+            Widgets on this display inherit the dashboard theme.
+          </p>
+        </div>
+
+        <p class="editor-section-title" data-i18n="editor.gridPreview">Grid preview</p>
+        <p class="homey-form-help">
+          <span data-i18n="editor.available">Available</span>
+          /
+          <span data-i18n="editor.occupied">Occupied</span>
+        </p>
+        <div id="gridPreview" aria-live="polite"></div>
+
+        <div id="widgetBrowse">
+          <p class="editor-section-title" data-i18n="editor.widgets">Widgets</p>
+          <div id="widgetList"></div>
+          <div class="editor-actions">
+            <button
+              id="addWidget"
+              type="button"
+              class="homey-button-secondary-shadow"
+              data-i18n="editor.addWidget"
+            >
+              Add Widget
+            </button>
+            <button
+              id="saveDashboard"
+              type="button"
+              class="homey-button-primary"
+              data-i18n="editor.save"
+            >
+              Save
+            </button>
+            <button
+              id="closeDashboard"
+              type="button"
+              class="homey-button-transparent"
+              data-i18n="editor.close"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div id="draftForm" hidden>
+          <p id="draftFormTitle" class="editor-section-title" data-i18n="editor.editWidget">
+            Edit Widget
+          </p>
+          <p id="editorError" class="editor-dialog__error" hidden></p>
+
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="widgetType" data-i18n="editor.widgetType">
+              Widget Type
+            </label>
+            <select class="homey-form-select" id="widgetType"></select>
+          </div>
+
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="widgetRow" data-i18n="editor.positionRow">
+              Row
+            </label>
+            <select class="homey-form-select" id="widgetRow"></select>
+          </div>
+
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="widgetColumn" data-i18n="editor.positionColumn">
+              Column
+            </label>
+            <select class="homey-form-select" id="widgetColumn"></select>
+          </div>
+
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="widgetSpan" data-i18n="editor.size">
+              Size
+            </label>
+            <select class="homey-form-select" id="widgetSpan"></select>
+          </div>
+
+          <div class="homey-form-group">
+            <label class="homey-form-checkbox">
+              <input
+                class="homey-form-checkbox-input"
+                id="widgetChrome"
+                type="checkbox"
+              />
+              <span class="homey-form-checkbox-checkmark"></span>
+              <span class="homey-form-checkbox-text" data-i18n="editor.chrome">
+                Border and background
+              </span>
+            </label>
+            <p class="homey-form-help" data-i18n="editor.chromeHelp">
+              Show a card with border and background behind the widget.
+            </p>
+          </div>
+
+          <div id="titleFields">
+            <div class="homey-form-group">
+              <label class="homey-form-label" for="titleText" data-i18n="editor.titleText">
+                Text
+              </label>
+              <input class="homey-form-input" id="titleText" type="text" />
+            </div>
+            <div class="homey-form-group">
+              <label class="homey-form-label" for="titleAlignment" data-i18n="editor.alignment">
+                Alignment
+              </label>
+              <select class="homey-form-select" id="titleAlignment">
+                <option value="left" data-i18n="editor.alignmentLeft">Left</option>
+                <option value="center" data-i18n="editor.alignmentCenter">Center</option>
+                <option value="right" data-i18n="editor.alignmentRight">Right</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="dateTimeFields" hidden>
+            <div class="homey-form-group">
+              <label class="homey-form-label" for="dateTimeMode" data-i18n="editor.mode">
+                Mode
+              </label>
+              <select class="homey-form-select" id="dateTimeMode">
+                <option value="time" data-i18n="editor.modeTime">Time</option>
+                <option value="date" data-i18n="editor.modeDate">Date</option>
+                <option value="date-time" data-i18n="editor.modeDateTime">Date &amp; Time</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="editor-actions">
+            <button id="applyDraft" type="button" class="homey-button-primary" data-i18n="editor.apply">
+              Apply
+            </button>
+            <button
+              id="cancelDraft"
+              type="button"
+              class="homey-button-transparent"
+              data-i18n="editor.cancel"
+            >
+              Cancel
+            </button>
+            <button
+              id="removeWidget"
+              type="button"
+              class="homey-button-danger-shadow"
+              data-i18n="editor.removeWidget"
+            >
+              Remove Widget
+            </button>
+          </div>
+        </div>
       </div>
-    </fieldset>
+    </div>
 
-    <button id="save" class="homey-button-primary-full" data-i18n="settings.save">
-      Save
-    </button>
-
+    <script src="./editor.js"></script>
     <script type="text/javascript">
       function onHomeyReady(Homey) {
-        Homey.ready();
-
-        var portElement = document.getElementById('httpPort');
-        var diagnosticsElement = document.getElementById('diagnosticsEnabled');
-        var saveElement = document.getElementById('save');
-
-        Homey.get('httpPort', function (err, httpPort) {
-          if (err) {
-            return Homey.alert(err);
-          }
-
-          if (httpPort === undefined || httpPort === null || httpPort === '') {
-            portElement.value = '7999';
-            return;
-          }
-
-          portElement.value = String(httpPort);
-        });
-
-        Homey.get('diagnosticsEnabled', function (err, diagnosticsEnabled) {
-          if (err) {
-            return Homey.alert(err);
-          }
-
-          if (
-            diagnosticsEnabled === undefined ||
-            diagnosticsEnabled === null ||
-            diagnosticsEnabled === ''
-          ) {
-            diagnosticsElement.checked = true;
-            return;
-          }
-
-          diagnosticsElement.checked = diagnosticsEnabled === true;
-        });
-
-        saveElement.addEventListener('click', function () {
-          var parsed = Number(portElement.value);
-          if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
-            return Homey.alert(Homey.__('settings.invalidPort'));
-          }
-
-          Homey.set('httpPort', parsed, function (err) {
-            if (err) {
-              return Homey.alert(err);
-            }
-
-            Homey.set(
-              'diagnosticsEnabled',
-              diagnosticsElement.checked,
-              function (diagErr) {
-                if (diagErr) {
-                  return Homey.alert(diagErr);
-                }
-
-                Homey.alert(Homey.__('settings.saved'));
-              },
-            );
-          });
-        });
+        if (
+          typeof DashboardSettingsEditor === 'undefined' ||
+          typeof DashboardSettingsEditor.start !== 'function'
+        ) {
+          Homey.alert('Dashboard editor failed to load');
+          Homey.ready();
+          return;
+        }
+        DashboardSettingsEditor.start(Homey);
       }
     </script>
   </body>

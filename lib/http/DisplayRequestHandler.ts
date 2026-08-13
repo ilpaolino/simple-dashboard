@@ -1,11 +1,19 @@
 import type { AdapterRegistry } from '../adapters/AdapterRegistry';
-import { createDashboardBootstrap } from '../dashboard';
+import {
+  createDashboardBootstrap,
+  createEmptyStateCopy,
+} from '../dashboard';
 import { formatGridSize, resolveLayoutId } from '../dashboard/layoutParse';
 import type { DisplayRegistry } from '../display/DisplayRegistry';
 import { normalizeClientIp } from '../display/ipNormalize';
 import { verifyHardwareIdentity } from '../display/hardwareIdentity';
+import { DISPLAY_TYPE_IDS } from '../display/types';
 import type { DiagnosticsLog } from '../diagnostics/DiagnosticsLog';
 import type { HttpResponse, Logger, RequestInfo } from '../types';
+import {
+  validateDashboardConfiguration,
+  type PlacementValidationError,
+} from '../widgets';
 import { DashboardAssetStore } from './DashboardAssetStore';
 import { renderDiagnosticsPage } from './pages/diagnosticsPage';
 import {
@@ -219,15 +227,57 @@ export class DisplayRequestHandler {
 
     this.options.registry.touch(config.displayId, clientIp);
     this.options.registry.setMatchResult(config.displayId, 'recognized');
+
+    const dashboardValidation = validateDashboardConfiguration({
+      grid: layout.config,
+      configuration: config.dashboard,
+    });
+
+    if (!dashboardValidation.ok) {
+      this.options.registry.markDashboardError(
+        config.displayId,
+        errorKeyForValidation(dashboardValidation.error),
+      );
+      this.options.diagnosticsLog.record({
+        at: new Date(),
+        messageKey: errorKeyForValidation(dashboardValidation.error),
+        displayId: config.displayId,
+        ipAddress: clientIp,
+      });
+      this.options.logger.warn('Invalid dashboard widget configuration', {
+        displayId: config.displayId,
+        error: dashboardValidation.error,
+        widgetId: dashboardValidation.widgetId,
+        clientIp,
+      });
+    } else {
+      this.options.registry.markDashboardError(config.displayId, null);
+    }
+
     this.options.registry.markDashboardRendered(config.displayId);
 
-    const bootstrap = createDashboardBootstrap(config.displayId, layout.config);
+    const widgets = dashboardValidation.ok
+      ? config.dashboard.widgets
+      : [];
+
+    const bootstrap = createDashboardBootstrap({
+      displayId: config.displayId,
+      displayName: config.name,
+      typeLabel: typeLabelForDisplay(config.typeId, translate),
+      layoutId: config.layoutId,
+      layout: layout.config,
+      widgets,
+      theme: config.dashboard.theme,
+      locale: this.options.getLanguage(),
+      emptyState: createEmptyStateCopy(translate),
+    });
 
     this.options.logger.info('Display dashboard rendered', {
       displayId: config.displayId,
       typeId: config.typeId,
       layoutId: config.layoutId,
       grid: formatGridSize(layout.config),
+      widgetCount: widgets.length,
       clientIp,
     });
 
@@ -240,6 +290,19 @@ export class DisplayRequestHandler {
       }),
     );
   }
+}
+
+function typeLabelForDisplay(
+  typeId: string,
+  translate: (key: string) => string,
+): string {
+  if (typeId === DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY) {
+    return translate('adapters.shelly_wall_display');
+  }
+  if (typeId === DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY) {
+    return translate('adapters.generic_web_display');
+  }
+  return typeId;
 }
 
 function pathOnly(url: string): string {
@@ -261,4 +324,24 @@ function textResponse(statusCode: number, body: string): HttpResponse {
     contentType: 'text/plain; charset=utf-8',
     body,
   };
+}
+
+function errorKeyForValidation(error: PlacementValidationError): string {
+  switch (error) {
+    case 'out_of_bounds':
+      return 'editor.errors.outOfBounds';
+    case 'overlap':
+      return 'editor.errors.overlap';
+    case 'unsupported_span':
+      return 'editor.errors.unsupportedSpan';
+    case 'invalid_placement':
+      return 'editor.errors.invalidPosition';
+    case 'unknown_type':
+      return 'editor.errors.unknownType';
+    case 'duplicate_id':
+      return 'editor.errors.duplicateId';
+    case 'invalid_config':
+    default:
+      return 'editor.errors.invalidConfig';
+  }
 }

@@ -20,7 +20,7 @@ const sampleHtml = `<!DOCTYPE html>
 </head>
 <body>
   <div id="dashboard-root"></div>
-  <script id="dashboard-bootstrap" type="application/json">{"displayId":"measure","layout":{"rows":2,"columns":2}}</script>
+  <script id="dashboard-bootstrap" type="application/json">{"displayId":"measure","displayName":"Measure","typeLabel":"Generic","layoutId":"2x2","layout":{"rows":2,"columns":2},"widgets":[],"locale":"en","emptyState":{"heading":"No widgets","lead":"Configure","nameLabel":"Name","typeLabel":"Type","idLabel":"ID","layoutLabel":"Layout","gridLabel":"Grid"}}</script>
   <script src="/dashboard.js" defer></script>
 </body>
 </html>`;

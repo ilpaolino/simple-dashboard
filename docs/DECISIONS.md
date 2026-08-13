@@ -1,115 +1,115 @@
 # Decisions
 
-Architectural choices for Milestone 3. Earlier decisions remain in force below and in [MILESTONE-0.md](MILESTONE-0.md) / [MILESTONE-1.md](MILESTONE-1.md) / [MILESTONE-2.md](MILESTONE-2.md).
+Architectural choices for Milestone 4. Earlier decisions remain in force below and in prior milestone docs.
 
-## Vanilla frontend
+## App Settings for dashboard editing
 
-**Choice:** Dashboard UI is HTML + CSS + TypeScript only. No Vue, React, Angular, Svelte, or UI component libraries. Source lives in `frontend/`; build emits a single IIFE `assets/dashboard/dashboard.js` plus `dashboard.css`.
+**Choice:** The visual dashboard editor is a Custom App Settings page (`settings/index.html` + compiled `settings/editor.js`) using Homey Style Library classes and `Homey.api` against the app Web API.
 
-**Why:** Wall displays (especially Shelly Wall Display WebViews) benefit from a tiny bundle, low RAM, fast startup, and minimal dependencies. Framework convenience is explicitly out of scope.
+**Why:** Official Homey Pro surface for complex configuration. No external UI, no parallel configurator outside Homey.
 
-**Build note:** `esbuild` is a **devDependency** only (bundle `frontend/main.ts` + shared `lib/dashboard` math into one browser file). It is not shipped to Homey (`.homeyignore` excludes `node_modules/` and `scripts/`).
+**Widget editor dialog:** Homey Settings expose `Homey.alert` / `Homey.confirm` (message dialogs) and `Homey.popup(url)` (new window). There is no official in-view modal for custom forms, so the dashboard editor uses an in-page dialog overlay with Homey form classes (`homey-form-select`, `homey-form-input`). Preview and widget list appear only after a display is selected, inside that dialog. Add/edit uses the same dialog (preview stays visible) with Apply, Cancel, and Remove. Remove always asks for confirmation via `Homey.confirm` when available.
 
-## Square grid cells
+**Refs:** [App Settings](https://apps.developer.homey.app/advanced/custom-views/app-settings), [HTML/CSS styling](https://apps.developer.homey.app/advanced/custom-views/html-and-css-styling), [Web API](https://apps.developer.homey.app/advanced/web-api).
 
-**Choice:** Every cell is always square. The engine never stretches cells to fill the viewport.
+## Device configuration remains per-device
 
-**Why:** Predictable geometry for future widgets and consistent touch targets across aspect ratios.
+**Choice:** Widget configuration is stored on each Homey Device via Device Store key `dashboard`.
 
-## Centered grid
+**Why:** Each Wall Display has its own layout and widgets. Homey remains the only source of truth.
 
-**Choice:** After computing the maximum fitting square cell size, the grid is centered horizontally and vertically within the safe area. Unused space remains empty.
+**Refs:** [Device Store / persistent storage](https://apps.developer.homey.app/the-basics/app/persistent-storage), [Devices](https://apps.developer.homey.app/the-basics/devices).
 
-**Why:** Prefer geometric predictability over using 100% of the screen.
+## Explicit placement
 
-## Proportional gap
+**Choice:** Every widget has an explicit `WidgetPlacement` (`row`, `column`, `rowSpan`, `columnSpan`). Top-left origin; spans extend right and down.
 
-**Choice:** `gap = clamp(cellSize × 0.08, 4px, 20px)`.
+**Why:** Deterministic layout, simple validation, no ambiguity for multi-cell widgets.
 
-**Why:** Gaps stay visible on small displays and do not explode on large ones. Limits are fixed constants for this milestone.
+## No automatic collision resolution
 
-## Fixed safety margin
+**Choice:** Overlaps and out-of-bounds placements are rejected. The system never auto-moves widgets.
 
-**Choice:** Outer margin is a centralized constant (`SAFETY_MARGIN_PX = 12`). Not configurable via Homey settings yet.
+**Why:** Explicit placement keeps configuration predictable and reviewable.
 
-**Why:** Avoids edge clipping on embedded browsers / viewport differences without adding settings surface area.
+## Widget Registry
 
-## Layout immutable after initial render
+**Choice:** Widget types register through a central `WidgetRegistry` (definitions) plus a frontend renderer registry. The dashboard renderer does not switch on `widget.type` with large `if` chains.
 
-**Choice:** Geometry is calculated once on page load. No permanent `resize` or `orientationchange` listeners. Orientation/viewport changes require a page reload.
+**Why:** Adding a widget should be a registration + folder, not a rewrite of the engine.
 
-**Why:** Lower runtime complexity and CPU/RAM on fixed wall mounts; predictable layout for debugging.
+## Widget isolation
 
-## Widget span compatibility
+**Choice:** Each widget lives in its own folder (`lib/widgets/<type>` for shared contracts; `frontend/widgets/<type>` for DOM/CSS).
 
-**Choice:** Data model includes `GridPlacement` with `rowSpan` / `columnSpan`. Milestone 3 does not render multi-cell widgets, but types and structural tests ensure 1×2 / 2×1 / 2×2 placements can fit later without rewriting the engine contracts.
+**Why:** Keeps CSS and logic separated so later visual polish can target one widget at a time.
 
-**Why:** Avoid a future rewrite of cell identity and layout math when widgets arrive.
+## Internal layout per span
 
-## DashboardBootstrap DTO
+**Choice:** Widgets declare allowed spans and use span-specific CSS classes (`widget-layout-1x1`, `2x1`, `3x1`, …). Internal layout may differ by span.
 
-**Choice:** Backend sends only `displayId` + `{ rows, columns }`. No Homey APIs, device names, or adapter details in the frontend payload.
+**Why:** Predisposes architecture for richer variants without changing the grid contract.
 
-**Why:** Clear backend/frontend separation; minimal attack/data surface on the LAN page.
+## Per-widget chrome
 
-## Portrait and landscape layout ids
+**Choice:** Title and Date & Time widgets accept optional `chrome`: `plain` (no border/background, default) or `card` (border + background). Missing `chrome` is treated as `plain`.
 
-**Choice:** Layout ids are `{columns}x{rows}`. Non-square grids ship both orientations (`2x4` / `4x2`, `3x6` / `6x3`). Square grids (`2x2`, `3x3`) are orientation-invariant, so they are not duplicated. Orientation is chosen in Homey Device Settings; the dashboard does not auto-rotate.
+**Why:** The screenshot look is borderless, but some layouts still want a framed card. The choice is per widget, not global.
 
-**Why:** Wall displays may be mounted portrait or landscape. The grid engine already sizes square cells to the viewport; the user still needs an explicit column/row count that matches the mount.
+## Dashboard dark / light theme
 
-**Migration:** Generic devices paired before landscape variants existed store only `2x4` / `3x6`. On device `onInit` (and when saving a layout) the stored `supportedLayoutIds` is expanded so the new options are selectable without re-pairing.
+**Choice:** `theme` (`dark` | `light`) is a **per-display dashboard** setting. Widgets have no theme of their own: they inherit CSS tokens (`--widget-fg`, `--widget-card-surface`, …) from the dashboard `data-theme`. Default is `dark`. Missing `theme` is treated as `dark`.
 
-## Process memory on diagnostics
+**Why:** Each Wall Display is an independent Homey device. Background, text, and widget chrome colors must stay consistent on that screen. Per-widget themes would break contrast.
 
-**Choice:** `/diagnostics` shows Node `process.memoryUsage()` RSS and heapUsed. Homey Apps SDK does not expose a dedicated “app RAM” metric; this is the official Node API available in the Homey Node runtime.
+## Reload-only configuration for now
 
-**Why:** Milestone performance budget requires an honest, non-invented measurement path.
+**Choice:** Saves update Device Store immediately; Wall Displays pick up changes on page refresh. `DashboardRenderer.applyConfiguration` exists so a future live channel can re-apply without rewrite.
+
+**Why:** Milestone scope excludes WebSocket/SSE/polling while still preparing the renderer.
+
+## Device Settings note only
+
+**Choice:** Device Advanced Settings show a read-only `label` pointing users to App Settings for grid/widgets. No widget editor in Device Settings.
+
+**Why:** Matches Homey UX expectations and keeps one editor surface.
+
+**Refs:** [Device settings](https://apps.developer.homey.app/the-basics/devices/settings).
+
+---
+
+## Milestone 3 decisions still in force
+
+### Vanilla frontend
+
+HTML + CSS + TypeScript only. `esbuild` is **devDependency** only.
+
+### Square grid cells / centered grid / proportional gap / fixed safety margin
+
+Unchanged.
+
+### Layout immutable after initial render (geometry)
+
+Geometry still calculated once per `applyConfiguration` call; no permanent resize listeners.
+
+### DashboardBootstrap DTO
+
+Extended with `widgets` + `locale`; still no Homey APIs in the browser.
+
+### Portrait and landscape layout ids
+
+Unchanged.
+
+### Process memory on diagnostics
+
+Unchanged (`process.memoryUsage()`).
 
 ---
 
 ## Milestone 2 decisions still in force
 
-### Homey is Source of Truth
-
-`DisplayRegistry` is an in-memory projection of Homey Devices.
-
-### Runtime state is not persisted
-
-`lastSeenAt`, sessions, match status, `lastRenderedAt`, layout errors live only in RAM.
-
-### Separate Homey Drivers
-
-`shelly_wall_display` and `generic_web_display`.
-
-### IP is routing, not identity
-
-### Hardware identity validation (Shelly)
-
-Official `GET /rpc/Shelly.GetDeviceInfo`.
-
-### Diagnostics is a permanent feature
-
-### Online timeout without heartbeat (5 minutes)
-
-### Pairing modes per driver
-
----
+Homey is Source of Truth; runtime state is not persisted; separate drivers; IP is routing; Shelly hardware validation; diagnostics permanent; online timeout 5 minutes; pairing modes per driver.
 
 ## Milestone 1 decisions still in force
 
-### Homey Compose for drivers
-
-### Custom pairing: injected Homey, no `/homey.js`
-
-### `Homey.createDevice` instead of `add_devices`
-
-### Native device settings only
-
-### Device class `other`, empty capabilities, `connectivity: lan`
-
-### Adapter isolation / Shelly.GetDeviceInfo / configuration snapshot
-
-### Localization EN + IT
-
-### TypeScript strict, no `any`
+Homey Compose; custom pairing; `Homey.createDevice`; native device settings; class `other`; adapter isolation; EN+IT; TypeScript strict, no `any`.

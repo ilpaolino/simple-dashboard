@@ -1,5 +1,6 @@
 import { escapeHtml } from './html';
 import type { DashboardBootstrap } from '../../dashboard/types';
+import { resolveDashboardTheme } from '../../widgets/types';
 
 /**
  * Embeds JSON in HTML without breaking </script> and without HTML-entity encoding
@@ -15,13 +16,14 @@ export function renderDashboardPage(input: {
   readonly bootstrap: DashboardBootstrap;
 }): string {
   const payload = embedJson(input.bootstrap);
+  const theme = resolveDashboardTheme(input.bootstrap.theme);
 
   return `<!DOCTYPE html>
-<html lang="${escapeHtml(input.lang)}">
+<html lang="${escapeHtml(input.lang)}" data-theme="${theme}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="light" />
+  <meta name="color-scheme" content="${theme}" />
   <title>${escapeHtml(input.title)}</title>
   <link rel="stylesheet" href="/dashboard.css" />
 </head>

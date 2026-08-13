@@ -1,0 +1,40 @@
+:root {
+  --widget-padding: 0.75rem;
+  --widget-gap: 0.35rem;
+  --widget-radius: 0.5rem;
+  --widget-font-family: -apple-system, "SF Pro Display", "Segoe UI", "Helvetica Neue", sans-serif;
+  --widget-font-title: clamp(1rem, 2.8vw, 1.6rem);
+  --widget-font-title-lg: clamp(1.15rem, 3.2vw, 1.9rem);
+  --widget-font-time: clamp(1.25rem, 4vw, 2.2rem);
+  --widget-font-time-sm: clamp(1rem, 3.2vw, 1.6rem);
+  --widget-font-date: clamp(0.75rem, 2vw, 1rem);
+  --widget-opacity-muted: 0.86;
+  /* Color tokens are owned by the display dashboard theme. Widgets inherit. */
+  --dashboard-bg: #1c2a32;
+  --widget-fg: #ffffff;
+  --widget-fg-muted: rgba(255, 255, 255, 0.78);
+  --widget-surface: transparent;
+  --widget-card-surface: rgba(255, 255, 255, 0.08);
+  --widget-border: rgba(255, 255, 255, 0.18);
+  --grid-cell-surface: rgba(255, 255, 255, 0.04);
+  --empty-panel-bg: rgba(247, 250, 251, 0.96);
+  --empty-panel-fg: #1f2a30;
+  --empty-panel-muted: #6a7a82;
+  --empty-panel-border: #c5d0d5;
+  --empty-panel-shadow: 0 8px 28px rgba(31, 42, 48, 0.12);
+}
+
+:root[data-theme="light"],
+[data-theme="light"] {
+  --dashboard-bg: #e8eef1;
+  --widget-fg: #1f2a30;
+  --widget-fg-muted: rgba(31, 42, 48, 0.68);
+  --widget-card-surface: rgba(255, 255, 255, 0.78);
+  --widget-border: rgba(31, 42, 48, 0.16);
+  --grid-cell-surface: rgba(31, 42, 48, 0.05);
+  --empty-panel-bg: #ffffff;
+  --empty-panel-fg: #1f2a30;
+  --empty-panel-muted: #6a7a82;
+  --empty-panel-border: #c5d0d5;
+  --empty-panel-shadow: 0 8px 28px rgba(31, 42, 48, 0.1);
+}

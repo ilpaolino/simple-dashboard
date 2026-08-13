@@ -1,7 +1,7 @@
 {
   "settings": {
     "title": "Impostazioni Simple Dashboard",
-    "subtitle": "Configura il server HTTP locale e la diagnostica",
+    "subtitle": "Configura il server HTTP locale, la diagnostica e i widget della dashboard",
     "httpPort": "Porta HTTP",
     "httpPortHelp": "La porta predefinita è 7999. Il server si riavvia automaticamente quando la porta cambia.",
     "diagnosticsEnabled": "Abilita diagnostica",
@@ -9,6 +9,64 @@
     "save": "Salva",
     "saved": "Impostazioni salvate. Il server HTTP si riavvierà se la porta è cambiata.",
     "invalidPort": "Inserisci una porta TCP valida tra 1 e 65535."
+  },
+  "editor": {
+    "title": "Editor Dashboard",
+    "subtitle": "Configura i widget di un Wall Display. Ricarica il display per applicare le modifiche.",
+    "selectDisplay": "Seleziona display",
+    "theme": "Aspetto del display",
+    "themeDark": "Scuro",
+    "themeLight": "Chiaro",
+    "themeHelp": "I widget di questo display ereditano il tema della dashboard. Ogni display ha la propria impostazione.",
+    "gridPreview": "Anteprima griglia",
+    "widgets": "Widget",
+    "addWidget": "Aggiungi widget",
+    "removeWidget": "Rimuovi widget",
+    "editWidget": "Modifica widget",
+    "widgetType": "Tipo widget",
+    "position": "Posizione",
+    "positionRow": "Riga",
+    "positionColumn": "Colonna",
+    "size": "Dimensione",
+    "alignment": "Allineamento",
+    "alignmentLeft": "Sinistra",
+    "alignmentCenter": "Centro",
+    "alignmentRight": "Destra",
+    "titleText": "Testo",
+    "chrome": "Bordo e sfondo",
+    "chromeHelp": "Mostra una scheda con bordo e sfondo dietro il widget.",
+    "mode": "Modalità",
+    "modeTime": "Ora",
+    "modeDate": "Data",
+    "modeDateTime": "Data e ora",
+    "occupied": "Occupata",
+    "available": "Libera",
+    "preview": "Anteprima",
+    "noWidgets": "Nessun widget configurato.",
+    "apply": "Applica",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "confirmRemove": "Rimuovere questo widget dalla dashboard?",
+    "save": "Salva",
+    "saved": "Dashboard salvata. Ricarica il Wall Display per applicare la nuova configurazione.",
+    "errors": {
+      "displayNotFound": "Display non trovato.",
+      "outOfBounds": "Posizione non valida: il widget è fuori dalla griglia.",
+      "overlap": "Non sono ammessi widget sovrapposti.",
+      "unsupportedSpan": "Questa dimensione non è supportata per il widget selezionato.",
+      "invalidPosition": "Posizione non valida.",
+      "unknownType": "Tipo widget sconosciuto.",
+      "duplicateId": "ID widget duplicato.",
+      "invalidConfig": "Configurazione widget non valida."
+    }
+  },
+  "widgets": {
+    "title": {
+      "name": "Titolo"
+    },
+    "dateTime": {
+      "name": "Data e ora"
+    }
   },
   "adapters": {
     "shelly_wall_display": "Shelly Wall Display",
@@ -18,7 +76,8 @@
     "defaultName": "Wall Display",
     "defaultNameShelly": "Shelly Wall Display",
     "defaultNameGeneric": "Generic Web Display",
-    "notAvailable": "Non disponibile"
+    "notAvailable": "Non disponibile",
+    "dashboardEditorNote": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni dell'app Wall Display."
   },
   "pair": {
     "back": "Indietro",
@@ -52,6 +111,10 @@
   "pages": {
     "dashboard": {
       "title": "Dashboard"
+    },
+    "dashboardEmpty": {
+      "heading": "Nessun widget configurato",
+      "lead": "Configura la griglia e i widget dalle Impostazioni dell'app Wall Display in Homey."
     },
     "invalidLayout": {
       "title": "Configurazione display non valida",
@@ -111,6 +174,10 @@
       "gridSize": "Dimensione griglia",
       "lastRendered": "Ultimo rendering",
       "layoutError": "Errore layout",
+      "widgetCount": "Widget",
+      "widgetTypes": "Tipi widget",
+      "dashboardError": "Errore dashboard",
+      "lastDashboardLoaded": "Ultima configurazione caricata",
       "memoryRss": "RSS processo",
       "memoryHeap": "Heap usata",
       "recentErrors": "Errori recenti",

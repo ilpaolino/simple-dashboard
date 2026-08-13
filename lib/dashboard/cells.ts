@@ -32,8 +32,7 @@ export function createGridCells(config: GridConfig): readonly GridCell[] {
 }
 
 /**
- * Structural helper for future multi-cell widgets.
- * Validates placement bounds without rendering spans.
+ * Validates that a placement fits entirely inside the grid.
  */
 export function isPlacementWithinGrid(
   config: GridConfig,
@@ -67,7 +66,7 @@ export function isPlacementWithinGrid(
 }
 
 /**
- * Factory for future span placements (1x1, 1x2, 2x1, 2x2, …).
+ * Factory for explicit widget placements (1x1, 2x1, 3x1, 2x2, …).
  */
 export function createPlacement(
   row: number,

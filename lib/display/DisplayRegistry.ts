@@ -18,6 +18,8 @@ function emptyRuntime(): RegisteredDisplay['runtime'] {
     lastErrorKey: null,
     lastRenderedAt: null,
     lastLayoutErrorKey: null,
+    lastDashboardErrorKey: null,
+    lastDashboardLoadedAt: null,
   };
 }
 
@@ -127,6 +129,7 @@ export class DisplayRegistry {
 
     entry.runtime.lastRenderedAt = at;
     entry.runtime.lastLayoutErrorKey = null;
+    entry.runtime.lastDashboardLoadedAt = at.toISOString();
   }
 
   public markLayoutError(
@@ -139,6 +142,18 @@ export class DisplayRegistry {
     }
 
     entry.runtime.lastLayoutErrorKey = errorKey;
+  }
+
+  public markDashboardError(
+    displayId: string,
+    errorKey: string | null,
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.lastDashboardErrorKey = errorKey;
   }
 
   public getOnlineStatus(

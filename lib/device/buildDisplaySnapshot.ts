@@ -6,13 +6,22 @@ import {
   type DisplaySnapshot,
   type DisplayTypeId,
 } from '../display/types';
+import {
+  emptyDashboardConfiguration,
+  parseDashboardConfiguration,
+  type DashboardConfiguration,
+} from '../widgets';
 import type { SettingsValue } from './settingsValidation';
+
+/** Homey Device Store key for per-display widget configuration. */
+export const DASHBOARD_STORE_KEY = 'dashboard';
 
 export interface HomeyDeviceLike {
   getData(): unknown;
   getName(): string;
   getSettings(): unknown;
   getStore(): unknown;
+  getStoreValue?(key: string): unknown;
 }
 
 /**
@@ -24,6 +33,7 @@ export function buildDisplaySnapshot(options: {
   readonly typeId: DisplayTypeId;
   readonly pendingSettings?: Readonly<Record<string, SettingsValue>>;
   readonly pendingStore?: unknown;
+  readonly pendingDashboard?: DashboardConfiguration;
 }): DisplaySnapshot | null {
   const data = options.device.getData();
   if (typeof data !== 'object' || data === null) {
@@ -69,6 +79,10 @@ export function buildDisplaySnapshot(options: {
       ? dataRecord.id
       : null;
 
+  const dashboard =
+    options.pendingDashboard ??
+    readDashboardFromDevice(options.device);
+
   return {
     displayId: dataRecord.id,
     name: options.device.getName(),
@@ -76,5 +90,28 @@ export function buildDisplaySnapshot(options: {
     ipAddress,
     hardwareId,
     layoutId,
+    dashboard,
   };
+}
+
+export function readDashboardFromDevice(
+  device: HomeyDeviceLike,
+): DashboardConfiguration {
+  const raw =
+    typeof device.getStoreValue === 'function'
+      ? device.getStoreValue(DASHBOARD_STORE_KEY)
+      : readStoreKey(device.getStore(), DASHBOARD_STORE_KEY);
+
+  const parsed = parseDashboardConfiguration(raw);
+  if (!parsed.ok) {
+    return emptyDashboardConfiguration();
+  }
+  return parsed.configuration;
+}
+
+function readStoreKey(store: unknown, key: string): unknown {
+  if (typeof store !== 'object' || store === null) {
+    return undefined;
+  }
+  return (store as Record<string, unknown>)[key];
 }
