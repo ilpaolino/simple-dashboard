@@ -5,6 +5,7 @@ import {
   lightVisualStateClass,
   resolveLightVisualState,
 } from '../../../lib/widgets/light/visual';
+import type { CommandStatus } from '../../realtime/WidgetInteractionController';
 import {
   layoutVariantClass,
   placementGridArea,
@@ -13,6 +14,10 @@ import {
   type WidgetRenderer,
 } from '../types';
 
+/**
+ * Interactive LightWidget: entire tile is the tap target (toggle).
+ * Real Homey onoff state is always shown; pending/error are overlays.
+ */
 export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
   public readonly type = 'light' as const;
 
@@ -29,7 +34,7 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
     element.style.gridArea = placementGridArea(instance.placement);
     element.dataset.widgetId = instance.id;
     element.dataset.widgetType = instance.type;
-    element.setAttribute('role', 'status');
+    element.setAttribute('role', 'button');
 
     const statusEl = document.createElement('p');
     statusEl.className = 'widget-light__status';
@@ -37,38 +42,150 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
     const nameEl = document.createElement('p');
     nameEl.className = 'widget-light__name';
 
+    const feedbackEl = document.createElement('p');
+    feedbackEl.className = 'widget-light__feedback';
+    feedbackEl.hidden = true;
+
+    const pendingEl = document.createElement('span');
+    pendingEl.className = 'widget-light__pending';
+    pendingEl.setAttribute('aria-hidden', 'true');
+    pendingEl.hidden = true;
+
     element.appendChild(statusEl);
     element.appendChild(nameEl);
+    element.appendChild(feedbackEl);
+    element.appendChild(pendingEl);
 
-    const paint = (runtime: LightWidgetRuntimeState | undefined): void => {
+    let runtime: LightWidgetRuntimeState | undefined =
+      context.runtime?.type === 'light' ? context.runtime : undefined;
+    let commandStatus: CommandStatus = 'idle';
+
+    const paint = (): void => {
       const visual = resolveLightVisualState(runtime);
-      element.className = [
+      const interactive = visual === 'on' || visual === 'off';
+      const classes = [
         'widget',
         'widget-light',
         layoutVariantClass(instance.placement),
         lightVisualStateClass(visual),
-      ].join(' ');
+      ];
+
+      if (commandStatus === 'pending') {
+        classes.push('widget-light--state-pending');
+      } else if (commandStatus === 'error' || commandStatus === 'timeout') {
+        classes.push('widget-light--state-error');
+      }
+
+      element.className = classes.join(' ');
       element.dataset.visualState = visual;
+      element.dataset.commandStatus = commandStatus;
+      element.dataset.interactive = interactive ? 'true' : 'false';
+      element.tabIndex = interactive ? 0 : -1;
+      element.setAttribute('aria-disabled', interactive ? 'false' : 'true');
 
       const copy = context.copy.light;
       if (visual === 'unavailable') {
         nameEl.textContent = runtime?.name || copy.unavailable;
         statusEl.textContent = copy.unavailable;
         element.setAttribute('aria-label', copy.unavailable);
+        feedbackEl.hidden = true;
+        pendingEl.hidden = true;
         return;
       }
 
       nameEl.textContent = runtime?.name ?? '';
       statusEl.textContent = visual === 'on' ? copy.on : copy.off;
+
+      if (commandStatus === 'pending') {
+        pendingEl.hidden = false;
+        feedbackEl.hidden = false;
+        feedbackEl.textContent = copy.commandInProgress;
+        element.setAttribute(
+          'aria-label',
+          `${runtime?.name ?? ''} — ${statusEl.textContent}. ${copy.commandInProgress}`,
+        );
+        return;
+      }
+
+      pendingEl.hidden = true;
+
+      if (commandStatus === 'timeout') {
+        feedbackEl.hidden = false;
+        feedbackEl.textContent = copy.commandTimeout;
+        element.setAttribute(
+          'aria-label',
+          `${runtime?.name ?? ''} — ${statusEl.textContent}. ${copy.commandTimeout}`,
+        );
+        return;
+      }
+
+      if (commandStatus === 'error') {
+        feedbackEl.hidden = false;
+        feedbackEl.textContent = copy.commandFailed;
+        element.setAttribute(
+          'aria-label',
+          `${runtime?.name ?? ''} — ${statusEl.textContent}. ${copy.commandFailed}`,
+        );
+        return;
+      }
+
+      feedbackEl.hidden = true;
       element.setAttribute(
         'aria-label',
         `${runtime?.name ?? ''} — ${statusEl.textContent}`,
       );
     };
 
-    const initial =
-      context.runtime?.type === 'light' ? context.runtime : undefined;
-    paint(initial);
+    const unsubscribe = context.interactions?.onStatus(
+      instance.id,
+      (feedback) => {
+        if (feedback.status === 'success') {
+          commandStatus = 'idle';
+        } else {
+          commandStatus = feedback.status;
+        }
+        paint();
+      },
+    );
+
+    const tryToggle = (): void => {
+      const visual = resolveLightVisualState(runtime);
+      if (visual !== 'on' && visual !== 'off') {
+        return;
+      }
+      context.interactions?.requestToggle(instance.id);
+    };
+
+    // Prefer pointerup once; ignore synthetic click after touch to avoid double fire.
+    let lastPointerUpAt = 0;
+    const onPointerUp = (event: Event): void => {
+      const pointerEvent = event as PointerEvent;
+      if (pointerEvent.button !== undefined && pointerEvent.button !== 0) {
+        return;
+      }
+      lastPointerUpAt = Date.now();
+      tryToggle();
+    };
+    const onClick = (event: Event): void => {
+      if (Date.now() - lastPointerUpAt < 400) {
+        event.preventDefault();
+        return;
+      }
+      tryToggle();
+    };
+    const onKeyDown = (event: Event): void => {
+      const keyEvent = event as KeyboardEvent;
+      if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+        keyEvent.preventDefault();
+        tryToggle();
+      }
+    };
+
+    element.addEventListener('pointerup', onPointerUp);
+    element.addEventListener('click', onClick);
+    element.addEventListener('keydown', onKeyDown);
+
+    paint();
 
     return {
       widgetId: instance.id,
@@ -77,9 +194,17 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
         if (state.type !== 'light') {
           return;
         }
-        paint(state);
+        runtime = state;
+        if (commandStatus === 'pending') {
+          context.interactions?.notifyStateConfirmed(instance.id);
+        }
+        paint();
       },
       destroy() {
+        unsubscribe?.();
+        element.removeEventListener('pointerup', onPointerUp);
+        element.removeEventListener('click', onClick);
+        element.removeEventListener('keydown', onKeyDown);
         element.remove();
       },
     };

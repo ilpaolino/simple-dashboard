@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 6 adds a **typed realtime channel** on the same configurable port: live LightWidget `onoff` updates, live dashboard configuration push, reconnect with full snapshot, heartbeat, and reference-counted Homey capability subscriptions.
+It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 7 adds **bidirectional LightWidget commands**: tap-to-toggle with pending feedback, backend widget-intent validation, official Homey `setCapabilityValue('onoff')`, and confirmation only from Homey realtime.
 
 ## Current status
 
-**Milestone 6 is implemented.** Milestone 0–5 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, read-only LightWidget, diagnostics).
+**Milestone 7 is implemented.** Milestone 0–6 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, LightWidget, WebSocket realtime, diagnostics).
 
 | Area | Status |
 | --- | --- |
@@ -17,16 +17,17 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 6 adds a
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M6) |
+| Diagnostics page | Done (M2–M7) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5) |
 | Homey Device Repository (`homey:manager:api`) | Done (M5) |
-| Read-only LightWidget (`onoff`) | Done (M5) |
+| LightWidget (`onoff` display + toggle) | Done (M5/M7) |
 | WebSocket realtime (same port) | Done (M6) |
 | Selective Homey capability subscriptions | Done (M6) |
 | Live dashboard configuration | Done (M6) |
-| Homey capability control (set on/off, dim, color) | Not started |
+| Bidirectional widget commands (toggle) | Done (M7) |
+| Dim / color / color temperature | Not started |
 | Flow cards | Not started |
 
 ## How to resume after a break
@@ -34,16 +35,16 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 6 adds a
 1. Read this file, then [ARCHITECTURE.md](ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md).
 2. Check [MILESTONES.md](MILESTONES.md) for what is in / out of scope.
 3. Check [TODO.md](TODO.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before writing new code.
-4. Reuse `lib/realtime`, `lib/homey`, `lib/display`, `lib/dashboard`, `lib/widgets`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer. Do not let the frontend call Homey APIs.
+4. Reuse `lib/realtime` (commands + subscriptions), `lib/homey`, `lib/display`, `lib/dashboard`, `lib/widgets`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer. Do not let the frontend call Homey APIs or send raw `deviceId`/`capability` commands.
 
 ## Runtime constraints
 
-- Must run **on Homey Pro** (`homey app run --remote` or `homey app install`) for LAN bind, for probing a display by IP, and for `HomeyAPI.createAppAPI` / `makeCapabilityInstance`.
+- Must run **on Homey Pro** (`homey app run --remote` or `homey app install`) for LAN bind, for probing a display by IP, and for `HomeyAPI.createAppAPI` / `makeCapabilityInstance` / `setCapabilityValue`.
 - Compatibility: Homey `>=12.9.0` (Node.js 22).
 - TypeScript strict mode, compiled to `.homeybuild/`.
 - Frontend is built separately into `assets/dashboard/` (IIFE, no runtime framework).
 - Dashboard Editor settings source is built into `settings/editor.js`.
-- Permission `homey:manager:api` is required to read global Homey devices/zones and subscribe to capabilities.
+- Permission `homey:manager:api` is required to read/control global Homey devices and subscribe to capabilities.
 
 ## Local commands
 
@@ -65,15 +66,15 @@ homey app run --remote
 | --- | --- |
 | `app.ts` | Homey App lifecycle; HTTP + WebSocket gateway + DisplayRegistry + HomeyDeviceRepository + editor API |
 | `api.ts` | Homey Web API for Dashboard Editor |
-| `lib/realtime/` | WebSocket protocol, sessions, subscription manager, gateway |
+| `lib/realtime/` | WebSocket protocol, sessions, subscriptions, command handler, pending manager, gateway |
 | `lib/homey/` | Homey Web API client + HomeyDeviceRepository (backend only) |
 | `lib/widgets/` | Shared widget types, placement, validation, registry, runtime snapshot |
-| `lib/widgets/light/` | LightWidget config, compatibility, runtime resolver |
+| `lib/widgets/light/` | LightWidget config, compatibility, runtime resolver, interactions |
 | `lib/dashboard/` | Grid types, geometry math, cell ids, bootstrap DTO |
 | `lib/display/` | Registry, session, IP normalize, hardware identity, online via WS |
 | `lib/http/` | Request handler, dashboard HTML, static assets, diagnostics |
 | `frontend/` | Vanilla dashboard + settings editor source |
-| `frontend/realtime/` | WebSocket client, reconnect, connection overlay |
+| `frontend/realtime/` | WebSocket client, reconnect, connection overlay, WidgetInteractionController |
 | `frontend/widgets/` | Isolated widget renderers (title, date-time, light) |
 | `assets/dashboard/` | Built `dashboard.css` / `dashboard.js` served on LAN |
 | `settings/` | Official Homey app settings + Dashboard Editor |
@@ -91,4 +92,4 @@ The Homey device identity is `data.id` (Shelly device id when detected, otherwis
 
 Widget configuration is stored per Homey Device in the Device Store key `dashboard`.
 
-LightWidget persists **only** `deviceId`. Name, zone, availability, and `onoff` are read from Homey (snapshot + realtime).
+LightWidget persists **only** `deviceId`. Name, zone, availability, and `onoff` are read from Homey (snapshot + realtime). Commands are issued as widget intents (`widgetId` + `action`), never as raw Homey device writes from the browser.

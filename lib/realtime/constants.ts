@@ -21,3 +21,15 @@ export const RECONNECT_FACTOR = 2;
 
 /** Capability used by LightWidget realtime. */
 export const REALTIME_LIGHT_CAPABILITY_ID = 'onoff';
+
+/**
+ * Max wait for Homey realtime confirmation after a capability command.
+ * Not user-configurable in this milestone.
+ */
+export const COMMAND_TIMEOUT_MS = 4_000;
+
+/** Bounded recent-command buffer for /diagnostics. */
+export const COMMAND_DIAGNOSTICS_HISTORY_LIMIT = 20;
+
+/** Brief client-side error feedback duration for command failures. */
+export const COMMAND_ERROR_FEEDBACK_MS = 2_000;

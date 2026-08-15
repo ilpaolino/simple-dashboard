@@ -167,6 +167,10 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       value: String(metrics?.activeSubscriptions ?? 0),
     },
     {
+      label: t('pages.diagnostics.activePendingCommands'),
+      value: String(metrics?.activePendingCommands ?? 0),
+    },
+    {
       label: t('pages.diagnostics.displayCount'),
       value: String(displays.length),
     },
@@ -325,7 +329,48 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.diagnostics.activeSubscriptions'))}</dt><dd>${escapeHtml(String(metrics.activeSubscriptions ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.rejectedConnections'))}</dt><dd>${escapeHtml(String(metrics.rejectedConnections ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.heartbeatTimeouts'))}</dt><dd>${escapeHtml(String(metrics.heartbeatTimeouts ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.commandsReceived'))}</dt><dd>${escapeHtml(String(metrics.commandsReceived ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.commandsAccepted'))}</dt><dd>${escapeHtml(String(metrics.commandsAccepted ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.commandsRejected'))}</dt><dd>${escapeHtml(String(metrics.commandsRejected ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.commandsSucceeded'))}</dt><dd>${escapeHtml(String(metrics.commandsSucceeded ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.commandsFailed'))}</dt><dd>${escapeHtml(String(metrics.commandsFailed ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.commandsTimedOut'))}</dt><dd>${escapeHtml(String(metrics.commandsTimedOut ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.activePendingCommands'))}</dt><dd>${escapeHtml(String(metrics.activePendingCommands ?? 0))}</dd>
     </dl>`;
+
+  const recentCommands = Array.isArray(metrics?.recentCommands)
+    ? metrics.recentCommands
+    : [];
+  const recentCommandsHtml =
+    recentCommands.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noRecentCommands'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.diagnostics.widgetId'))}</th>
+          <th>${escapeHtml(t('pages.recognized.name'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.commandAction'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.commandStatus'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.commandDuration'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${recentCommands
+          .map((item) => {
+            if (!item || typeof item !== 'object') {
+              return '';
+            }
+            return `<tr>
+          <td>${escapeHtml(item.widgetId)}</td>
+          <td>${escapeHtml(item.displayId)}</td>
+          <td>${escapeHtml(item.action)}</td>
+          <td>${escapeHtml(item.status)}</td>
+          <td>${escapeHtml(`${item.durationMs}ms`)}</td>
+        </tr>`;
+          })
+          .join('\n')}
+      </tbody>
+    </table>`;
 
   const subscriptions = Array.isArray(input.realtime?.subscriptions)
     ? input.realtime.subscriptions
@@ -417,6 +462,8 @@ ${diagnosticsStyles}
     ${lightTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.realtimeMetrics'))}</h1>
     ${realtimeMetricsHtml}
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentCommands'))}</h1>
+    ${recentCommandsHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.subscriptions'))}</h1>
     ${subscriptionsHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentErrors'))}</h1>

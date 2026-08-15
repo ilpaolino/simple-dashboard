@@ -7,6 +7,14 @@ import type {
 } from '../../lib/widgets/types';
 import { resolveWidgetChrome, spanKey } from '../../lib/widgets/types';
 import type { DashboardUiCopy } from '../../lib/dashboard/types';
+import type { WidgetInteractionController } from '../realtime/WidgetInteractionController';
+
+export interface WidgetInteractionsApi {
+  readonly requestToggle: (widgetId: string) => boolean;
+  readonly onStatus: WidgetInteractionController['onStatus'];
+  readonly notifyStateConfirmed: (widgetId: string) => void;
+  readonly isPending: (widgetId: string) => boolean;
+}
 
 export interface WidgetRenderContext {
   readonly locale: string;
@@ -14,6 +22,7 @@ export interface WidgetRenderContext {
   readonly now?: Date;
   readonly runtime?: WidgetRuntimeState;
   readonly copy: DashboardUiCopy;
+  readonly interactions?: WidgetInteractionsApi;
 }
 
 export interface MountedWidget {

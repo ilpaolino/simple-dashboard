@@ -7,6 +7,9 @@ export {
   RECONNECT_MAX_MS,
   RECONNECT_FACTOR,
   REALTIME_LIGHT_CAPABILITY_ID,
+  COMMAND_TIMEOUT_MS,
+  COMMAND_DIAGNOSTICS_HISTORY_LIMIT,
+  COMMAND_ERROR_FEEDBACK_MS,
 } from './constants';
 export {
   extractReferencedDeviceIds,
@@ -15,6 +18,8 @@ export {
 export {
   isServerMessage,
   isClientMessage,
+  isWidgetActionId,
+  isCommandRejectReason,
   parseClientMessage,
   parseServerMessage,
   serializeServerMessage,
@@ -26,8 +31,21 @@ export {
   type RealtimeUiCopy,
   type RealtimeErrorCode,
   type RealtimeProtocolVersion,
+  type WidgetActionId,
+  type CommandRejectReason,
 } from './protocol';
 export { RealtimeMetrics, type RealtimeMetricsSnapshot } from './RealtimeMetrics';
+export {
+  PendingCommandManager,
+  type PendingCommandRecord,
+  type PendingCommandStatus,
+  type CommandDiagnosticEntry,
+} from './PendingCommandManager';
+export {
+  WidgetCommandHandler,
+  type WidgetActionRequest,
+  type WidgetCommandResult,
+} from './WidgetCommandHandler';
 export {
   DisplayRealtimeSession,
   type DisplayRealtimeSessionInfo,

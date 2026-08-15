@@ -124,7 +124,10 @@ function isDashboardCopy(value: unknown): boolean {
   if (
     typeof light.on !== 'string' ||
     typeof light.off !== 'string' ||
-    typeof light.unavailable !== 'string'
+    typeof light.unavailable !== 'string' ||
+    typeof light.commandInProgress !== 'string' ||
+    typeof light.commandFailed !== 'string' ||
+    typeof light.commandTimeout !== 'string'
   ) {
     return false;
   }

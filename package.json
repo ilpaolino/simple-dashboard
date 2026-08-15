@@ -1,7 +1,7 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.7.0",
-  "description": "Simple Dashboard — WebSocket realtime sync for Homey Pro wall displays",
+  "version": "0.8.0",
+  "description": "Simple Dashboard — bidirectional LightWidget commands for Homey Pro wall displays",
   "main": "app.js",
   "scripts": {
     "build": "tsc && npm run build:frontend",

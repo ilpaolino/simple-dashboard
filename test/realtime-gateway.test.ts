@@ -116,6 +116,13 @@ function mockHomeyApi(onoff = false): HomeyWebApi & {
       };
       return handle;
     },
+    async setCapabilityValue(options) {
+      if (options.capabilityId !== 'onoff') {
+        throw new Error('unsupported capability');
+      }
+      device.capabilityValues = { onoff: Boolean(options.value) };
+      listener?.(options.value);
+    },
   };
 }
 

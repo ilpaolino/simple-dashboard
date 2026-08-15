@@ -48,6 +48,7 @@ export interface HomeyCapabilitySubscription {
  * Official Homey Web API surface used by this app.
  * @see https://athombv.github.io/node-homey-api/HomeyAPI.html
  * @see https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#makeCapabilityInstance
+ * @see https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#setCapabilityValue
  */
 export interface HomeyWebApi {
   getDevices(): Promise<readonly HomeyApiDeviceDto[]>;
@@ -59,4 +60,14 @@ export interface HomeyWebApi {
     readonly onValue: (value: unknown) => void;
     readonly onDestroyed?: () => void;
   }): Promise<HomeyCapabilitySubscription | null>;
+  /**
+   * Sets a capability value via the official Homey Web API.
+   * Resolving means Homey accepted the request — not that the physical
+   * device has confirmed the new state (realtime remains source of truth).
+   */
+  setCapabilityValue(options: {
+    readonly deviceId: string;
+    readonly capabilityId: string;
+    readonly value: boolean | number | string;
+  }): Promise<void>;
 }

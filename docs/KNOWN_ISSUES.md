@@ -1,15 +1,15 @@
 # Known issues
 
-## Fixed / superseded during Milestone 6
+## Fixed / superseded during Milestone 7
 
-- **No live push.** Connected Displays receive live LightWidget `onoff` and live full dashboard configuration over WebSocket.
-- **No Homey realtime listeners.** Selective `makeCapabilityInstance('onoff')` is used via `RealtimeSubscriptionManager`.
-- **Online from HTTP lastSeen only.** Online/offline is now based on an active realtime session.
+- **No ON/OFF control from the display.** LightWidget tap toggles `onoff` via validated widget intents and Homey `setCapabilityValue`.
+- **Read-only LightWidget.** Pending overlay + realtime confirmation are implemented.
 
-## Deferred by design (Milestone 6)
+## Deferred by design (Milestone 7)
 
-- **No ON/OFF control from the display.** LightWidget remains read-only toward Homey (`setCapabilityValue` not used). The protocol is already bidirectional for a later milestone.
-- **No dim / color / color temperature.** Compatibility and subscriptions are `onoff` only.
+- **No dim / color / color temperature.** Compatibility and commands remain `onoff` only.
+- **No advanced gestures.** Architecture reserves `double-tap` / `long-press` / `swipe`; only `tap → toggle` is implemented.
+- **No offline command queue / auto-retry.** Disconnect clears pending; reconnect uses a full snapshot.
 - **No event replay.** Offline gaps are corrected by a full snapshot after reconnect only.
 - **No Socket.IO.** `ws` only, shared HTTP port.
 - **No drag & drop / advanced visual editor.** Placement is form-based with grid preview.
@@ -22,10 +22,11 @@
 - **Existing M1 `wall_display` devices** are not migrated automatically.
 - **Widget CSS is still simple** (Homey-inspired tiles, not a final visual system).
 - **Local IP trust only.** No cloud auth; clients must match a configured Display IP.
+- **Command timeout is fixed** at 4000 ms (not user-configurable).
 
 ## Runtime constraints (still true)
 
-- LAN bind, IP probe, Homey Web API, and capability realtime require the app to run **on Homey Pro**, not only in local Docker (`homey app run` without `--remote`).
+- LAN bind, IP probe, Homey Web API, capability realtime, and capability writes require the app to run **on Homey Pro**, not only in local Docker (`homey app run` without `--remote`).
 - Privileged HTTP ports (`< 1024`) may fail on Homey.
 - Some HTTP clients omit `Host`; the server still uses `requireHostHeader: false`.
 - Frontend assets must be built (`npm run build` / `npm run build:frontend`) before packaging; `assets/dashboard/*` and `settings/editor.js` are what Homey serves.
@@ -43,4 +44,4 @@
 
 ## Tests that cannot run in CI without Homey
 
-Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget runtime, realtime gateway/subscriptions/heartbeat (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONES.md](MILESTONES.md).
+Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget runtime, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONES.md](MILESTONES.md).

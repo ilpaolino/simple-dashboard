@@ -41,6 +41,10 @@ class MemoryHomeyWebApi implements HomeyWebApi {
   public async subscribeCapability(): Promise<null> {
     return null;
   }
+
+  public async setCapabilityValue(): Promise<void> {
+    // no-op for LightWidget runtime tests
+  }
 }
 
 function device(
@@ -278,17 +282,19 @@ describe('LightWidget snapshot semantics', () => {
     }
   });
 
-  it('uses official makeCapabilityInstance only in the Homey Web API client', () => {
+  it('uses official makeCapabilityInstance and setCapabilityValue in the Homey Web API client', () => {
     const client = fs.readFileSync(
       path.join(process.cwd(), 'lib/homey/createHomeyWebApi.ts'),
       'utf8',
     );
     assert.match(client, /makeCapabilityInstance/);
+    assert.match(client, /setCapabilityValue/);
 
     const lightRuntime = fs.readFileSync(
       path.join(process.cwd(), 'lib/widgets/light/runtime.ts'),
       'utf8',
     );
     assert.doesNotMatch(lightRuntime, /makeCapabilityInstance/);
+    assert.doesNotMatch(lightRuntime, /setCapabilityValue/);
   });
 });

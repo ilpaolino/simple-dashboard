@@ -40,6 +40,10 @@ class MemoryHomeyWebApi implements HomeyWebApi {
   public async subscribeCapability(): Promise<null> {
     return null;
   }
+
+  public async setCapabilityValue(): Promise<void> {
+    // no-op for repository listing tests
+  }
 }
 
 function lightDevice(

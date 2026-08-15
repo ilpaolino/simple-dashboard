@@ -25,12 +25,14 @@ import { extractReferencedDeviceIds } from './extractReferencedDeviceIds';
 import {
   DisplayRealtimeSession,
 } from './DisplayRealtimeSession';
+import { PendingCommandManager } from './PendingCommandManager';
 import { RealtimeMetrics } from './RealtimeMetrics';
 import { RealtimeSessionManager } from './RealtimeSessionManager';
 import {
   RealtimeSubscriptionManager,
   type HomeyCapabilitySubscriber,
 } from './RealtimeSubscriptionManager';
+import { WidgetCommandHandler } from './WidgetCommandHandler';
 import type {
   DashboardSnapshotPayload,
   RealtimeUiCopy,
@@ -48,7 +50,7 @@ export interface RealtimeGatewayOptions {
 
 /**
  * Owns WebSocket upgrade, DisplaySession binding, Homey subscriptions,
- * selective event routing, and live configuration push.
+ * selective event routing, widget commands, and live configuration push.
  */
 export class RealtimeGateway {
   private readonly registry: DisplayRegistry;
@@ -61,6 +63,8 @@ export class RealtimeGateway {
   public readonly metrics = new RealtimeMetrics();
   private readonly sessions: RealtimeSessionManager;
   private readonly subscriptions: RealtimeSubscriptionManager;
+  private readonly pendingCommands: PendingCommandManager;
+  private readonly commandHandler: WidgetCommandHandler;
 
   private wss: WebSocketServer | null = null;
   private httpServer: HttpServerNode | null = null;
@@ -76,6 +80,31 @@ export class RealtimeGateway {
     this.logger = options.logger;
     this.translate = options.translate;
     this.getLanguage = options.getLanguage;
+
+    this.pendingCommands = new PendingCommandManager({
+      onTimeout: (command) => {
+        this.metrics.recordCommandTimedOut();
+        this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+        this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+        this.logger.warn('Command timed out', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-timeout',
+          requestId: command.requestId,
+        });
+      },
+    });
+
+    this.commandHandler = new WidgetCommandHandler({
+      registry: this.registry,
+      deviceRepository: this.deviceRepository,
+      pending: this.pendingCommands,
+      metrics: this.metrics,
+      logger: this.logger,
+    });
 
     this.sessions = new RealtimeSessionManager({
       metrics: this.metrics,
@@ -93,6 +122,10 @@ export class RealtimeGateway {
       onClientMessage: (session, message) => {
         if (message.type === 'heartbeat-ack') {
           this.registry.markRealtimeHeartbeat(session.displayId);
+          return;
+        }
+        if (message.type === 'widget-action') {
+          void this.handleWidgetAction(session, message);
         }
       },
     });
@@ -115,6 +148,8 @@ export class RealtimeGateway {
   }
 
   public getMetrics() {
+    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
     return this.metrics.snapshot();
   }
 
@@ -157,6 +192,7 @@ export class RealtimeGateway {
     }
 
     this.sessions.closeAll(1001, 'server_restart');
+    this.pendingCommands.destroy();
 
     if (this.wss) {
       try {
@@ -225,6 +261,50 @@ export class RealtimeGateway {
     this.sessions.closeDisplay(displayId, 1001, 'display_removed');
     await this.subscriptions.removeDisplay(displayId);
     this.registry.markRealtimeDisconnected(displayId);
+  }
+
+  private async handleWidgetAction(
+    session: DisplayRealtimeSession,
+    message: {
+      readonly widgetId: string;
+      readonly action: 'toggle';
+      readonly requestId: string;
+    },
+  ): Promise<void> {
+    if (!session.isOpen()) {
+      return;
+    }
+
+    const result = await this.commandHandler.handle({
+      displayId: session.displayId,
+      widgetId: message.widgetId,
+      action: message.action,
+      requestId: message.requestId,
+    });
+
+    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+
+    if (!session.isOpen()) {
+      // Socket dropped while Homey API was in flight — drop pending, no replay.
+      this.pendingCommands.cancel(message.requestId);
+      this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+      return;
+    }
+
+    if (!result.ok) {
+      session.send({
+        type: 'command-rejected',
+        requestId: message.requestId,
+        reason: result.reason,
+      });
+      return;
+    }
+
+    session.send({
+      type: 'command-accepted',
+      requestId: message.requestId,
+    });
   }
 
   private async handleUpgrade(
@@ -362,6 +442,16 @@ export class RealtimeGateway {
   private async handleSessionClosed(
     session: DisplayRealtimeSession,
   ): Promise<void> {
+    const cancelled = this.pendingCommands.cancelForDisplay(session.displayId);
+    if (cancelled.length > 0) {
+      this.logger.info('Cleared pending commands on socket close', {
+        displayId: session.displayId,
+        count: cancelled.length,
+      });
+      this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+      this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+    }
+
     await this.subscriptions.removeDisplay(session.displayId);
     this.registry.markRealtimeDisconnected(session.displayId);
   }
@@ -370,6 +460,9 @@ export class RealtimeGateway {
     deviceId: string,
     value: unknown,
   ): Promise<void> {
+    const on = parseOnoff(value);
+    this.resolvePendingForCapability(deviceId, on);
+
     const displayIds = this.subscriptions.getDisplayIdsForDevice(deviceId);
     if (displayIds.length === 0) {
       return;
@@ -397,7 +490,6 @@ export class RealtimeGateway {
         }
 
         try {
-          const on = parseOnoff(value);
           const resolved = device
             ? resolveLightWidgetRuntimeFromSnapshot({
                 widgetId: widget.id,
@@ -429,7 +521,68 @@ export class RealtimeGateway {
     }
   }
 
+  /**
+   * Homey realtime is the only confirmation of success.
+   *
+   * Mismatch policy (deterministic): if a pending command expected ON and Homey
+   * reports OFF (or the reverse), clear pending, adopt Homey's value via the
+   * normal widget-state path, and count the command as failed — no auto-retry.
+   */
+  private resolvePendingForCapability(
+    deviceId: string,
+    on: boolean | null,
+  ): void {
+    const pending = this.pendingCommands.findByDeviceId(deviceId);
+    if (pending.length === 0 || on === null) {
+      return;
+    }
+
+    for (const command of pending) {
+      if (command.expectedValue === on) {
+        this.pendingCommands.resolveSuccess(command.requestId);
+        this.metrics.recordCommandSucceeded();
+        this.logger.info('Command confirmation received', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+          value: on,
+        });
+      } else {
+        this.pendingCommands.resolveMismatch(command.requestId);
+        this.metrics.recordCommandFailed();
+        this.logger.warn('Command pending cleared by mismatched Homey state', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+          expected: command.expectedValue,
+          actual: on,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-rejected',
+          requestId: command.requestId,
+          reason: 'unexpected_state',
+        });
+      }
+    }
+
+    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+  }
+
   private async handleDeviceRemoved(deviceId: string): Promise<void> {
+    const pending = this.pendingCommands.findByDeviceId(deviceId);
+    for (const command of pending) {
+      this.pendingCommands.resolveFailed(command.requestId);
+      this.metrics.recordCommandFailed();
+      this.sessions.sendToDisplay(command.displayId, {
+        type: 'command-rejected',
+        requestId: command.requestId,
+        reason: 'device_missing',
+      });
+    }
+    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+
     const displayIds = this.subscriptions.getDisplayIdsForDevice(deviceId);
     for (const displayId of displayIds) {
       const entry = this.registry.getById(displayId);

@@ -471,6 +471,9 @@ describe('DisplayRequestHandler', () => {
       async subscribeCapability() {
         return null;
       },
+      async setCapabilityValue() {
+        // unused in HTTP handler tests
+      },
     });
 
     const handler = new DisplayRequestHandler({

@@ -22,4 +22,8 @@ export const lightWidgetDefinition: WidgetDefinition<LightWidgetConfig> = {
   allowedSpans: LIGHT_SPANS,
   defaultConfig: DEFAULT_LIGHT_CONFIG,
   validateConfig: isLightWidgetConfig,
+  /** Milestone 7: single tap toggles onoff. Further gestures are reserved. */
+  interactions: {
+    tap: 'toggle',
+  },
 };

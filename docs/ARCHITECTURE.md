@@ -49,14 +49,14 @@ Same trust model as HTTP: client IP → `DisplayRegistry.findByIp`. Unknown IPs 
 
 ### Protocol (discriminated unions)
 
-Server → client: `dashboard-snapshot` | `dashboard-configuration` | `widget-state` | `heartbeat` | `error`  
-Client → server: `client-ready` | `heartbeat-ack`
+Server → client: `dashboard-snapshot` | `dashboard-configuration` | `widget-state` | `heartbeat` | `command-accepted` | `command-rejected` | `command-timeout` | `error`  
+Client → server: `client-ready` | `heartbeat-ack` | `widget-action`
 
 `REALTIME_PROTOCOL_VERSION = 1` is embedded in snapshots.
 
 ### Snapshot & reconnect
 
-After open + Display binding, the server sends a **full snapshot** (configuration + widget runtime states). On reconnect there is **no event replay** — a new snapshot replaces frontend state. The connection overlay stays until the snapshot is applied.
+After open + Display binding, the server sends a **full snapshot** (configuration + widget runtime states). On reconnect there is **no event replay** — a new snapshot replaces frontend state. The connection overlay stays until the snapshot is applied. Pending commands are cleared on disconnect and never replayed.
 
 ### Live configuration sequence
 
@@ -87,13 +87,57 @@ A Display is **online** only while it has an active realtime WebSocket session. 
 
 Server sends `heartbeat` every 20s; client replies `heartbeat-ack`. Missing ack within 45s closes the zombie socket. Timers are cleared on close / port restart / app uninit.
 
+## Milestone 7 — Bidirectional commands & interactive LightWidget
+
+```text
+LightWidget tap
+        │
+        ▼
+WidgetInteractionController  (gesture → widget intent)
+        │  widget-action { widgetId, action: 'toggle', requestId }
+        ▼
+RealtimeGateway
+        │
+        ▼
+WidgetCommandHandler
+        │  validate Display session + widget ownership + type + action
+        │  resolve deviceId from dashboard config (never from client)
+        │  derive target from Homey current onoff
+        │
+        ├─ PendingCommandManager (timeout 4000 ms)
+        └─ HomeyDeviceRepository.setCapabilityValue('onoff', target)
+                │
+                ▼
+Homey realtime onoff event
+        │
+        ▼
+confirm if value === expected → clear pending + widget-state
+mismatch → clear pending + widget-state + command-rejected(unexpected_state)
+timeout → command-timeout (keep previous real state)
+```
+
+### Security model
+
+The browser may only send **widget intents**. It cannot choose `deviceId`, capability, or value. The backend resolves:
+
+```text
+widgetId → current Display dashboard → LightWidget.config.deviceId → allowed action
+```
+
+### Pending vs real state
+
+The tile always paints Homey-confirmed `on` / `off` / `unavailable`. Pending and error are **overlays** (`widget-light--state-pending` / `widget-light--state-error`), never a substitute for real state.
+
+### Concurrent commands
+
+One pending command per Display+widget. Further taps are ignored client-side and rejected server-side (`already_pending`). No queue, no offline buffer, no auto-retry.
+
 ### Frontend
 
-- `RealtimeClient` connects to `ws(s)://host/realtime`.
-- Global `ConnectionOverlay` for lost connection / reconnecting.
-- `DashboardRenderer.updateWidgetState` patches LightWidget without full rebuild.
-- `applyConfiguration` replaces the full widget set atomically (DateTime timers cleaned up).
+- `RealtimeClient` owns the socket and wires `WidgetInteractionController`.
+- `LightWidget` uses the full tile as the tap target (`role="button"`).
+- Gesture map is extensible (`tap` today; `double-tap` / `long-press` / `swipe` reserved).
 
 ### What is intentionally not here
 
-No ON/OFF control from the display, no dimmer/color, no Flow, no notifications, no cameras, no Socket.IO, no polling of Homey state.
+No dimmer/color/temperature, no long-press/double-tap, no popups, no Flow, no notifications, no cameras, no Socket.IO, no polling of Homey state.

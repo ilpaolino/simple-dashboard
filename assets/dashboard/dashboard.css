@@ -168,6 +168,14 @@
   background: var(--light-tile-off);
   color: var(--widget-fg);
   box-shadow: inset 0 0 0 1px var(--light-tile-border);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: relative;
+}
+.widget-light[data-interactive=false] {
+  cursor: default;
 }
 .widget-light__status {
   margin: 0;
@@ -191,6 +199,30 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+.widget-light__feedback {
+  margin: 0;
+  font-family: var(--widget-font-family);
+  font-size: calc(var(--cell-size) * 0.08);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--widget-fg-muted);
+}
+.widget-light__pending {
+  position: absolute;
+  top: calc(var(--cell-size) * 0.08);
+  right: calc(var(--cell-size) * 0.08);
+  width: calc(var(--cell-size) * 0.12);
+  height: calc(var(--cell-size) * 0.12);
+  border-radius: 50%;
+  border: 2px solid var(--widget-fg-muted);
+  border-top-color: var(--light-on-accent);
+  animation: widget-light-spin 0.8s linear infinite;
+}
+@keyframes widget-light-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .widget-light--state-on {
   background: var(--light-tile-on);
   box-shadow: inset 0 0 0 1px var(--light-tile-on-border);
@@ -208,6 +240,16 @@
 .widget-light--state-unavailable .widget-light__status,
 .widget-light--state-unavailable .widget-light__name {
   color: var(--widget-fg-muted);
+}
+.widget-light--state-pending {
+  box-shadow: inset 0 0 0 1px var(--light-on-accent);
+}
+.widget-light--state-pending .widget-light__feedback {
+  color: var(--light-on-accent);
+}
+.widget-light--state-error .widget-light__feedback {
+  color: var(--widget-fg);
+  opacity: 0.9;
 }
 .widget--failed {
   display: flex;

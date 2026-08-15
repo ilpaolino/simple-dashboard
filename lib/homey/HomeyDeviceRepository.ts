@@ -58,6 +58,18 @@ export class HomeyDeviceRepository {
     return this.api.subscribeCapability(options);
   }
 
+  /**
+   * Official Homey Web API capability write.
+   * @see https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#setCapabilityValue
+   */
+  public async setCapabilityValue(options: {
+    readonly deviceId: string;
+    readonly capabilityId: string;
+    readonly value: boolean | number | string;
+  }): Promise<void> {
+    await this.api.setCapabilityValue(options);
+  }
+
   private async loadZones(): Promise<Readonly<Record<string, HomeyApiZoneDto>>> {
     try {
       return await this.api.getZones();
@@ -105,5 +117,9 @@ export class UnavailableHomeyWebApi implements HomeyWebApi {
 
   public async subscribeCapability(): Promise<null> {
     return null;
+  }
+
+  public async setCapabilityValue(): Promise<never> {
+    throw new Error('Homey Web API is not available');
   }
 }

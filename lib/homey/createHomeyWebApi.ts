@@ -21,6 +21,10 @@ type HomeyLiveDevice = {
     capabilityId: string,
     listener: (value: unknown) => void,
   ): HomeyCapabilityInstance;
+  setCapabilityValue(opts: {
+    capabilityId: string;
+    value: boolean | number | string;
+  }): Promise<unknown>;
 };
 
 type HomeyApiSdk = {
@@ -40,6 +44,7 @@ type HomeyApiSdk = {
  * @see https://apps.developer.homey.app/the-basics/app/permissions
  * @see https://athombv.github.io/node-homey-api/HomeyAPI.html#createAppAPI
  * @see https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#makeCapabilityInstance
+ * @see https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#setCapabilityValue
  */
 export async function createHomeyWebApi(homey: unknown): Promise<HomeyWebApi> {
   const api = (await HomeyAPI.createAppAPI({
@@ -107,5 +112,26 @@ class HomeyApiWebClient implements HomeyWebApi {
         instance.destroy();
       },
     };
+  }
+
+  public async setCapabilityValue(options: {
+    readonly deviceId: string;
+    readonly capabilityId: string;
+    readonly value: boolean | number | string;
+  }): Promise<void> {
+    const payload = await this.api.devices.getDevice({ id: options.deviceId });
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Homey device not found');
+    }
+
+    const device = payload as HomeyLiveDevice;
+    if (typeof device.setCapabilityValue !== 'function') {
+      throw new Error('Homey setCapabilityValue is unavailable');
+    }
+
+    await device.setCapabilityValue({
+      capabilityId: options.capabilityId,
+      value: options.value,
+    });
   }
 }

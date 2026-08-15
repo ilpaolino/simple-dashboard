@@ -18,7 +18,11 @@ import {
   createFrontendWidgetRegistry,
   type FrontendWidgetRegistry,
 } from '../widgets/registry/WidgetRegistry';
-import { placementGridArea, type MountedWidget } from '../widgets/types';
+import {
+  placementGridArea,
+  type MountedWidget,
+  type WidgetInteractionsApi,
+} from '../widgets/types';
 
 export interface DashboardConfigurationView {
   readonly displayId: string;
@@ -32,6 +36,7 @@ export interface DashboardConfigurationView {
   readonly locale: string;
   readonly emptyState: DashboardEmptyStateCopy;
   readonly copy?: DashboardUiCopy;
+  readonly interactions?: WidgetInteractionsApi;
 }
 
 /**
@@ -45,6 +50,7 @@ export class DashboardRenderer {
   private theme: DashboardTheme = 'dark';
   private widgetRuntime: Record<string, WidgetRuntimeState> = {};
   private copy: DashboardUiCopy = defaultDashboardUiCopy();
+  private interactions: WidgetInteractionsApi | undefined;
 
   public constructor(
     root: HTMLElement,
@@ -54,12 +60,19 @@ export class DashboardRenderer {
     this.registry = registry;
   }
 
+  public setInteractions(interactions: WidgetInteractionsApi | undefined): void {
+    this.interactions = interactions;
+  }
+
   public applyConfiguration(config: DashboardConfigurationView): void {
     this.destroyMounted();
     this.root.replaceChildren();
     this.applyTheme(resolveDashboardTheme(config.theme));
     this.widgetRuntime = { ...(config.widgetRuntime ?? {}) };
     this.copy = config.copy ?? defaultDashboardUiCopy();
+    if (config.interactions) {
+      this.interactions = config.interactions;
+    }
 
     if (config.widgets.length === 0) {
       this.renderEmptyState(config);
@@ -132,6 +145,7 @@ export class DashboardRenderer {
         theme: this.theme,
         runtime: this.widgetRuntime[widget.id],
         copy: this.copy,
+        interactions: this.interactions,
       });
       this.mounted.push(mounted);
       return mounted.element;

@@ -100,6 +100,9 @@ describe('display pages', () => {
             on: 'On',
             off: 'Off',
             unavailable: 'Device unavailable',
+            commandInProgress: 'Command in progress',
+            commandFailed: 'Command failed',
+            commandTimeout: 'Command timeout',
           },
           widgetFailed: 'Widget failed',
           realtime: {

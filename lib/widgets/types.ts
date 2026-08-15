@@ -116,6 +116,13 @@ export interface WidgetDefinition<TConfig> {
   readonly allowedSpans: readonly WidgetSpan[];
   readonly defaultConfig: TConfig;
   readonly validateConfig: (config: unknown) => config is TConfig;
+  /**
+   * Optional gesture → action map. Extensible for future interactions
+   * (double-tap, long-press, swipe) without changing the registry shape.
+   */
+  readonly interactions?: Readonly<
+    Partial<Record<'tap' | 'double-tap' | 'long-press' | 'swipe', string>>
+  >;
 }
 
 export type PlacementValidationError =

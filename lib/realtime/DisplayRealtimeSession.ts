@@ -7,6 +7,7 @@ import {
 import type { RealtimeMetrics } from './RealtimeMetrics';
 import {
   serializeServerMessage,
+  isWidgetActionId,
   type ClientMessage,
   type ServerMessage,
 } from './protocol';
@@ -187,6 +188,32 @@ export class DisplayRealtimeSession {
 
     if (type === 'client-ready') {
       this.onClientMessage(this, { type: 'client-ready' });
+      return;
+    }
+
+    if (type === 'widget-action') {
+      const candidate = parsed as {
+        readonly widgetId?: unknown;
+        readonly action?: unknown;
+        readonly requestId?: unknown;
+      };
+      if (
+        typeof candidate.widgetId !== 'string' ||
+        candidate.widgetId.trim() === '' ||
+        !isWidgetActionId(candidate.action) ||
+        typeof candidate.requestId !== 'string' ||
+        candidate.requestId.trim() === ''
+      ) {
+        this.onProtocolError(this, 'invalid_widget_action');
+        return;
+      }
+
+      this.onClientMessage(this, {
+        type: 'widget-action',
+        widgetId: candidate.widgetId.trim(),
+        action: candidate.action,
+        requestId: candidate.requestId.trim(),
+      });
       return;
     }
 

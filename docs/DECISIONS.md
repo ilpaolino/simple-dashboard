@@ -1,5 +1,67 @@
 # Decisions
 
+Architectural choices for Milestone 7. Earlier decisions remain in force below and in prior milestone docs.
+
+## Commands use widget intents
+
+**Choice:** The client sends `{ type: 'widget-action', widgetId, action, requestId }`. It never sends Homey `deviceId`, capability id, or target value.
+
+**Why:** A wall browser must not be able to command arbitrary Homey devices. The backend resolves `widgetId` against the Display’s current dashboard configuration and allowed actions.
+
+## Homey confirms final state
+
+**Choice:** Visual success is only applied when Homey realtime delivers a matching `onoff` update. `command-accepted` means “validated and sent to Homey”, not “device confirmed”.
+
+**Why:** Homey remains source of truth. API acceptance and WebSocket send success are not sufficient.
+
+**API used:** `Device#setCapabilityValue({ capabilityId: 'onoff', value })` via `homey-api` / `HomeyAPI.createAppAPI`.
+
+**Refs:** [Device#setCapabilityValue](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#setCapabilityValue), [Device#makeCapabilityInstance](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#makeCapabilityInstance).
+
+## Pending is separate from real state
+
+**Choice:** LightWidget keeps painting the last Homey-confirmed ON/OFF and overlays pending/error feedback.
+
+**Why:** Optimistic UI would lie about device state on slow or failed devices. Pending is a command lifecycle state, not a capability value.
+
+## No concurrent commands per widget
+
+**Choice:** While a widget is pending, further taps are ignored. The backend also rejects `already_pending`.
+
+**Why:** Prevents toggle races and duplicate Homey writes without introducing a command queue.
+
+## No offline command queue
+
+**Choice:** Socket loss clears pending on both sides. Reconnect uses a full snapshot. Commands are not buffered or replayed.
+
+**Why:** Avoids unbounded queues and surprising delayed toggles after reconnection.
+
+## Interaction architecture is extensible
+
+**Choice:** `WidgetDefinition.interactions` maps gestures (`tap` | `double-tap` | `long-press` | `swipe`) to action ids. Milestone 7 only implements `tap → toggle` for LightWidget.
+
+**Why:** Future gestures should not require rewriting the WebSocket envelope or the interaction controller.
+
+## Command timeout is fixed at 4000 ms
+
+**Choice:** `COMMAND_TIMEOUT_MS = 4000`. Not user-configurable in this milestone.
+
+**Why:** Fast enough for wall UX, long enough for typical Homey/device round-trips. Keeps settings surface small.
+
+## Realtime mismatch clears pending
+
+**Choice:** If Homey reports an `onoff` value different from the pending target, adopt Homey’s value, clear pending, send `command-rejected` with `unexpected_state`, and do not retry.
+
+**Why:** Deterministic; Homey always wins; avoids leaving the UI stuck in pending when another actor changed the light.
+
+## Toggle target is server-derived
+
+**Choice:** Backend reads current Homey `onoff` and sets the opposite. The client cannot impose the target.
+
+**Why:** Prevents stale-client desync and forged capability values.
+
+---
+
 Architectural choices for Milestone 6. Earlier decisions remain in force below and in prior milestone docs.
 
 ## WebSocket over SSE
@@ -98,7 +160,7 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 **Permission:** `homey:manager:api` is required. It grants ManagerApi / Homey Web API access so this app can read devices that it does not own. Implications: stricter App Store review, not allowed on Homey Cloud (this app is already `platforms: ["local"]`), and the app is in the Tools category as Homey recommends for this permission. No other permissions are requested.
 
-**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`, and (from Milestone 6) `Device#makeCapabilityInstance` / `DeviceCapability#destroy` for selective realtime. `setCapabilityValue` is still not used for LightWidget control.
+**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`, `Device#makeCapabilityInstance` / `DeviceCapability#destroy` for selective realtime, and (from Milestone 7) `Device#setCapabilityValue` for LightWidget toggle.
 
 **Package:** `homey-api@3.16.1` — last stable line that supports Node `>=16`. `3.17+` requires Node 24, which is incompatible with Homey `>=12.9.0` (Node 22).
 
@@ -118,9 +180,7 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 ## Read-only first
 
-**Choice:** LightWidget displays name + ON/OFF. It does not call `setCapabilityValue`.
-
-**Why:** Milestone scope is the data layer and a first bound widget. Control, dim, and color come later on the same `deviceId` reference.
+**Superseded by Milestone 7:** LightWidget can toggle `onoff` via validated widget intents. Dim/color remain deferred.
 
 ## Snapshot plus realtime
 
@@ -136,7 +196,7 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 ## Homey-inspired visual language
 
-**Choice:** LightWidget is a simple rounded tile with a clear ON/OFF/unavailable hierarchy. CSS classes `widget-light--state-on|off|unavailable` are derived from `LightVisualState`. No proprietary Homey assets or undocumented internals are copied.
+**Choice:** LightWidget is a simple rounded tile with a clear ON/OFF/unavailable hierarchy. CSS classes `widget-light--state-on|off|unavailable|pending|error` are derived from visual + command status. No proprietary Homey assets or undocumented internals are copied.
 
 **Why:** The tile should feel at home next to Homey without pixel-perfect cloning.
 

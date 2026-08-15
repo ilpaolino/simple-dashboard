@@ -9,15 +9,21 @@ import {
 import {
   parseServerMessage,
   serializeClientMessage,
+  type ClientMessage,
   type DashboardSnapshotPayload,
   type ServerMessage,
 } from '../../lib/realtime/protocol';
 import { ConnectionOverlay } from './ConnectionOverlay';
+import {
+  WidgetInteractionController,
+  type WidgetActionDispatch,
+} from './WidgetInteractionController';
 
 export interface RealtimeClientOptions {
   readonly renderer: DashboardRenderer;
   readonly copy: DashboardUiCopy;
   readonly overlay?: ConnectionOverlay;
+  readonly interactions?: WidgetInteractionController;
 }
 
 /**
@@ -29,6 +35,7 @@ export class RealtimeClient {
   private readonly renderer: DashboardRenderer;
   private copy: DashboardUiCopy;
   private readonly overlay: ConnectionOverlay;
+  private readonly interactions: WidgetInteractionController;
 
   private socket: WebSocket | null = null;
   private reconnectAttempt = 0;
@@ -48,6 +55,16 @@ export class RealtimeClient {
     this.renderer = options.renderer;
     this.copy = options.copy;
     this.overlay = options.overlay ?? new ConnectionOverlay();
+    this.interactions =
+      options.interactions ??
+      new WidgetInteractionController({
+        sendAction: (message) => this.sendWidgetAction(message),
+      });
+    this.bindInteractions();
+  }
+
+  public getInteractionController(): WidgetInteractionController {
+    return this.interactions;
   }
 
   public start(): void {
@@ -61,6 +78,7 @@ export class RealtimeClient {
   public destroy(): void {
     this.destroyed = true;
     this.clearReconnectTimer();
+    this.interactions.destroy();
     if (this.socket) {
       this.socket.onopen = null;
       this.socket.onclose = null;
@@ -74,6 +92,23 @@ export class RealtimeClient {
       this.socket = null;
     }
     this.overlay.destroy();
+  }
+
+  private bindInteractions(): void {
+    this.renderer.setInteractions({
+      requestToggle: (widgetId) =>
+        this.interactions.handleGesture({
+          widgetId,
+          gesture: 'tap',
+          action: 'toggle',
+          interactive: true,
+        }),
+      onStatus: (widgetId, listener) =>
+        this.interactions.onStatus(widgetId, listener),
+      notifyStateConfirmed: (widgetId) =>
+        this.interactions.handleWidgetStateConfirmed(widgetId),
+      isPending: (widgetId) => this.interactions.isPending(widgetId),
+    });
   }
 
   private connect(): void {
@@ -105,6 +140,7 @@ export class RealtimeClient {
 
     socket.addEventListener('close', () => {
       this.socket = null;
+      this.interactions.handleDisconnect();
       if (!this.destroyed) {
         this.overlay.show(this.copy.realtime);
         this.scheduleReconnect();
@@ -130,6 +166,18 @@ export class RealtimeClient {
           break;
         case 'widget-state':
           this.renderer.updateWidgetState(message.widgetId, message.state);
+          break;
+        case 'command-accepted':
+          this.interactions.handleCommandAccepted(message.requestId);
+          break;
+        case 'command-rejected':
+          this.interactions.handleCommandRejected(
+            message.requestId,
+            message.reason,
+          );
+          break;
+        case 'command-timeout':
+          this.interactions.handleCommandTimeout(message.requestId);
           break;
         case 'error':
           // Keep overlay / session; isolated protocol errors must not crash UI.
@@ -196,15 +244,21 @@ export class RealtimeClient {
     });
   }
 
-  private send(
-    message:
-      | { readonly type: 'heartbeat-ack'; readonly at: string }
-      | { readonly type: 'client-ready' },
-  ): void {
+  private sendWidgetAction(message: WidgetActionDispatch): boolean {
+    return this.send({
+      type: 'widget-action',
+      widgetId: message.widgetId,
+      action: message.action,
+      requestId: message.requestId,
+    });
+  }
+
+  private send(message: ClientMessage): boolean {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      return;
+      return false;
     }
     this.socket.send(serializeClientMessage(message));
+    return true;
   }
 
   private scheduleReconnect(): void {

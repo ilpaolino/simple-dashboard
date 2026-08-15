@@ -48,6 +48,9 @@ export interface DashboardUiCopy {
     readonly on: string;
     readonly off: string;
     readonly unavailable: string;
+    readonly commandInProgress: string;
+    readonly commandFailed: string;
+    readonly commandTimeout: string;
   };
   readonly widgetFailed: string;
   readonly realtime: {

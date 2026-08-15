@@ -388,10 +388,32 @@ class FakeElement {
   public className = '';
   public textContent = '';
   public dataset: Record<string, string> = {};
+  public hidden = false;
+  public tabIndex = -1;
   private readonly attrs = new Map<string, string>();
+  private readonly listeners = new Map<string, Set<(event: Event) => void>>();
 
   public setAttribute(name: string, value: string): void {
     this.attrs.set(name, value);
+  }
+
+  public addEventListener(
+    type: string,
+    listener: (event: Event) => void,
+  ): void {
+    let set = this.listeners.get(type);
+    if (!set) {
+      set = new Set();
+      this.listeners.set(type, set);
+    }
+    set.add(listener);
+  }
+
+  public removeEventListener(
+    type: string,
+    listener: (event: Event) => void,
+  ): void {
+    this.listeners.get(type)?.delete(listener);
   }
 
   public appendChild(child: FakeElement): FakeElement {
