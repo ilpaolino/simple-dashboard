@@ -22,6 +22,7 @@ import { createHomeyWebApi } from './lib/homey/createHomeyWebApi';
 import type { CompatibleDeviceOption } from './lib/homey/types';
 import { validateLightWidgetBinding } from './lib/widgets/light/runtime';
 import type { LightBindingError } from './lib/widgets/light/types';
+import { RealtimeGateway } from './lib/realtime';
 
 import {
   createDefaultWidgetRegistry,
@@ -35,7 +36,8 @@ import {
 sourceMapSupport.install();
 
 /**
- * Homey App entry point — wires lifecycle, HTTP routing, DisplayRegistry, and editor API.
+ * Homey App entry point — wires lifecycle, HTTP routing, DisplayRegistry,
+ * Homey Device Repository, realtime WebSocket gateway, and editor API.
  * @see https://apps-sdk-v3.developer.homey.app/App.html
  */
 class WelcomeWallApp extends Homey.App {
@@ -48,11 +50,24 @@ class WelcomeWallApp extends Homey.App {
   public readonly displayRegistry = new DisplayRegistry();
   public readonly diagnosticsLog = new DiagnosticsLog();
   private deviceRepository!: HomeyDeviceRepository;
+  private realtimeGateway!: RealtimeGateway;
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
     this.settingsManager = new SettingsManager(this.homey.settings, this.logger);
     this.deviceRepository = await this.initDeviceRepository();
+
+    this.realtimeGateway = new RealtimeGateway({
+      registry: this.displayRegistry,
+      deviceRepository: this.deviceRepository,
+      capabilitySubscriber: {
+        subscribeCapability: (options) =>
+          this.deviceRepository.subscribeCapability(options),
+      },
+      logger: this.logger,
+      translate: (key: string) => this.homey.__(key),
+      getLanguage: () => this.homey.i18n.getLanguage(),
+    });
 
     const adapters = createDefaultAdapterRegistry();
     this.requestHandler = new DisplayRequestHandler({
@@ -67,11 +82,23 @@ class WelcomeWallApp extends Homey.App {
       getPort: () => this.httpServer.getPort(),
       getUptimeSeconds: () => this.httpServer.getUptimeSeconds(),
       deviceRepository: this.deviceRepository,
+      getRealtimeDiagnostics: () => ({
+        active: this.realtimeGateway.isActive(),
+        metrics: this.realtimeGateway.getMetrics(),
+        sessions: this.realtimeGateway.listSessions(),
+        subscriptions: this.realtimeGateway.listSubscriptions(),
+      }),
     });
 
     this.httpServer = new HttpServer({
       logger: this.logger,
       requestHandler: (info) => this.requestHandler.handle(info),
+      onListening: (server) => {
+        this.realtimeGateway.attach(server);
+      },
+      onBeforeClose: async () => {
+        this.realtimeGateway.detach();
+      },
     });
 
     this.settingsManager.ensureDefaults();
@@ -97,6 +124,7 @@ class WelcomeWallApp extends Homey.App {
 
     this.logger.info('Simple Dashboard app initialized', {
       diagnosticsEnabled: this.settingsManager.isDiagnosticsEnabled(),
+      realtime: this.realtimeGateway.isActive(),
     });
   }
 
@@ -110,6 +138,7 @@ class WelcomeWallApp extends Homey.App {
   }
 
   public unregisterDisplay(displayId: string): void {
+    void this.realtimeGateway.notifyDisplayRemoved(displayId);
     this.displayRegistry.remove(displayId);
     this.logger.info('Display removed from runtime registry', { displayId });
   }
@@ -270,6 +299,9 @@ class WelcomeWallApp extends Homey.App {
       this.displayRegistry.markDashboardError(displayId, null);
     }
 
+    // validate → save → update registry → sync subscriptions → push complete config
+    await this.realtimeGateway.notifyDashboardConfigurationChanged(displayId);
+
     this.logger.info('Dashboard configuration saved', {
       displayId,
       widgetCount: parsed.configuration.widgets.length,
@@ -280,6 +312,12 @@ class WelcomeWallApp extends Homey.App {
   }
 
   public async onUninit(): Promise<void> {
+    try {
+      await this.realtimeGateway.destroy();
+    } catch (error) {
+      this.logger.error('Realtime gateway cleanup failed during app uninit', error);
+    }
+
     try {
       await this.httpServer.stop();
     } catch (error) {

@@ -1,6 +1,5 @@
 import { createDisplaySession, touchDisplaySession } from './DisplaySession';
 import { normalizeClientIp } from './ipNormalize';
-import { resolveOnlineStatus } from './onlineStatus';
 import type {
   DisplaySession,
   DisplaySnapshot,
@@ -22,6 +21,13 @@ function emptyRuntime(): RegisteredDisplay['runtime'] {
     lastDashboardErrorKey: null,
     lastDashboardLoadedAt: null,
     lastLightWidgetDiagnostics: [],
+    realtimeConnectionId: null,
+    realtimeConnectedAt: null,
+    realtimeRemoteAddress: null,
+    realtimeLastHeartbeatAt: null,
+    realtimeSubscribedDeviceCount: 0,
+    realtimeReconnectCount: 0,
+    realtimeSeen: false,
   };
 }
 
@@ -170,16 +176,80 @@ export class DisplayRegistry {
     entry.runtime.lastLightWidgetDiagnostics = diagnostics;
   }
 
+  public markRealtimeConnected(
+    displayId: string,
+    info: {
+      readonly connectionId: string;
+      readonly connectedAt: Date;
+      readonly remoteAddress: string;
+    },
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    // Count a reconnect when this display already had a realtime session in-process.
+    if (entry.runtime.realtimeSeen) {
+      entry.runtime.realtimeReconnectCount += 1;
+    }
+
+    entry.runtime.realtimeSeen = true;
+    entry.runtime.realtimeConnectionId = info.connectionId;
+    entry.runtime.realtimeConnectedAt = info.connectedAt;
+    entry.runtime.realtimeRemoteAddress = info.remoteAddress;
+    entry.runtime.realtimeLastHeartbeatAt = info.connectedAt;
+    entry.runtime.lastSeenAt = info.connectedAt;
+  }
+
+  public markRealtimeHeartbeat(
+    displayId: string,
+    at: Date = new Date(),
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.realtimeLastHeartbeatAt = at;
+    entry.runtime.lastSeenAt = at;
+  }
+
+  public markRealtimeSubscribedDevices(
+    displayId: string,
+    count: number,
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.realtimeSubscribedDeviceCount = Math.max(0, count);
+  }
+
+  public markRealtimeDisconnected(displayId: string): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.realtimeConnectionId = null;
+    entry.runtime.realtimeConnectedAt = null;
+    entry.runtime.realtimeRemoteAddress = null;
+    entry.runtime.realtimeLastHeartbeatAt = null;
+    entry.runtime.realtimeSubscribedDeviceCount = 0;
+  }
+
   public getOnlineStatus(
     displayId: string,
-    now: Date = new Date(),
+    _now: Date = new Date(),
   ): OnlineStatus {
     const entry = this.byId.get(displayId);
     if (!entry) {
       return 'offline';
     }
 
-    return resolveOnlineStatus(entry.runtime.lastSeenAt, now);
+    return entry.runtime.realtimeConnectionId ? 'online' : 'offline';
   }
 
   public listByType(typeId: DisplayTypeId): readonly RegisteredDisplay[] {

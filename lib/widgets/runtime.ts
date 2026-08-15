@@ -9,6 +9,12 @@ import {
 import type { LightWidgetDiagnostic } from './light/types';
 import type { WidgetInstance, WidgetRuntimeState } from './types';
 
+export {
+  createLightApiErrorRuntime,
+  resolveLightWidgetRuntimeFromSnapshot,
+  parseOnoff,
+} from './light/runtime';
+
 export interface DashboardRuntimeResolveResult {
   readonly states: Readonly<Record<string, WidgetRuntimeState>>;
   readonly diagnostics: readonly LightWidgetDiagnostic[];

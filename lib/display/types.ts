@@ -65,6 +65,15 @@ export interface DisplayRuntimeState {
   lastDashboardLoadedAt: string | null;
   /** LightWidget snapshot diagnostics from the last dashboard bootstrap. */
   lastLightWidgetDiagnostics: readonly LightWidgetDiagnostic[];
+  /** Active WebSocket connection id, if any (runtime only). */
+  realtimeConnectionId: string | null;
+  realtimeConnectedAt: Date | null;
+  realtimeRemoteAddress: string | null;
+  realtimeLastHeartbeatAt: Date | null;
+  realtimeSubscribedDeviceCount: number;
+  realtimeReconnectCount: number;
+  /** True after the first realtime session in this process (for reconnect counting). */
+  realtimeSeen: boolean;
 }
 
 export interface RegisteredDisplay {
@@ -80,8 +89,8 @@ export interface DiagnosticsRecentError {
 }
 
 /**
- * Displays are considered online while lastSeenAt is within this window.
- * Based on inbound HTTP requests only — no separate heartbeat.
+ * Displays are considered online only while a realtime WebSocket session is active.
+ * HTTP lastSeen remains diagnostic only and is not used for online/offline.
  */
 export const DISPLAY_ONLINE_TIMEOUT_MS = 5 * 60 * 1000;
 

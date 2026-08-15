@@ -86,7 +86,7 @@ export class DashboardRenderer {
   }
 
   /**
-   * Future realtime entry point. Milestone 5 only applies state at bootstrap.
+   * Apply a targeted runtime state update without rebuilding the dashboard.
    */
   public updateWidgetState(widgetId: string, state: WidgetRuntimeState): void {
     this.widgetRuntime[widgetId] = state;

@@ -12,7 +12,7 @@
   },
   "editor": {
     "title": "Dashboard Editor",
-    "subtitle": "Configure widgets for a Wall Display. Reload the display to apply changes.",
+    "subtitle": "Configure widgets for a Wall Display. Changes apply live when the display is connected.",
     "selectDisplay": "Select display",
     "theme": "Display appearance",
     "themeDark": "Dark",
@@ -48,7 +48,7 @@
     "close": "Close",
     "confirmRemove": "Remove this widget from the dashboard?",
     "save": "Save",
-    "saved": "Dashboard saved. Reload the Wall Display to apply the new configuration.",
+    "saved": "Dashboard saved. Connected displays update live.",
     "errors": {
       "displayNotFound": "Display not found.",
       "outOfBounds": "Invalid position: the widget is outside the grid.",
@@ -176,7 +176,7 @@
     "diagnostics": {
       "title": "Diagnostics",
       "heading": "Diagnostics",
-      "lead": "Runtime status of the HTTP server and configured displays.",
+      "lead": "Runtime status of the HTTP/WebSocket server and configured displays.",
       "server": "HTTP server",
       "serverListening": "Listening",
       "serverStopped": "Stopped",
@@ -208,7 +208,32 @@
       "error": "Error",
       "yes": "Yes",
       "no": "No",
-      "noLightWidgets": "No Light widgets on the last dashboard load."
+      "noLightWidgets": "No Light widgets on the last dashboard load.",
+      "websocketServer": "WebSocket server",
+      "websocketActive": "Active",
+      "websocketInactive": "Inactive",
+      "activeConnections": "Active connections",
+      "activeSubscriptions": "Active subscriptions",
+      "connectionId": "Connection ID",
+      "connectedAt": "Connected at",
+      "lastHeartbeat": "Last heartbeat",
+      "reconnectCount": "Reconnects",
+      "subscribedDevices": "Subscribed devices",
+      "realtimeMetrics": "Realtime metrics",
+      "subscriptions": "Homey subscriptions",
+      "noRealtime": "Realtime metrics unavailable.",
+      "noSubscriptions": "No Homey capability subscriptions.",
+      "connectionsOpened": "Connections opened",
+      "connectionsClosed": "Connections closed",
+      "reconnects": "Reconnects (runtime)",
+      "messagesSent": "Messages sent",
+      "messagesReceived": "Messages received",
+      "rejectedConnections": "Rejected connections",
+      "heartbeatTimeouts": "Heartbeat timeouts",
+      "refCount": "Ref count",
+      "interestedDisplays": "Interested displays",
+      "subscriptionActive": "Subscribed",
+      "displayIds": "Display IDs"
     },
     "diagnosticsDisabled": {
       "title": "Diagnostics disabled",
@@ -225,6 +250,16 @@
       "never": "Never",
       "none": "—",
       "invalidLayout": "Invalid"
+    },
+    "realtime": {
+      "connectionLost": "Connection to Homey lost",
+      "reconnecting": "Reconnecting…",
+      "connectionRestored": "Connection restored",
+      "realtimeUnavailable": "Realtime unavailable",
+      "protocolError": "Protocol error",
+      "displaySessionInvalid": "Display session invalid",
+      "snapshotFailed": "Snapshot failed",
+      "homeyConnectionError": "Homey connection error"
     }
   },
   "errors": {

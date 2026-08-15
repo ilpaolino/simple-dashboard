@@ -2,6 +2,7 @@
 @import './widgets/title/TitleWidget.css';
 @import './widgets/date-time/DateTimeWidget.css';
 @import './widgets/light/LightWidget.css';
+@import './realtime/ConnectionOverlay.css';
 
 :root {
   color-scheme: dark;

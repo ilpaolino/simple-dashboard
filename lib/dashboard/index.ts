@@ -111,6 +111,16 @@ export function createDashboardUiCopy(
       unavailable: translate('widgets.light.unavailable'),
     },
     widgetFailed: translate('pages.dashboard.widgetFailed'),
+    realtime: {
+      connectionLost: translate('pages.realtime.connectionLost'),
+      reconnecting: translate('pages.realtime.reconnecting'),
+      connectionRestored: translate('pages.realtime.connectionRestored'),
+      realtimeUnavailable: translate('pages.realtime.realtimeUnavailable'),
+      protocolError: translate('pages.realtime.protocolError'),
+      displaySessionInvalid: translate('pages.realtime.displaySessionInvalid'),
+      snapshotFailed: translate('pages.realtime.snapshotFailed'),
+      homeyConnectionError: translate('pages.realtime.homeyConnectionError'),
+    },
   };
 }
 
@@ -126,6 +136,16 @@ export function defaultDashboardUiCopy(): DashboardUiCopy {
       unavailable: 'Device unavailable',
     },
     widgetFailed: 'Widget failed',
+    realtime: {
+      connectionLost: 'Connection to Homey lost',
+      reconnecting: 'Reconnecting…',
+      connectionRestored: 'Connection restored',
+      realtimeUnavailable: 'Realtime unavailable',
+      protocolError: 'Protocol error',
+      displaySessionInvalid: 'Display session invalid',
+      snapshotFailed: 'Snapshot failed',
+      homeyConnectionError: 'Homey connection error',
+    },
   };
 }
 

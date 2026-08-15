@@ -6,6 +6,7 @@ import { isLightWidgetConfig } from '../lib/widgets/light/definition';
 import type { WidgetInstance, WidgetPlacement } from '../lib/widgets/types';
 import { isDashboardTheme } from '../lib/widgets/types';
 import { DashboardRenderer } from './layout/DashboardRenderer';
+import { RealtimeClient } from './realtime/RealtimeClient';
 
 const BOOTSTRAP_ELEMENT_ID = 'dashboard-bootstrap';
 
@@ -120,10 +121,28 @@ function isDashboardCopy(value: unknown): boolean {
   }
 
   const light = candidate.light as Record<string, unknown>;
+  if (
+    typeof light.on !== 'string' ||
+    typeof light.off !== 'string' ||
+    typeof light.unavailable !== 'string'
+  ) {
+    return false;
+  }
+
+  if (typeof candidate.realtime !== 'object' || candidate.realtime === null) {
+    return false;
+  }
+
+  const realtime = candidate.realtime as Record<string, unknown>;
   return (
-    typeof light.on === 'string' &&
-    typeof light.off === 'string' &&
-    typeof light.unavailable === 'string'
+    typeof realtime.connectionLost === 'string' &&
+    typeof realtime.reconnecting === 'string' &&
+    typeof realtime.connectionRestored === 'string' &&
+    typeof realtime.realtimeUnavailable === 'string' &&
+    typeof realtime.protocolError === 'string' &&
+    typeof realtime.displaySessionInvalid === 'string' &&
+    typeof realtime.snapshotFailed === 'string' &&
+    typeof realtime.homeyConnectionError === 'string'
   );
 }
 
@@ -183,6 +202,12 @@ function main(): void {
 
   const renderer = new DashboardRenderer(root);
   renderer.applyBootstrap(bootstrap);
+
+  const realtime = new RealtimeClient({
+    renderer,
+    copy: bootstrap.copy,
+  });
+  realtime.start();
 }
 
 try {

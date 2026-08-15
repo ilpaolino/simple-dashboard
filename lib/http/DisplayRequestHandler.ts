@@ -18,7 +18,10 @@ import {
 } from '../widgets';
 import type { HomeyDeviceRepository } from '../homey/HomeyDeviceRepository';
 import { DashboardAssetStore } from './DashboardAssetStore';
-import { renderDiagnosticsPage } from './pages/diagnosticsPage';
+import {
+  renderDiagnosticsPage,
+  type DiagnosticsRealtimeSection,
+} from './pages/diagnosticsPage';
 import {
   renderDashboardPage,
   renderInvalidLayoutPage,
@@ -43,6 +46,7 @@ export interface DisplayRequestHandlerOptions {
   readonly getUptimeSeconds: () => number;
   readonly assets?: DashboardAssetStore;
   readonly deviceRepository?: HomeyDeviceRepository | null;
+  readonly getRealtimeDiagnostics?: () => DiagnosticsRealtimeSection | null;
 }
 
 /**
@@ -92,18 +96,33 @@ export class DisplayRequestHandler {
       );
     }
 
-    return htmlResponse(
-      200,
-      renderDiagnosticsPage({
-        lang,
-        translate,
-        serverListening: this.options.isServerListening(),
-        port: this.options.getPort(),
-        uptimeSeconds: this.options.getUptimeSeconds(),
-        registry: this.options.registry,
-        recentErrors: this.options.diagnosticsLog.list(),
-      }),
-    );
+    try {
+      let realtime = null;
+      try {
+        realtime = this.options.getRealtimeDiagnostics?.() ?? null;
+      } catch (error) {
+        this.options.logger.error('Realtime diagnostics snapshot failed', error);
+      }
+
+      return htmlResponse(
+        200,
+        renderDiagnosticsPage({
+          lang,
+          translate,
+          serverListening: this.options.isServerListening(),
+          port: this.options.getPort(),
+          uptimeSeconds: this.options.getUptimeSeconds(),
+          registry: this.options.registry,
+          recentErrors: this.options.diagnosticsLog.list(),
+          realtime,
+        }),
+      );
+    } catch (error) {
+      this.options.logger.error('Diagnostics page render failed', error);
+      const detail =
+        error instanceof Error ? error.message : 'unknown_error';
+      return textResponse(500, `Diagnostics render failed: ${detail}`);
+    }
   }
 
   private async handleRoot(info: RequestInfo): Promise<HttpResponse> {

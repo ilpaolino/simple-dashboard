@@ -18,6 +18,8 @@
   "include": [
     "./**/*.ts",
     "../lib/dashboard/**/*.ts",
-    "../lib/widgets/**/*.ts"
+    "../lib/widgets/**/*.ts",
+    "../lib/realtime/constants.ts",
+    "../lib/realtime/protocol.ts"
   ]
 }

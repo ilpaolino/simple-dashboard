@@ -36,6 +36,10 @@ class MemoryHomeyWebApi implements HomeyWebApi {
   public async getZones(): Promise<Readonly<Record<string, HomeyApiZoneDto>>> {
     return this.zones;
   }
+
+  public async subscribeCapability(): Promise<null> {
+    return null;
+  }
 }
 
 function lightDevice(

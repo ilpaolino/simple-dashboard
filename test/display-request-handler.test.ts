@@ -113,7 +113,7 @@ describe('DisplayRequestHandler', () => {
     assert.match(response.body, /"rows":4/);
     assert.match(response.body, /"columns":2/);
     assert.match(response.body, /dashboard\.js/);
-    assert.equal(registry.getOnlineStatus('gen-1'), 'online');
+    assert.equal(registry.getOnlineStatus('gen-1'), 'offline');
     assert.ok(registry.getById('gen-1')?.runtime.lastRenderedAt);
   });
 
@@ -263,6 +263,134 @@ describe('DisplayRequestHandler', () => {
     assert.match(response.body, /pages\.diagnostics\.lightWidgets/);
   });
 
+  it('serves diagnostics even when translations return undefined', async () => {
+    const registry = new DisplayRegistry();
+    registry.rebuild([
+      {
+        displayId: 'gen-1',
+        name: 'Office',
+        typeId: DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY,
+        ipAddress: '192.168.1.40',
+        hardwareId: null,
+        layoutId: LAYOUT_IDS.GRID_2X4,
+        dashboard: emptyDashboardConfiguration(),
+      },
+    ]);
+
+    const handler = new DisplayRequestHandler({
+      registry,
+      adapters: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+      diagnosticsLog: new DiagnosticsLog(),
+      logger: silentLogger,
+      translate: () => undefined as unknown as string,
+      getLanguage: () => 'en',
+      isDiagnosticsEnabled: () => true,
+      isServerListening: () => true,
+      getPort: () => 7999,
+      getUptimeSeconds: () => 1,
+      getRealtimeDiagnostics: () => ({
+        active: true,
+        metrics: {
+          connectionsOpened: 0,
+          connectionsClosed: 0,
+          activeConnections: 0,
+          reconnects: 0,
+          messagesSent: 0,
+          messagesReceived: 0,
+          activeSubscriptions: 0,
+          rejectedConnections: 0,
+          heartbeatTimeouts: 0,
+        },
+        sessions: [],
+        subscriptions: [],
+      }),
+    });
+
+    const response = await handler.handle(request({ url: '/diagnostics' }));
+    assert.equal(response.statusCode, 200);
+    assert.match(response.body, /pages\.diagnostics\.heading/);
+  });
+
+  it('serves diagnostics with corrupt runtime timestamps and dashboard shape', async () => {
+    const registry = new DisplayRegistry();
+    registry.rebuild([
+      {
+        displayId: 'gen-1',
+        name: 'Office',
+        typeId: DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY,
+        ipAddress: '192.168.1.40',
+        hardwareId: null,
+        layoutId: LAYOUT_IDS.GRID_2X4,
+        dashboard: { version: 1 } as ReturnType<typeof emptyDashboardConfiguration>,
+      },
+    ]);
+
+    const entry = registry.getById('gen-1');
+    assert.ok(entry);
+    (entry.runtime as { lastSeenAt: unknown }).lastSeenAt = '2024-01-01T00:00:00.000Z';
+    (entry.runtime as { lastRenderedAt: unknown }).lastRenderedAt = new Date('invalid');
+    (entry.runtime as { lastLightWidgetDiagnostics: unknown }).lastLightWidgetDiagnostics = [
+      null,
+      {
+        widgetId: 'w1',
+        deviceId: 'dev-1',
+        resolved: true,
+        hasOnoff: true,
+        available: true,
+        on: true,
+        error: null,
+      },
+    ];
+
+    const handler = new DisplayRequestHandler({
+      registry,
+      adapters: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+      diagnosticsLog: new DiagnosticsLog(),
+      logger: silentLogger,
+      translate,
+      getLanguage: () => 'en',
+      isDiagnosticsEnabled: () => true,
+      isServerListening: () => true,
+      getPort: () => 7999,
+      getUptimeSeconds: () => 1,
+      getRealtimeDiagnostics: () => ({
+        active: true,
+        metrics: {
+          connectionsOpened: 1,
+          connectionsClosed: 0,
+          activeConnections: 1,
+          reconnects: 0,
+          messagesSent: 0,
+          messagesReceived: 0,
+          activeSubscriptions: 0,
+          rejectedConnections: 0,
+          heartbeatTimeouts: 0,
+        },
+        sessions: [],
+        subscriptions: [
+          null as unknown as {
+            deviceId: string;
+            refCount: number;
+            displayIds: string[];
+            subscribed: boolean;
+          },
+          {
+            deviceId: 'dev-1',
+            refCount: 1,
+            displayIds: ['gen-1'],
+            subscribed: true,
+          },
+        ],
+      }),
+    });
+
+    const response = await handler.handle(request({ url: '/diagnostics' }));
+    assert.equal(response.statusCode, 200);
+    assert.match(response.body, /Office/);
+    assert.match(response.body, /w1/);
+    assert.doesNotMatch(response.body, /Diagnostics render failed/);
+  });
+
   it('serves dashboard static assets', async () => {
     const assets = createTempAssets();
     const handler = new DisplayRequestHandler({
@@ -339,6 +467,9 @@ describe('DisplayRequestHandler', () => {
       },
       async getZones() {
         return {};
+      },
+      async subscribeCapability() {
+        return null;
       },
     });
 

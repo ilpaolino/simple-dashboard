@@ -58,6 +58,10 @@ export interface HttpServerOptions {
   readonly host?: string;
   readonly logger: Logger;
   readonly requestHandler: RequestHandler;
+  /** Called after the HTTP server is listening (e.g. attach WebSocket). */
+  readonly onListening?: (server: import('node:http').Server) => void | Promise<void>;
+  /** Called before the HTTP server closes (e.g. detach WebSocket sessions). */
+  readonly onBeforeClose?: () => void | Promise<void>;
 }
 
 export const SETTINGS_KEYS = {

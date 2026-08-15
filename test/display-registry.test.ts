@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DisplayRegistry } from '../lib/display/DisplayRegistry';
-import { DISPLAY_ONLINE_TIMEOUT_MS, DISPLAY_TYPE_IDS } from '../lib/display/types';
+import { DISPLAY_TYPE_IDS } from '../lib/display/types';
 import type { DisplaySnapshot } from '../lib/display/types';
 import { LAYOUT_IDS } from '../lib/adapters/types';
 import { emptyDashboardConfiguration } from '../lib/widgets';
@@ -87,7 +87,7 @@ describe('DisplayRegistry', () => {
     assert.equal(registry.getById('generated-uuid')?.runtime.session, null);
   });
 
-  it('tracks online status from lastSeen with timeout', () => {
+  it('tracks online status from active realtime sessions only', () => {
     const registry = new DisplayRegistry();
     registry.rebuild([generic()]);
 
@@ -95,10 +95,18 @@ describe('DisplayRegistry', () => {
 
     const now = new Date('2026-08-13T10:00:00.000Z');
     registry.touch('generated-uuid', '192.168.1.40', now);
+    // HTTP touch alone does not mark the display online.
+    assert.equal(registry.getOnlineStatus('generated-uuid', now), 'offline');
+
+    registry.markRealtimeConnected('generated-uuid', {
+      connectionId: 'conn-1',
+      connectedAt: now,
+      remoteAddress: '192.168.1.40',
+    });
     assert.equal(registry.getOnlineStatus('generated-uuid', now), 'online');
 
-    const later = new Date(now.getTime() + DISPLAY_ONLINE_TIMEOUT_MS + 1);
-    assert.equal(registry.getOnlineStatus('generated-uuid', later), 'offline');
+    registry.markRealtimeDisconnected('generated-uuid');
+    assert.equal(registry.getOnlineStatus('generated-uuid', now), 'offline');
   });
 
   it('stores hardware mismatch match status for Shelly displays', () => {

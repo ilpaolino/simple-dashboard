@@ -12,7 +12,7 @@
   },
   "editor": {
     "title": "Editor Dashboard",
-    "subtitle": "Configura i widget di un Wall Display. Ricarica il display per applicare le modifiche.",
+    "subtitle": "Configura i widget di un Wall Display. Le modifiche si applicano in tempo reale se il display è connesso.",
     "selectDisplay": "Seleziona display",
     "theme": "Aspetto del display",
     "themeDark": "Scuro",
@@ -48,7 +48,7 @@
     "close": "Chiudi",
     "confirmRemove": "Rimuovere questo widget dalla dashboard?",
     "save": "Salva",
-    "saved": "Dashboard salvata. Ricarica il Wall Display per applicare la nuova configurazione.",
+    "saved": "Dashboard salvata. I display connessi si aggiornano in tempo reale.",
     "errors": {
       "displayNotFound": "Display non trovato.",
       "outOfBounds": "Posizione non valida: il widget è fuori dalla griglia.",
@@ -176,7 +176,7 @@
     "diagnostics": {
       "title": "Diagnostica",
       "heading": "Diagnostica",
-      "lead": "Stato runtime del server HTTP e dei display configurati.",
+      "lead": "Stato runtime del server HTTP/WebSocket e dei display configurati.",
       "server": "Server HTTP",
       "serverListening": "In ascolto",
       "serverStopped": "Fermo",
@@ -208,7 +208,32 @@
       "error": "Errore",
       "yes": "Sì",
       "no": "No",
-      "noLightWidgets": "Nessun LightWidget nell'ultimo caricamento della dashboard."
+      "noLightWidgets": "Nessun LightWidget nell'ultimo caricamento della dashboard.",
+      "websocketServer": "Server WebSocket",
+      "websocketActive": "Attivo",
+      "websocketInactive": "Inattivo",
+      "activeConnections": "Connessioni attive",
+      "activeSubscriptions": "Subscription attive",
+      "connectionId": "ID connessione",
+      "connectedAt": "Connesso alle",
+      "lastHeartbeat": "Ultimo heartbeat",
+      "reconnectCount": "Riconnessioni",
+      "subscribedDevices": "Device sottoscritti",
+      "realtimeMetrics": "Metriche realtime",
+      "subscriptions": "Subscription Homey",
+      "noRealtime": "Metriche realtime non disponibili.",
+      "noSubscriptions": "Nessuna subscription Homey attiva.",
+      "connectionsOpened": "Connessioni aperte",
+      "connectionsClosed": "Connessioni chiuse",
+      "reconnects": "Riconnessioni (runtime)",
+      "messagesSent": "Messaggi inviati",
+      "messagesReceived": "Messaggi ricevuti",
+      "rejectedConnections": "Connessioni rifiutate",
+      "heartbeatTimeouts": "Timeout heartbeat",
+      "refCount": "Ref count",
+      "interestedDisplays": "Display interessati",
+      "subscriptionActive": "Sottoscritto",
+      "displayIds": "ID display"
     },
     "diagnosticsDisabled": {
       "title": "Diagnostica disabilitata",
@@ -225,6 +250,16 @@
       "never": "Mai",
       "none": "—",
       "invalidLayout": "Non valido"
+    },
+    "realtime": {
+      "connectionLost": "Connessione a Homey persa",
+      "reconnecting": "Riconnessione…",
+      "connectionRestored": "Connessione ripristinata",
+      "realtimeUnavailable": "Realtime non disponibile",
+      "protocolError": "Errore di protocollo",
+      "displaySessionInvalid": "Sessione display non valida",
+      "snapshotFailed": "Snapshot non riuscito",
+      "homeyConnectionError": "Errore di connessione Homey"
     }
   },
   "errors": {

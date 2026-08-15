@@ -37,6 +37,10 @@ class MemoryHomeyWebApi implements HomeyWebApi {
   public async getZones(): Promise<Readonly<Record<string, never>>> {
     return {};
   }
+
+  public async subscribeCapability(): Promise<null> {
+    return null;
+  }
 }
 
 function device(
@@ -255,11 +259,9 @@ describe('Dashboard runtime snapshot', () => {
   });
 });
 
-describe('Milestone 5 snapshot semantics', () => {
-  it('does not introduce Homey polling, WebSocket, or realtime listeners', () => {
+describe('LightWidget snapshot semantics', () => {
+  it('keeps LightWidget render path free of polling and timers', () => {
     const files = [
-      'lib/homey/HomeyDeviceRepository.ts',
-      'lib/homey/createHomeyWebApi.ts',
       'lib/widgets/light/runtime.ts',
       'lib/widgets/runtime.ts',
       'frontend/widgets/light/LightWidget.ts',
@@ -272,10 +274,21 @@ describe('Milestone 5 snapshot semantics', () => {
       );
       assert.doesNotMatch(source, /setInterval/);
       assert.doesNotMatch(source, /setTimeout/);
-      assert.doesNotMatch(source, /WebSocket/);
       assert.doesNotMatch(source, /EventSource/);
-      assert.doesNotMatch(source, /makeCapabilityInstance/);
-      assert.doesNotMatch(source, /\.connect\(/);
     }
+  });
+
+  it('uses official makeCapabilityInstance only in the Homey Web API client', () => {
+    const client = fs.readFileSync(
+      path.join(process.cwd(), 'lib/homey/createHomeyWebApi.ts'),
+      'utf8',
+    );
+    assert.match(client, /makeCapabilityInstance/);
+
+    const lightRuntime = fs.readFileSync(
+      path.join(process.cwd(), 'lib/widgets/light/runtime.ts'),
+      'utf8',
+    );
+    assert.doesNotMatch(lightRuntime, /makeCapabilityInstance/);
   });
 });

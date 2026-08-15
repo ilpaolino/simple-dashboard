@@ -1,5 +1,93 @@
 # Decisions
 
+Architectural choices for Milestone 6. Earlier decisions remain in force below and in prior milestone docs.
+
+## WebSocket over SSE
+
+**Choice:** WebSocket on the shared HTTP port (`/realtime`), not SSE.
+
+**Why:** Later milestones need bidirectional messages (display → Homey commands). WebSocket is the lightest official Node pattern that already supports that without Socket.IO overhead.
+
+**Library:** `ws@8.18.3` (~192 KiB on disk). Node 22’s built-in WebSocket is client-oriented; `ws` is the standard server upgrade path and is already a transitive dependency of `homey-api` / `engine.io-client`. Declaring it directly keeps the version explicit.
+
+**Refs:** [ws documentation](https://github.com/websockets/ws), [Node http upgrade](https://nodejs.org/api/http.html#event-upgrade).
+
+## Shared HTTP/WebSocket port
+
+**Choice:** One configurable TCP port (default `7999`) for both HTTP and WebSocket upgrades.
+
+**Why:** Wall displays already know one URL; Homey App Settings already configure one port; no second firewall hole.
+
+## One socket per DisplaySession
+
+**Choice:** Each WebSocket is bound to exactly one Display via IP recognition → `DisplayRegistry` → `DisplayRealtimeSession`.
+
+**Why:** Prevents anonymous global Homey event fans-out and keeps trust local to the paired Display.
+
+## Newest connection wins
+
+**Choice:** If the same Display opens a second WebSocket, the previous session is closed.
+
+**Why:** Deterministic single-session semantics for online/offline and subscription ownership.
+
+## Selective subscriptions
+
+**Choice:** Only Homey devices referenced by the Display’s dashboard widgets are subscribed (`extractReferencedDeviceIds`).
+
+**Why:** Homey Pro RAM and listener budget; never subscribe to the whole device list.
+
+## Reference-counted subscriptions
+
+**Choice:** `RealtimeSubscriptionManager` shares one Homey `makeCapabilityInstance('onoff')` across Displays that reference the same device; unsubscribe at `refCount === 0`.
+
+**Why:** Avoid duplicate Homey realtime listeners when multiple wall displays show the same light.
+
+**Refs:** [Device#makeCapabilityInstance](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#makeCapabilityInstance), [DeviceCapability#destroy](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.DeviceCapability.html).
+
+## Full snapshot after reconnect
+
+**Choice:** After reconnect, send a complete `dashboard-snapshot`. No event replay / catch-up queue.
+
+**Why:** Simpler consistency; offline gaps are corrected atomically; no unbounded buffers.
+
+## Full configuration updates
+
+**Choice:** Structural dashboard edits are sent as a complete `dashboard-configuration` (plus fresh widget runtime states), not incremental widget-added/moved/deleted events.
+
+**Why:** Deterministic `applyConfiguration()` on the client; avoids intermediate mixed layouts.
+
+## Targeted runtime updates
+
+**Choice:** Capability changes use `widget-state` messages for the affected widget only.
+
+**Why:** Bandwidth and render cost stay low as device counts grow.
+
+## Connection overlay
+
+**Choice:** Lost connection is a global overlay (not a grid cell). Overlay is removed only after a valid snapshot is applied — not merely when the socket opens.
+
+**Why:** Clear UX; prevents showing stale widgets as “live” before sync completes.
+
+## Online status from realtime sessions
+
+**Choice:** Display online/offline is derived from an active WebSocket session, not from the previous 5-minute HTTP lastSeen window.
+
+**Why:** Heartbeat + session lifecycle are a stronger liveness signal for wall displays that stay open.
+
+## Local trust model
+
+**Choice:** LAN-only; clients must match a configured Display IP. No cloud auth in this milestone. Displays cannot receive another Display’s config.
+
+**Why:** Matches Homey Pro local deployment; auth can be layered later without rewriting the protocol.
+
+## Config save order
+
+**Choice:** validate → persist Device Store → update registry → diff subscriptions → push complete config to connected sessions.
+
+**Why:** Homey remains source of truth before any push; offline Displays are unaffected until reconnect snapshot.
+
+---
+
 Architectural choices for Milestone 5. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Homey Device Repository
@@ -10,7 +98,7 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 **Permission:** `homey:manager:api` is required. It grants ManagerApi / Homey Web API access so this app can read devices that it does not own. Implications: stricter App Store review, not allowed on Homey Cloud (this app is already `platforms: ["local"]`), and the app is in the Tools category as Homey recommends for this permission. No other permissions are requested.
 
-**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`. Capability `onoff` is read from the snapshot (`capabilities` / `capabilitiesObj.value`). `makeCapabilityInstance`, `connect()`, and `setCapabilityValue` are not used.
+**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`, and (from Milestone 6) `Device#makeCapabilityInstance` / `DeviceCapability#destroy` for selective realtime. `setCapabilityValue` is still not used for LightWidget control.
 
 **Package:** `homey-api@3.16.1` — last stable line that supports Node `>=16`. `3.17+` requires Node 24, which is incompatible with Homey `>=12.9.0` (Node 22).
 
@@ -34,11 +122,11 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 **Why:** Milestone scope is the data layer and a first bound widget. Control, dim, and color come later on the same `deviceId` reference.
 
-## Snapshot before realtime
+## Snapshot plus realtime
 
-**Choice:** Homey state is read once during dashboard bootstrap. `DashboardRenderer.updateWidgetState(widgetId, state)` is implemented but not driven by timers, polling, WebSocket, SSE, or Homey listeners.
+**Choice:** Homey state is still snapshotted at HTTP bootstrap and after every WebSocket connect. Live `onoff` updates use official capability instances; `DashboardRenderer.updateWidgetState` applies them without rebuilding the grid.
 
-**Why:** Realtime is a later milestone. The config/runtime split avoids painting LightWidget as bootstrap-only.
+**Why:** Snapshot remains the reconnect source of truth; realtime patches keep the open display current without polling.
 
 ## Broken references remain visible
 
@@ -124,9 +212,7 @@ Architectural choices for Milestone 4. Earlier decisions remain in force below a
 
 ## Reload-only configuration for now
 
-**Choice:** Saves update Device Store immediately; Wall Displays pick up changes on page refresh. `DashboardRenderer.applyConfiguration` exists so a future live channel can re-apply without rewrite.
-
-**Why:** Milestone scope excludes WebSocket/SSE/polling while still preparing the renderer.
+**Superseded by Milestone 6:** connected Displays receive live `dashboard-configuration` pushes. Offline Displays still pick up changes on the next full snapshot after reconnect.
 
 ## Device Settings note only
 

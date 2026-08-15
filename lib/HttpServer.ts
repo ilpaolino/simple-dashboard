@@ -41,15 +41,21 @@ export class ServerStopError extends Error {
   }
 }
 
+export type HttpServerAttachHook = (server: http.Server) => void | Promise<void>;
+export type HttpServerDetachHook = () => void | Promise<void>;
+
 /**
  * Local HTTP server using Node.js `http` (Homey Node.js runtime).
  * Uses `requireHostHeader: false` as documented for Homey Node.js 22+.
+ * WebSocket upgrades attach to the same server instance (shared port).
  * @see https://apps.developer.homey.app/upgrade-guides/node-22
  */
 export class HttpServer {
   private readonly logger: Logger;
   private readonly requestHandler: HttpServerOptions['requestHandler'];
   private readonly host: string;
+  private readonly onListening: HttpServerAttachHook | null;
+  private readonly onBeforeClose: HttpServerDetachHook | null;
   private server: http.Server | null = null;
   private activePort: number | null = null;
   private restartChain: Promise<void> = Promise.resolve();
@@ -59,10 +65,16 @@ export class HttpServer {
     this.logger = options.logger;
     this.requestHandler = options.requestHandler;
     this.host = options.host ?? '0.0.0.0';
+    this.onListening = options.onListening ?? null;
+    this.onBeforeClose = options.onBeforeClose ?? null;
   }
 
   public getPort(): number | null {
     return this.activePort;
+  }
+
+  public getNodeServer(): http.Server | null {
+    return this.server;
   }
 
   public isListening(): boolean {
@@ -132,6 +144,11 @@ export class HttpServer {
     const address = server.address();
     this.activePort = resolveBoundPort(address, port);
     this.startedAt = new Date();
+
+    if (this.onListening) {
+      await this.onListening(server);
+    }
+
     this.logger.info('HTTP server started', {
       host: this.host,
       port: this.activePort,
@@ -146,14 +163,43 @@ export class HttpServer {
       return;
     }
 
+    if (this.onBeforeClose) {
+      try {
+        await this.onBeforeClose();
+      } catch (error) {
+        this.logger.error('HTTP server detach hook failed', error);
+      }
+    }
+
     try {
       await new Promise<void>((resolve, reject) => {
-        server.close((error) => {
+        // WebSocket upgrades keep sockets open; force-close so stop() cannot hang.
+        if (typeof server.closeAllConnections === 'function') {
+          server.closeAllConnections();
+        }
+
+        let settled = false;
+        const finish = (error?: Error): void => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timer);
           if (error) {
             reject(error);
             return;
           }
           resolve();
+        };
+
+        const timer = setTimeout(() => {
+          // Last resort: allow the process to exit even if a peer ignores close.
+          server.unref();
+          finish();
+        }, 1000);
+
+        server.close((error) => {
+          finish(error ?? undefined);
         });
       });
       this.logger.info('HTTP server stopped', { port: this.activePort });

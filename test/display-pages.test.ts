@@ -102,6 +102,16 @@ describe('display pages', () => {
             unavailable: 'Device unavailable',
           },
           widgetFailed: 'Widget failed',
+          realtime: {
+            connectionLost: 'Connection to Homey lost',
+            reconnecting: 'Reconnecting…',
+            connectionRestored: 'Connection restored',
+            realtimeUnavailable: 'Realtime unavailable',
+            protocolError: 'Protocol error',
+            displaySessionInvalid: 'Display session invalid',
+            snapshotFailed: 'Snapshot failed',
+            homeyConnectionError: 'Homey connection error',
+          },
         },
       },
     });

@@ -67,3 +67,9 @@ export {
   resolveDashboardRuntime,
   type DashboardRuntimeResolveResult,
 } from './runtime';
+export {
+  resolveLightWidgetRuntimeFromSnapshot,
+  createLightApiErrorRuntime,
+  parseOnoff,
+} from './light/runtime';
+export type { HomeyCapabilitySubscription } from '../homey/types';

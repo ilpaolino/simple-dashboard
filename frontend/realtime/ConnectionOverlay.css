@@ -1,0 +1,37 @@
+.connection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1.5rem;
+  background: rgba(12, 18, 22, 0.72);
+  font-family: var(--widget-font-family);
+  color: #f7fafb;
+  text-align: center;
+}
+
+.connection-overlay[hidden] {
+  display: none !important;
+}
+
+.connection-overlay__title {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.8vw, 1.45rem);
+  font-weight: 650;
+}
+
+.connection-overlay__detail {
+  margin: 0;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  opacity: 0.88;
+}
+
+:root[data-theme="light"] .connection-overlay,
+[data-theme="light"] .connection-overlay {
+  background: rgba(232, 238, 241, 0.88);
+  color: #1f2a30;
+}

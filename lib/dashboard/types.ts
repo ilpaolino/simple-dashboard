@@ -50,6 +50,16 @@ export interface DashboardUiCopy {
     readonly unavailable: string;
   };
   readonly widgetFailed: string;
+  readonly realtime: {
+    readonly connectionLost: string;
+    readonly reconnecting: string;
+    readonly connectionRestored: string;
+    readonly realtimeUnavailable: string;
+    readonly protocolError: string;
+    readonly displaySessionInvalid: string;
+    readonly snapshotFailed: string;
+    readonly homeyConnectionError: string;
+  };
 }
 
 /**

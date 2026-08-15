@@ -1,8 +1,8 @@
 # Simple Dashboard
 
-Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard.
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync.
 
-This milestone does **not** include widgets, Flow cards, WebSockets, or Homey device control from the display.
+This milestone includes widgets, Homey LightWidget (read-only), and live WebSocket updates. It does **not** include Flow cards or Homey device control from the display.
 
 ## Requirements
 
@@ -66,14 +66,15 @@ homey app install
 5. Shelly: confirm detected hardware info, then add
 6. Generic: add after entering the IP
 7. Open Advanced settings → set layout (Shelly: 2x2 / 3x3 — Generic: 2x4 / 4x2 / 3x6 / 6x3)
-8. Open the dashboard URL from the display browser and reload after layout changes
+8. Open the dashboard URL from the display browser (WebSocket sync starts automatically; editor saves apply live when connected)
 
 ## Configure HTTP port and diagnostics
 
 1. More → Apps → Simple Dashboard → Configure / Settings
-2. Set **HTTP port**
+2. Set **HTTP port** (HTTP and WebSocket share this port)
 3. Toggle **Enable diagnostics** / **Abilita diagnostica**
 4. Save
+5. Use **Dashboard Editor** in the same settings page for widgets (live push when the display is connected)
 
 ## Useful Homey CLI commands
 
@@ -92,6 +93,6 @@ Persistent project memory lives in [`docs/`](docs/):
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [DECISIONS.md](docs/DECISIONS.md)
 - [MILESTONES.md](docs/MILESTONES.md)
-- [MILESTONE-3.md](docs/MILESTONE-3.md)
+- [MILESTONE-6.md](docs/MILESTONE-6.md)
 - [TODO.md](docs/TODO.md)
 - [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)

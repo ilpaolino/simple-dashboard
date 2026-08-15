@@ -1,5 +1,16 @@
-export function escapeHtml(value: string): string {
-  return value
+/**
+ * Escape text for HTML text nodes / attributes.
+ * Coerces non-strings so a missing Homey translation cannot crash the page.
+ */
+export function escapeHtml(value: unknown): string {
+  const text =
+    typeof value === 'string'
+      ? value
+      : value == null
+        ? ''
+        : String(value);
+
+  return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
