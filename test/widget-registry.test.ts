@@ -4,6 +4,7 @@ import {
   createDefaultWidgetRegistry,
   isTitleWidgetConfig,
   isDateTimeWidgetConfig,
+  isLightWidgetConfig,
   validateDashboardConfiguration,
   validatePlacementAgainstWidgets,
   buildOccupancyMap,
@@ -14,11 +15,12 @@ import {
 } from '../lib/widgets';
 
 describe('WidgetRegistry', () => {
-  it('registers title and date-time widgets', () => {
+  it('registers title, date-time and light widgets', () => {
     const registry = createDefaultWidgetRegistry();
     assert.ok(registry.has('title'));
     assert.ok(registry.has('date-time'));
-    assert.equal(registry.list().length, 2);
+    assert.ok(registry.has('light'));
+    assert.equal(registry.list().length, 3);
   });
 
   it('returns null for unknown types', () => {
@@ -36,6 +38,9 @@ describe('WidgetRegistry', () => {
     assert.deepEqual(registry.allowedSpans('date-time'), [
       { rowSpan: 1, columnSpan: 1 },
       { rowSpan: 1, columnSpan: 2 },
+    ]);
+    assert.deepEqual(registry.allowedSpans('light'), [
+      { rowSpan: 1, columnSpan: 1 },
     ]);
   });
 });
@@ -209,6 +214,35 @@ describe('Widget configuration', () => {
       isDateTimeWidgetConfig({ mode: 'time', chrome: 'framed' }),
       false,
     );
+  });
+
+  it('validates LightWidget config', () => {
+    assert.equal(isLightWidgetConfig({ deviceId: 'dev-1' }), true);
+    assert.equal(isLightWidgetConfig({ deviceId: '' }), false);
+    assert.equal(isLightWidgetConfig({ deviceId: '   ' }), false);
+    assert.equal(isLightWidgetConfig({}), false);
+    assert.equal(isLightWidgetConfig({ name: 'Lamp' }), false);
+  });
+
+  it('rejects LightWidget spans other than 1x1', () => {
+    const result = validateDashboardConfiguration({
+      grid: { rows: 3, columns: 3 },
+      configuration: {
+        version: 1,
+        widgets: [
+          {
+            id: 'light-1',
+            type: 'light',
+            placement: { row: 0, column: 0, rowSpan: 1, columnSpan: 2 },
+            config: { deviceId: 'dev-1' },
+          },
+        ],
+      },
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error, 'unsupported_span');
+    }
   });
 
   it('validates a full dashboard configuration', () => {

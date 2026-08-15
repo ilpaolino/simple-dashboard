@@ -1,5 +1,65 @@
 # Decisions
 
+Architectural choices for Milestone 5. Earlier decisions remain in force below and in prior milestone docs.
+
+## Homey Device Repository
+
+**Choice:** All access to Homey devices and zones is centralized in `HomeyDeviceRepository`, backed by the official `homey-api` client created with `HomeyAPI.createAppAPI({ homey })`.
+
+**Why:** The frontend must not call Homey. A single backend layer normalizes id, name, zone, availability, and capability values, and can be mocked in tests.
+
+**Permission:** `homey:manager:api` is required. It grants ManagerApi / Homey Web API access so this app can read devices that it does not own. Implications: stricter App Store review, not allowed on Homey Cloud (this app is already `platforms: ["local"]`), and the app is in the Tools category as Homey recommends for this permission. No other permissions are requested.
+
+**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`. Capability `onoff` is read from the snapshot (`capabilities` / `capabilitiesObj.value`). `makeCapabilityInstance`, `connect()`, and `setCapabilityValue` are not used.
+
+**Package:** `homey-api@3.16.1` — last stable line that supports Node `>=16`. `3.17+` requires Node 24, which is incompatible with Homey `>=12.9.0` (Node 22).
+
+**Refs:** [Permissions](https://apps.developer.homey.app/the-basics/app/permissions), [HomeyAPI.createAppAPI](https://athombv.github.io/node-homey-api/HomeyAPI.html), [Device](https://athombv.github.io/node-homey-api/HomeyAPIV3Local.ManagerDevices.Device.html), [ManagerApi](https://apps-sdk-v3.developer.homey.app/ManagerApi.html).
+
+## Widgets store references, not copies
+
+**Choice:** LightWidget persists only `{ deviceId }`.
+
+**Why:** Name, zone, availability, and on/off must not drift from Homey. A rename in Homey appears after the next dashboard refresh without reconfiguring the widget.
+
+## Homey remains source of truth
+
+**Choice:** Every dashboard load and every editor open re-reads devices and zones from Homey. There is no long-lived device cache.
+
+**Why:** Homey is the only authoritative store for device identity and state. The dashboard holds a snapshot, not a replica.
+
+## Read-only first
+
+**Choice:** LightWidget displays name + ON/OFF. It does not call `setCapabilityValue`.
+
+**Why:** Milestone scope is the data layer and a first bound widget. Control, dim, and color come later on the same `deviceId` reference.
+
+## Snapshot before realtime
+
+**Choice:** Homey state is read once during dashboard bootstrap. `DashboardRenderer.updateWidgetState(widgetId, state)` is implemented but not driven by timers, polling, WebSocket, SSE, or Homey listeners.
+
+**Why:** Realtime is a later milestone. The config/runtime split avoids painting LightWidget as bootstrap-only.
+
+## Broken references remain visible
+
+**Choice:** If the bound device is removed, unreachable, unavailable, or no longer exposes `onoff`, the widget stays on the grid in the `unavailable` visual state. The stored `deviceId` is never auto-replaced or deleted.
+
+**Why:** The user must see that the configuration still exists. Correction is explicit in the Dashboard Editor.
+
+## Homey-inspired visual language
+
+**Choice:** LightWidget is a simple rounded tile with a clear ON/OFF/unavailable hierarchy. CSS classes `widget-light--state-on|off|unavailable` are derived from `LightVisualState`. No proprietary Homey assets or undocumented internals are copied.
+
+**Why:** The tile should feel at home next to Homey without pixel-perfect cloning.
+
+## Server-side light compatibility
+
+**Choice:** A device is LightWidget-compatible when it has capability `onoff`. Filtering happens in the repository. The editor receives `{ id, name, zoneName }[]` only.
+
+**Why:** The settings UI should not know Homey capability objects. Dim/color are not required now, but the same `deviceId` can gain those later.
+
+---
+
 Architectural choices for Milestone 4. Earlier decisions remain in force below and in prior milestone docs.
 
 ## App Settings for dashboard editing

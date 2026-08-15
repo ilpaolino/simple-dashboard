@@ -20,66 +20,63 @@
 
 **Status:** Done. Details: [MILESTONE-4.md](MILESTONE-4.md).
 
+## Milestone 5 — Homey Device Data Layer & Read-Only Light Widget
+
+**Status:** Done. Details: [MILESTONE-5.md](MILESTONE-5.md).
+
 ### In scope (implemented)
 
-- Custom App Settings Dashboard Editor (Homey Style Library + Web API)
-- Per-device widget persistence via Device Store
-- Explicit `WidgetPlacement` with overlap / bounds validation
-- Multi-cell widgets as single rectangles
-- `WidgetRegistry` + isolated Title / DateTime widgets
-- Browser-local DateTime updates (`Intl` + timer cleanup)
-- Diagnostics: widget count/types, dashboard errors, last loaded config
-- Device Settings note pointing to App Settings
-- Automated registry / placement / config / renderer tests
+- Permission `homey:manager:api` + official `HomeyAPI.createAppAPI`
+- `HomeyDeviceRepository` (list, lookup, capabilities, zone, availability)
+- Server-side LightWidget compatibility (`onoff`)
+- Dashboard Editor device selector (name + zone; “No zone” fallback)
+- `LightWidget` 1×1, read-only name + ON/OFF snapshot at load
+- Config stores only `deviceId`; runtime DTO is separate
+- Broken / removed / unavailable devices stay visible
+- Isolated widget failures; diagnostics for each LightWidget
+- Automated repository / compatibility / runtime / renderer / snapshot-semantics tests
 
 ### Out of scope (explicitly deferred)
 
-- Homey capability control (lights, covers, sensors, thermostats, …)
-- WebSocket / realtime push
+- ON/OFF control, dimmer, color, color temperature
+- WebSocket / SSE / polling / Homey capability listeners
 - Flow cards / notifications
 - Drag & drop / advanced visual editor
 - Overlays / cameras
-- Dynamic resize listeners
 
 ## Later milestones (not started)
 
-- Homey device bindings for widgets
-- Live configuration / state channel
-- Additional widget types
+- LightWidget control (set `onoff`)
+- Dim / color / temperature on the same `deviceId`
+- Live configuration / state channel (`updateWidgetState`)
+- Additional widget types (covers, sensors, thermostats)
 - Display hardware controls beyond recognition
 
-## Manual test checklist (Milestone 4)
+## Manual test checklist (Milestone 5)
 
 - [ ] Build completed
 - [ ] TypeScript strict without errors
 - [ ] lint completed
 - [ ] test automatici completed
-- [ ] App Settings Dashboard Editor accessible
-- [ ] selezione Display
-- [ ] griglia corretta visualizzata
-- [ ] celle occupate/libere visibili
-- [ ] aggiunta TitleWidget 2x1
-- [ ] aggiunta TitleWidget 3x1
-- [ ] allineamento left
-- [ ] allineamento center
-- [ ] allineamento right
-- [ ] aggiunta DateTimeWidget 1x1
-- [ ] aggiunta DateTimeWidget 2x1
-- [ ] mode time
-- [ ] mode date
-- [ ] mode date-time
-- [ ] data/ora si aggiornano senza reload
-- [ ] widget multi-cella senza divisioni interne
-- [ ] collisione impedita
-- [ ] widget fuori griglia impedito
-- [ ] modifica widget
-- [ ] rimozione widget
-- [ ] refresh Wall Display applica nuova configurazione
-- [ ] seconda applyConfiguration funziona
-- [ ] nessun timer orfano
-- [ ] Device Settings mostra nota verso App Settings
+- [ ] permesso Homey verificato (`homey:manager:api`)
+- [ ] Dashboard Editor apre elenco Device compatibili
+- [ ] Device senza `onoff` non appare
+- [ ] nome Device visibile
+- [ ] zona Device visibile
+- [ ] zona assente gestita
+- [ ] LightWidget aggiungibile
+- [ ] LightWidget solo 1x1
+- [ ] luce ON visualizzata correttamente
+- [ ] luce OFF visualizzata correttamente
+- [ ] nome aggiornato dopo rename + refresh
+- [ ] Device rimosso → Device non disponibile
+- [ ] Device unavailable gestito
+- [ ] LightWidget rotto non blocca altri widget
+- [ ] nessun realtime introdotto
+- [ ] nessun polling introdotto
+- [ ] diagnostics aggiornata
 - [ ] UI italiana
 - [ ] UI inglese
-- [ ] diagnostics aggiornata
+- [ ] estetica coerente con Homey
 - [ ] bundle size documentata
 - [ ] dipendenze documentate

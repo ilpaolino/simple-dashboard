@@ -66,6 +66,20 @@
     },
     "dateTime": {
       "name": "Date & Time"
+    },
+    "light": {
+      "name": "Light",
+      "device": "Device",
+      "selectDevice": "Select device",
+      "zone": "Zone",
+      "noZone": "No zone",
+      "on": "On",
+      "off": "Off",
+      "unavailable": "Device unavailable",
+      "deviceNotCompatible": "Device not compatible",
+      "missingOnoff": "Missing on/off capability",
+      "failedToLoadDevice": "Failed to load device",
+      "noCompatibleDevices": "No compatible devices"
     }
   },
   "adapters": {
@@ -110,7 +124,8 @@
   },
   "pages": {
     "dashboard": {
-      "title": "Dashboard"
+      "title": "Dashboard",
+      "widgetFailed": "Widget failed"
     },
     "dashboardEmpty": {
       "heading": "No widgets configured",
@@ -182,7 +197,18 @@
       "memoryHeap": "Heap used",
       "recentErrors": "Recent errors",
       "noErrors": "No recent errors.",
-      "noDisplays": "No displays configured."
+      "noDisplays": "No displays configured.",
+      "lightWidgets": "Light widgets",
+      "widgetId": "Widget ID",
+      "deviceId": "Device ID",
+      "deviceResolved": "Device resolved",
+      "hasOnoff": "onoff capability",
+      "availability": "Availability",
+      "lastOnOff": "Last on/off",
+      "error": "Error",
+      "yes": "Yes",
+      "no": "No",
+      "noLightWidgets": "No Light widgets on the last dashboard load."
     },
     "diagnosticsDisabled": {
       "title": "Diagnostics disabled",

@@ -1,6 +1,7 @@
 import { createDefaultWidgetRegistry } from '../../../lib/widgets/registry';
 import type { WidgetDefinition, WidgetTypeId } from '../../../lib/widgets/types';
 import { DateTimeWidgetRenderer } from '../date-time/DateTimeWidget';
+import { LightWidgetRenderer } from '../light/LightWidget';
 import { TitleWidgetRenderer } from '../title/TitleWidget';
 import type { WidgetRenderer } from '../types';
 
@@ -15,6 +16,7 @@ export class FrontendWidgetRegistry {
   public constructor() {
     this.registerRenderer(new TitleWidgetRenderer());
     this.registerRenderer(new DateTimeWidgetRenderer());
+    this.registerRenderer(new LightWidgetRenderer());
   }
 
   public registerRenderer<TConfig>(renderer: WidgetRenderer<TConfig>): void {

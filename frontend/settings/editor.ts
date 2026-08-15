@@ -11,6 +11,7 @@ import {
 } from '../../lib/widgets/placement';
 import { createWidgetId } from '../../lib/widgets/validation';
 import { isDateTimeWidgetConfig } from '../../lib/widgets/date-time/definition';
+import { isLightWidgetConfig } from '../../lib/widgets/light/definition';
 import { isTitleWidgetConfig } from '../../lib/widgets/title/definition';
 import {
   resolveDashboardTheme,
@@ -64,6 +65,12 @@ interface WidgetTypeMeta {
   readonly defaultConfig: unknown;
 }
 
+interface CompatibleDeviceOption {
+  readonly id: string;
+  readonly name: string;
+  readonly zoneName: string | null;
+}
+
 interface EditorDashboardPayload {
   readonly displayId: string;
   readonly name: string;
@@ -71,6 +78,10 @@ interface EditorDashboardPayload {
   readonly grid: { readonly rows: number; readonly columns: number };
   readonly dashboard: DashboardConfiguration;
   readonly widgetTypes: readonly WidgetTypeMeta[];
+  readonly compatibleDevices: {
+    readonly light: readonly CompatibleDeviceOption[];
+  };
+  readonly deviceLoadError: string | null;
 }
 
 interface EditorState {
@@ -95,6 +106,7 @@ interface DraftWidget {
   titleAlignment: 'left' | 'center' | 'right';
   dateTimeMode: 'time' | 'date' | 'date-time';
   chrome: WidgetChrome;
+  deviceId: string;
   isNew: boolean;
 }
 
@@ -233,6 +245,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
       titleAlignment: 'left',
       dateTimeMode: 'date-time',
       chrome: 'plain',
+      deviceId: '',
       isNew: true,
     };
     state.selectedWidgetId = state.draft.id;
@@ -311,6 +324,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
     'titleAlignment',
     'dateTimeMode',
     'widgetChrome',
+    'lightDevice',
   ]) {
     document.getElementById(id)?.addEventListener('change', () => {
       readDraftForm();
@@ -419,7 +433,10 @@ function applyDraftToWidgets(): boolean {
 
   const widget = draftToWidget(state.draft);
   if (!widget) {
-    state.errorKey = 'editor.errors.invalidConfig';
+    state.errorKey =
+      state.draft.type === 'light' && state.draft.deviceId.trim() === ''
+        ? 'widgets.light.selectDevice'
+        : 'editor.errors.invalidConfig';
     return false;
   }
 
@@ -470,13 +487,26 @@ function draftToWidget(draft: DraftWidget): WidgetInstance | null {
     };
   }
 
-  const config = { mode: draft.dateTimeMode, chrome: draft.chrome };
-  if (!isDateTimeWidgetConfig(config)) {
+  if (draft.type === 'date-time') {
+    const config = { mode: draft.dateTimeMode, chrome: draft.chrome };
+    if (!isDateTimeWidgetConfig(config)) {
+      return null;
+    }
+    return {
+      id: draft.id,
+      type: 'date-time',
+      placement,
+      config,
+    };
+  }
+
+  const config = { deviceId: draft.deviceId };
+  if (!isLightWidgetConfig(config)) {
     return null;
   }
   return {
     id: draft.id,
-    type: 'date-time',
+    type: 'light',
     placement,
     config,
   };
@@ -490,8 +520,23 @@ function validateDraft(): void {
 
   const widget = draftToWidget(state.draft);
   if (!widget) {
-    state.errorKey = 'editor.errors.invalidConfig';
+    state.errorKey =
+      state.draft.type === 'light' && state.draft.deviceId.trim() === ''
+        ? 'widgets.light.selectDevice'
+        : 'editor.errors.invalidConfig';
     return;
+  }
+
+  if (widget.type === 'light') {
+    const devices = state.payload.compatibleDevices?.light ?? [];
+    const known = devices.some((device) => device.id === widget.config.deviceId);
+    if (!known && state.draft.isNew) {
+      state.errorKey =
+        devices.length === 0
+          ? 'widgets.light.noCompatibleDevices'
+          : 'widgets.light.deviceNotCompatible';
+      return;
+    }
   }
 
   const meta = state.payload.widgetTypes.find(
@@ -585,6 +630,7 @@ function syncDraftForm(): void {
   if (titleAlignment) titleAlignment.value = state.draft.titleAlignment;
   if (dateTimeMode) dateTimeMode.value = state.draft.dateTimeMode;
   if (widgetChrome) widgetChrome.checked = state.draft.chrome === 'card';
+  fillLightDeviceOptions();
 }
 
 function readDraftForm(): void {
@@ -616,6 +662,9 @@ function readDraftForm(): void {
   const widgetChrome = document.getElementById(
     'widgetChrome',
   ) as HTMLInputElement | null;
+  const lightDevice = document.getElementById(
+    'lightDevice',
+  ) as HTMLSelectElement | null;
 
   if (typeSelect && isWidgetTypeId(typeSelect.value)) {
     if (state.draft.type !== typeSelect.value) {
@@ -629,6 +678,9 @@ function readDraftForm(): void {
         state.draft.columnSpan = span.columnSpan;
       }
       fillSpanOptions(spanSelect, state.draft.type);
+      if (state.draft.type === 'light') {
+        fillLightDeviceOptions();
+      }
     }
   }
 
@@ -661,6 +713,66 @@ function readDraftForm(): void {
   if (widgetChrome) {
     state.draft.chrome = widgetChrome.checked ? 'card' : 'plain';
   }
+  if (lightDevice) {
+    state.draft.deviceId = lightDevice.value;
+  }
+}
+
+function fillLightDeviceOptions(): void {
+  const select = document.getElementById(
+    'lightDevice',
+  ) as HTMLSelectElement | null;
+  const help = document.getElementById('lightDeviceHelp');
+  if (!select || !state.payload || !state.draft) {
+    return;
+  }
+
+  const devices = state.payload.compatibleDevices?.light ?? [];
+  select.replaceChildren();
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = t('widgets.light.selectDevice');
+  select.appendChild(placeholder);
+
+  for (const device of devices) {
+    const option = document.createElement('option');
+    option.value = device.id;
+    option.textContent = deviceOptionLabel(device);
+    select.appendChild(option);
+  }
+
+  if (
+    state.draft.deviceId &&
+    !devices.some((device) => device.id === state.draft?.deviceId)
+  ) {
+    const missing = document.createElement('option');
+    missing.value = state.draft.deviceId;
+    missing.textContent = `${state.draft.deviceId} — ${t('widgets.light.unavailable')}`;
+    select.appendChild(missing);
+  }
+
+  select.value = state.draft.deviceId;
+
+  if (help) {
+    if (state.payload.deviceLoadError) {
+      help.hidden = false;
+      help.textContent = state.payload.deviceLoadError;
+    } else if (devices.length === 0) {
+      help.hidden = false;
+      help.textContent = t('widgets.light.noCompatibleDevices');
+    } else {
+      help.hidden = true;
+      help.textContent = '';
+    }
+  }
+}
+
+function deviceOptionLabel(device: CompatibleDeviceOption): string {
+  const zone = device.zoneName?.trim()
+    ? device.zoneName
+    : t('widgets.light.noZone');
+  return `${device.name} — ${zone}`;
 }
 
 function fillCoordinateOptions(
@@ -744,33 +856,40 @@ function renderWidgetList(): void {
 
 function selectExistingWidget(widget: WidgetInstance): void {
   state.selectedWidgetId = widget.id;
+  const base = {
+    id: widget.id,
+    row: widget.placement.row,
+    column: widget.placement.column,
+    rowSpan: widget.placement.rowSpan,
+    columnSpan: widget.placement.columnSpan,
+    titleText: 'Title',
+    titleAlignment: 'left' as const,
+    dateTimeMode: 'date-time' as const,
+    chrome: 'plain' as const,
+    deviceId: '',
+    isNew: false,
+  };
+
   if (widget.type === 'title') {
     state.draft = {
-      id: widget.id,
+      ...base,
       type: 'title',
-      row: widget.placement.row,
-      column: widget.placement.column,
-      rowSpan: widget.placement.rowSpan,
-      columnSpan: widget.placement.columnSpan,
       titleText: widget.config.text,
       titleAlignment: widget.config.alignment,
-      dateTimeMode: 'date-time',
       chrome: resolveWidgetChrome(widget.config),
-      isNew: false,
+    };
+  } else if (widget.type === 'date-time') {
+    state.draft = {
+      ...base,
+      type: 'date-time',
+      dateTimeMode: widget.config.mode,
+      chrome: resolveWidgetChrome(widget.config),
     };
   } else {
     state.draft = {
-      id: widget.id,
-      type: 'date-time',
-      row: widget.placement.row,
-      column: widget.placement.column,
-      rowSpan: widget.placement.rowSpan,
-      columnSpan: widget.placement.columnSpan,
-      titleText: 'Title',
-      titleAlignment: 'left',
-      dateTimeMode: widget.config.mode,
-      chrome: resolveWidgetChrome(widget.config),
-      isNew: false,
+      ...base,
+      type: 'light',
+      deviceId: widget.config.deviceId,
     };
   }
   syncDraftForm();
@@ -968,6 +1087,8 @@ function renderDraftPanel(): void {
   const formTitle = document.getElementById('draftFormTitle');
   const titleFields = document.getElementById('titleFields');
   const dateTimeFields = document.getElementById('dateTimeFields');
+  const lightFields = document.getElementById('lightFields');
+  const chromeFields = document.getElementById('chromeFields');
   const removeButton = document.getElementById('removeWidget');
 
   const isEditing = state.draft !== null;
@@ -995,6 +1116,12 @@ function renderDraftPanel(): void {
   }
   if (dateTimeFields) {
     dateTimeFields.hidden = state.draft.type !== 'date-time';
+  }
+  if (lightFields) {
+    lightFields.hidden = state.draft.type !== 'light';
+  }
+  if (chromeFields) {
+    chromeFields.hidden = state.draft.type === 'light';
   }
 }
 

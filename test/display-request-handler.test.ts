@@ -7,6 +7,7 @@ import { AdapterRegistry } from '../lib/adapters/AdapterRegistry';
 import { GenericWebDisplayAdapter } from '../lib/adapters/GenericWebDisplayAdapter';
 import { ShellyWallDisplayAdapter } from '../lib/adapters/ShellyWallDisplayAdapter';
 import { ADAPTER_IDS, LAYOUT_IDS } from '../lib/adapters/types';
+import { HomeyDeviceRepository } from '../lib/homey/HomeyDeviceRepository';
 import { emptyDashboardConfiguration } from '../lib/widgets';
 import { DiagnosticsLog } from '../lib/diagnostics/DiagnosticsLog';
 import { DisplayRegistry } from '../lib/display/DisplayRegistry';
@@ -259,6 +260,7 @@ describe('DisplayRequestHandler', () => {
     assert.match(response.body, /Office/);
     assert.match(response.body, /pages\.diagnostics\.gridSize/);
     assert.match(response.body, /2x4/);
+    assert.match(response.body, /pages\.diagnostics\.lightWidgets/);
   });
 
   it('serves dashboard static assets', async () => {
@@ -283,5 +285,88 @@ describe('DisplayRequestHandler', () => {
     assert.match(css.contentType, /text\/css/);
     assert.equal(js.statusCode, 200);
     assert.match(js.contentType, /javascript/);
+  });
+
+  it('embeds a LightWidget snapshot at load without realtime listeners', async () => {
+    const registry = new DisplayRegistry();
+    registry.rebuild([
+      {
+        displayId: 'gen-1',
+        name: 'Office',
+        typeId: DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY,
+        ipAddress: '192.168.1.40',
+        hardwareId: null,
+        layoutId: LAYOUT_IDS.GRID_2X4,
+        dashboard: {
+          version: 1,
+          theme: 'dark',
+          widgets: [
+            {
+              id: 'light-1',
+              type: 'light',
+              placement: { row: 0, column: 0, rowSpan: 1, columnSpan: 1 },
+              config: { deviceId: 'lamp-1' },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const repository = new HomeyDeviceRepository({
+      async getDevices() {
+        return [
+          {
+            id: 'lamp-1',
+            name: 'Office lamp',
+            zoneId: null,
+            available: true,
+            capabilities: ['onoff'],
+            capabilityValues: { onoff: true },
+          },
+        ];
+      },
+      async getDevice(id: string) {
+        return id === 'lamp-1'
+          ? {
+              id: 'lamp-1',
+              name: 'Office lamp',
+              zoneId: null,
+              available: true,
+              capabilities: ['onoff'],
+              capabilityValues: { onoff: true },
+            }
+          : null;
+      },
+      async getZones() {
+        return {};
+      },
+    });
+
+    const handler = new DisplayRequestHandler({
+      registry,
+      adapters: new AdapterRegistry([new GenericWebDisplayAdapter()]),
+      diagnosticsLog: new DiagnosticsLog(),
+      logger: silentLogger,
+      translate,
+      getLanguage: () => 'en',
+      isDiagnosticsEnabled: () => true,
+      isServerListening: () => true,
+      getPort: () => 7999,
+      getUptimeSeconds: () => 12,
+      assets: createTempAssets(),
+      deviceRepository: repository,
+    });
+
+    const response = await handler.handle(
+      request({ clientIp: '192.168.1.40' }),
+    );
+    assert.equal(response.statusCode, 200);
+    assert.match(response.body, /"type":"light"/);
+    assert.match(response.body, /"on":true/);
+    assert.match(response.body, /Office lamp/);
+    assert.equal(
+      registry.getById('gen-1')?.runtime.lastLightWidgetDiagnostics[0]?.on,
+      true,
+    );
   });
 });

@@ -99,6 +99,7 @@ export class DateTimeWidgetRenderer
     }, TICK_MS);
 
     return {
+      widgetId: instance.id,
       element,
       destroy() {
         if (timerId !== null) {

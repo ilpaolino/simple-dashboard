@@ -285,7 +285,7 @@
             <select class="homey-form-select" id="widgetSpan"></select>
           </div>
 
-          <div class="homey-form-group">
+          <div id="chromeFields" class="homey-form-group">
             <label class="homey-form-checkbox">
               <input
                 class="homey-form-checkbox-input"
@@ -331,6 +331,16 @@
                 <option value="date" data-i18n="editor.modeDate">Date</option>
                 <option value="date-time" data-i18n="editor.modeDateTime">Date &amp; Time</option>
               </select>
+            </div>
+          </div>
+
+          <div id="lightFields" hidden>
+            <div class="homey-form-group">
+              <label class="homey-form-label" for="lightDevice" data-i18n="widgets.light.selectDevice">
+                Select device
+              </label>
+              <select class="homey-form-select" id="lightDevice"></select>
+              <p id="lightDeviceHelp" class="homey-form-help" hidden></p>
             </div>
           </div>
 

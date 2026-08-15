@@ -59,6 +59,28 @@ function formatBytes(bytes: number): string {
   return `${mb.toFixed(1)} MiB`;
 }
 
+function lightErrorLabel(
+  error: string | null,
+  translate: (key: string) => string,
+): string {
+  if (!error) {
+    return translate('pages.status.none');
+  }
+  switch (error) {
+    case 'missing_device':
+    case 'api_error':
+      return translate('widgets.light.failedToLoadDevice');
+    case 'missing_capability':
+      return translate('widgets.light.missingOnoff');
+    case 'unavailable':
+      return translate('widgets.light.unavailable');
+    case 'invalid_value':
+      return translate('editor.errors.invalidConfig');
+    default:
+      return error;
+  }
+}
+
 export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
   const t = input.translate;
   const now = input.now ?? new Date();
@@ -158,6 +180,48 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
           })
           .join('')}</ul>`;
 
+  const lightRows = displays.flatMap((entry) =>
+    entry.runtime.lastLightWidgetDiagnostics.map((item) => {
+      const lastOnOff =
+        item.on === null
+          ? t('pages.status.none')
+          : item.on
+            ? t('widgets.light.on')
+            : t('widgets.light.off');
+      return `<tr>
+        <td>${escapeHtml(entry.config.name)}</td>
+        <td>${escapeHtml(item.widgetId)}</td>
+        <td>${escapeHtml(item.deviceId)}</td>
+        <td>${escapeHtml(item.resolved ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.hasOnoff ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.available ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(lastOnOff)}</td>
+        <td>${escapeHtml(lightErrorLabel(item.error, t))}</td>
+      </tr>`;
+    }),
+  );
+
+  const lightTable =
+    lightRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noLightWidgets'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.recognized.name'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.widgetId'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.deviceId'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.deviceResolved'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hasOnoff'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.availability'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.lastOnOff'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.error'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lightRows.join('\n')}
+      </tbody>
+    </table>`;
+
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(input.lang)}">
 <head>
@@ -200,6 +264,8 @@ ${TECHNICAL_PAGE_STYLES}
         ${tableRows || `<tr><td colspan="15">${escapeHtml(t('pages.diagnostics.noDisplays'))}</td></tr>`}
       </tbody>
     </table>
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.lightWidgets'))}</h1>
+    ${lightTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentErrors'))}</h1>
     ${errorsHtml}
   </main>

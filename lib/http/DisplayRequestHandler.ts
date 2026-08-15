@@ -1,6 +1,7 @@
 import type { AdapterRegistry } from '../adapters/AdapterRegistry';
 import {
   createDashboardBootstrap,
+  createDashboardUiCopy,
   createEmptyStateCopy,
 } from '../dashboard';
 import { formatGridSize, resolveLayoutId } from '../dashboard/layoutParse';
@@ -11,9 +12,11 @@ import { DISPLAY_TYPE_IDS } from '../display/types';
 import type { DiagnosticsLog } from '../diagnostics/DiagnosticsLog';
 import type { HttpResponse, Logger, RequestInfo } from '../types';
 import {
+  resolveDashboardRuntime,
   validateDashboardConfiguration,
   type PlacementValidationError,
 } from '../widgets';
+import type { HomeyDeviceRepository } from '../homey/HomeyDeviceRepository';
 import { DashboardAssetStore } from './DashboardAssetStore';
 import { renderDiagnosticsPage } from './pages/diagnosticsPage';
 import {
@@ -39,6 +42,7 @@ export interface DisplayRequestHandlerOptions {
   readonly getPort: () => number | null;
   readonly getUptimeSeconds: () => number;
   readonly assets?: DashboardAssetStore;
+  readonly deviceRepository?: HomeyDeviceRepository | null;
 }
 
 /**
@@ -260,6 +264,17 @@ export class DisplayRequestHandler {
       ? config.dashboard.widgets
       : [];
 
+    const runtime = await resolveDashboardRuntime({
+      widgets,
+      repository: this.options.deviceRepository ?? null,
+      logger: this.options.logger,
+    });
+
+    this.options.registry.markLightWidgetDiagnostics(
+      config.displayId,
+      runtime.diagnostics,
+    );
+
     const bootstrap = createDashboardBootstrap({
       displayId: config.displayId,
       displayName: config.name,
@@ -267,9 +282,11 @@ export class DisplayRequestHandler {
       layoutId: config.layoutId,
       layout: layout.config,
       widgets,
+      widgetRuntime: runtime.states,
       theme: config.dashboard.theme,
       locale: this.options.getLanguage(),
       emptyState: createEmptyStateCopy(translate),
+      copy: createDashboardUiCopy(translate),
     });
 
     this.options.logger.info('Display dashboard rendered', {

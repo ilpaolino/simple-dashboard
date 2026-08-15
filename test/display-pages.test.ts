@@ -94,6 +94,15 @@ describe('display pages', () => {
           layoutLabel: 'Layout',
           gridLabel: 'Grid size',
         },
+        widgetRuntime: {},
+        copy: {
+          light: {
+            on: 'On',
+            off: 'Off',
+            unavailable: 'Device unavailable',
+          },
+          widgetFailed: 'Widget failed',
+        },
       },
     });
 

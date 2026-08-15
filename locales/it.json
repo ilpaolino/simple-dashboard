@@ -66,6 +66,20 @@
     },
     "dateTime": {
       "name": "Data e ora"
+    },
+    "light": {
+      "name": "Luce",
+      "device": "Dispositivo",
+      "selectDevice": "Seleziona dispositivo",
+      "zone": "Zona",
+      "noZone": "Nessuna zona",
+      "on": "On",
+      "off": "Off",
+      "unavailable": "Device non disponibile",
+      "deviceNotCompatible": "Dispositivo non compatibile",
+      "missingOnoff": "Capability on/off mancante",
+      "failedToLoadDevice": "Impossibile caricare il dispositivo",
+      "noCompatibleDevices": "Nessun dispositivo compatibile"
     }
   },
   "adapters": {
@@ -110,7 +124,8 @@
   },
   "pages": {
     "dashboard": {
-      "title": "Dashboard"
+      "title": "Dashboard",
+      "widgetFailed": "Widget non disponibile"
     },
     "dashboardEmpty": {
       "heading": "Nessun widget configurato",
@@ -182,7 +197,18 @@
       "memoryHeap": "Heap usata",
       "recentErrors": "Errori recenti",
       "noErrors": "Nessun errore recente.",
-      "noDisplays": "Nessun display configurato."
+      "noDisplays": "Nessun display configurato.",
+      "lightWidgets": "Widget luce",
+      "widgetId": "ID widget",
+      "deviceId": "ID dispositivo",
+      "deviceResolved": "Device risolto",
+      "hasOnoff": "Capability onoff",
+      "availability": "Disponibilità",
+      "lastOnOff": "Ultimo on/off",
+      "error": "Errore",
+      "yes": "Sì",
+      "no": "No",
+      "noLightWidgets": "Nessun LightWidget nell'ultimo caricamento della dashboard."
     },
     "diagnosticsDisabled": {
       "title": "Diagnostica disabilitata",

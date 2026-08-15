@@ -36,6 +36,7 @@ export class TitleWidgetRenderer implements WidgetRenderer<TitleWidgetConfig> {
     element.appendChild(text);
 
     return {
+      widgetId: instance.id,
       element,
       destroy() {
         element.remove();

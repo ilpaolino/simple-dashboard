@@ -2,6 +2,7 @@ import type { DashboardBootstrap } from '../lib/dashboard/index';
 import { isWidgetTypeId } from '../lib/widgets/registry';
 import { isTitleWidgetConfig } from '../lib/widgets/title/definition';
 import { isDateTimeWidgetConfig } from '../lib/widgets/date-time/definition';
+import { isLightWidgetConfig } from '../lib/widgets/light/definition';
 import type { WidgetInstance, WidgetPlacement } from '../lib/widgets/types';
 import { isDashboardTheme } from '../lib/widgets/types';
 import { DashboardRenderer } from './layout/DashboardRenderer';
@@ -76,6 +77,14 @@ function isDashboardBootstrap(value: unknown): value is DashboardBootstrap {
     return false;
   }
 
+  if (!isDashboardCopy(candidate.copy)) {
+    return false;
+  }
+
+  if (!isWidgetRuntimeMap(candidate.widgetRuntime)) {
+    return false;
+  }
+
   return candidate.widgets.every(isWidgetInstance);
 }
 
@@ -94,6 +103,32 @@ function isEmptyStateCopy(value: unknown): boolean {
     typeof candidate.layoutLabel === 'string' &&
     typeof candidate.gridLabel === 'string'
   );
+}
+
+function isDashboardCopy(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.widgetFailed !== 'string') {
+    return false;
+  }
+
+  if (typeof candidate.light !== 'object' || candidate.light === null) {
+    return false;
+  }
+
+  const light = candidate.light as Record<string, unknown>;
+  return (
+    typeof light.on === 'string' &&
+    typeof light.off === 'string' &&
+    typeof light.unavailable === 'string'
+  );
+}
+
+function isWidgetRuntimeMap(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isWidgetInstance(value: unknown): value is WidgetInstance {
@@ -118,7 +153,11 @@ function isWidgetInstance(value: unknown): value is WidgetInstance {
     return isTitleWidgetConfig(candidate.config);
   }
 
-  return isDateTimeWidgetConfig(candidate.config);
+  if (candidate.type === 'date-time') {
+    return isDateTimeWidgetConfig(candidate.config);
+  }
+
+  return isLightWidgetConfig(candidate.config);
 }
 
 function isPlacement(value: unknown): value is WidgetPlacement {

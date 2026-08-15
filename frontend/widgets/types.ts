@@ -2,18 +2,24 @@ import type {
   DashboardTheme,
   WidgetInstance,
   WidgetPlacement,
+  WidgetRuntimeState,
   WidgetTypeId,
 } from '../../lib/widgets/types';
 import { resolveWidgetChrome, spanKey } from '../../lib/widgets/types';
+import type { DashboardUiCopy } from '../../lib/dashboard/types';
 
 export interface WidgetRenderContext {
   readonly locale: string;
   readonly theme: DashboardTheme;
   readonly now?: Date;
+  readonly runtime?: WidgetRuntimeState;
+  readonly copy: DashboardUiCopy;
 }
 
 export interface MountedWidget {
+  readonly widgetId: string;
   readonly element: HTMLElement;
+  updateState?(state: WidgetRuntimeState): void;
   destroy(): void;
 }
 

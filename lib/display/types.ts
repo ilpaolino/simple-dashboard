@@ -2,6 +2,7 @@ import type { LayoutId } from '../adapters/types';
 import { ADAPTER_IDS } from '../adapters/types';
 import type { DashboardConfiguration } from '../widgets/types';
 import { emptyDashboardConfiguration } from '../widgets/types';
+import type { LightWidgetDiagnostic } from '../widgets/light/types';
 
 /**
  * Homey driver ids — also used as display type ids.
@@ -62,6 +63,8 @@ export interface DisplayRuntimeState {
   lastDashboardErrorKey: string | null;
   /** ISO timestamp of last successfully loaded dashboard configuration. */
   lastDashboardLoadedAt: string | null;
+  /** LightWidget snapshot diagnostics from the last dashboard bootstrap. */
+  lastLightWidgetDiagnostics: readonly LightWidgetDiagnostic[];
 }
 
 export interface RegisteredDisplay {

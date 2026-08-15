@@ -1,21 +1,24 @@
 import {
   calculateGridGeometry,
   createGridCells,
+  defaultDashboardUiCopy,
   SAFETY_MARGIN_PX,
   type DashboardBootstrap,
   type DashboardEmptyStateCopy,
+  type DashboardUiCopy,
   type GridConfig,
 } from '../../lib/dashboard/index';
 import {
   resolveDashboardTheme,
   type DashboardTheme,
   type WidgetInstance,
+  type WidgetRuntimeState,
 } from '../../lib/widgets/types';
 import {
   createFrontendWidgetRegistry,
   type FrontendWidgetRegistry,
 } from '../widgets/registry/WidgetRegistry';
-import type { MountedWidget } from '../widgets/types';
+import { placementGridArea, type MountedWidget } from '../widgets/types';
 
 export interface DashboardConfigurationView {
   readonly displayId: string;
@@ -24,9 +27,11 @@ export interface DashboardConfigurationView {
   readonly layoutId: string;
   readonly layout: GridConfig;
   readonly widgets: readonly WidgetInstance[];
+  readonly widgetRuntime?: Readonly<Record<string, WidgetRuntimeState>>;
   readonly theme?: DashboardTheme;
   readonly locale: string;
   readonly emptyState: DashboardEmptyStateCopy;
+  readonly copy?: DashboardUiCopy;
 }
 
 /**
@@ -38,6 +43,8 @@ export class DashboardRenderer {
   private readonly root: HTMLElement;
   private mounted: MountedWidget[] = [];
   private theme: DashboardTheme = 'dark';
+  private widgetRuntime: Record<string, WidgetRuntimeState> = {};
+  private copy: DashboardUiCopy = defaultDashboardUiCopy();
 
   public constructor(
     root: HTMLElement,
@@ -51,6 +58,8 @@ export class DashboardRenderer {
     this.destroyMounted();
     this.root.replaceChildren();
     this.applyTheme(resolveDashboardTheme(config.theme));
+    this.widgetRuntime = { ...(config.widgetRuntime ?? {}) };
+    this.copy = config.copy ?? defaultDashboardUiCopy();
 
     if (config.widgets.length === 0) {
       this.renderEmptyState(config);
@@ -68,10 +77,21 @@ export class DashboardRenderer {
       layoutId: bootstrap.layoutId,
       layout: bootstrap.layout,
       widgets: bootstrap.widgets,
+      widgetRuntime: bootstrap.widgetRuntime,
       theme: bootstrap.theme,
       locale: bootstrap.locale,
       emptyState: bootstrap.emptyState,
+      copy: bootstrap.copy,
     });
+  }
+
+  /**
+   * Future realtime entry point. Milestone 5 only applies state at bootstrap.
+   */
+  public updateWidgetState(widgetId: string, state: WidgetRuntimeState): void {
+    this.widgetRuntime[widgetId] = state;
+    const mounted = this.mounted.find((item) => item.widgetId === widgetId);
+    mounted?.updateState?.(state);
   }
 
   public getMountedCount(): number {
@@ -88,20 +108,54 @@ export class DashboardRenderer {
     const grid = this.createGridElement(config.layout, geometry);
 
     for (const widget of config.widgets) {
-      const renderer = this.registry.getRenderer(widget.type);
-      if (!renderer) {
-        continue;
+      const element = this.mountWidget(widget, config);
+      if (element) {
+        grid.appendChild(element);
       }
-
-      const mounted = renderer.mount(widget, {
-        locale: config.locale,
-        theme: this.theme,
-      });
-      this.mounted.push(mounted);
-      grid.appendChild(mounted.element);
     }
 
     this.root.appendChild(grid);
+  }
+
+  private mountWidget(
+    widget: WidgetInstance,
+    config: DashboardConfigurationView,
+  ): HTMLElement | null {
+    const renderer = this.registry.getRenderer(widget.type);
+    if (!renderer) {
+      return this.createFailedWidget(widget);
+    }
+
+    try {
+      const mounted = renderer.mount(widget, {
+        locale: config.locale,
+        theme: this.theme,
+        runtime: this.widgetRuntime[widget.id],
+        copy: this.copy,
+      });
+      this.mounted.push(mounted);
+      return mounted.element;
+    } catch {
+      return this.createFailedWidget(widget);
+    }
+  }
+
+  private createFailedWidget(widget: WidgetInstance): HTMLElement {
+    const element = document.createElement('article');
+    element.className = 'widget widget--failed';
+    element.style.gridArea = placementGridArea(widget.placement);
+    element.dataset.widgetId = widget.id;
+    element.dataset.widgetType = widget.type;
+    element.setAttribute('role', 'status');
+    element.textContent = this.copy.widgetFailed;
+    this.mounted.push({
+      widgetId: widget.id,
+      element,
+      destroy() {
+        element.remove();
+      },
+    });
+    return element;
   }
 
   private renderEmptyState(config: DashboardConfigurationView): void {

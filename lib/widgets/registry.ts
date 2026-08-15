@@ -1,4 +1,5 @@
 import { dateTimeWidgetDefinition } from './date-time/definition';
+import { lightWidgetDefinition } from './light/definition';
 import { titleWidgetDefinition } from './title/definition';
 import type {
   WidgetDefinition,
@@ -55,12 +56,13 @@ export class WidgetRegistry {
 }
 
 export function isWidgetTypeId(value: unknown): value is WidgetTypeId {
-  return value === 'title' || value === 'date-time';
+  return value === 'title' || value === 'date-time' || value === 'light';
 }
 
 export function createDefaultWidgetRegistry(): WidgetRegistry {
   const registry = new WidgetRegistry();
   registry.register(titleWidgetDefinition);
   registry.register(dateTimeWidgetDefinition);
+  registry.register(lightWidgetDefinition);
   return registry;
 }

@@ -7,6 +7,7 @@ import type {
   DashboardTheme,
   WidgetInstance,
   WidgetPlacement,
+  WidgetRuntimeState,
 } from '../widgets/types';
 
 export interface GridConfig {
@@ -42,9 +43,19 @@ export interface DashboardEmptyStateCopy {
   readonly gridLabel: string;
 }
 
+export interface DashboardUiCopy {
+  readonly light: {
+    readonly on: string;
+    readonly off: string;
+    readonly unavailable: string;
+  };
+  readonly widgetFailed: string;
+}
+
 /**
  * Minimal DTO sent to the frontend. No Homey API surface.
  * `applyConfiguration` on the client can re-apply this shape later (reload-only today).
+ * `updateWidgetState` can patch `widgetRuntime` without a full reload when realtime arrives.
  */
 export interface DashboardBootstrap {
   readonly displayId: string;
@@ -53,12 +64,14 @@ export interface DashboardBootstrap {
   readonly layoutId: string;
   readonly layout: GridConfig;
   readonly widgets: readonly WidgetInstance[];
+  readonly widgetRuntime: Readonly<Record<string, WidgetRuntimeState>>;
   readonly theme: DashboardTheme;
   readonly locale: string;
   readonly emptyState: DashboardEmptyStateCopy;
+  readonly copy: DashboardUiCopy;
 }
 
-export type { DashboardConfiguration, DashboardTheme, WidgetInstance, WidgetPlacement };
+export type { DashboardConfiguration, DashboardTheme, WidgetInstance, WidgetPlacement, WidgetRuntimeState };
 
 export interface ViewportSize {
   readonly width: number;

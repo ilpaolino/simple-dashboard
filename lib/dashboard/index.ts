@@ -5,6 +5,7 @@ import { SAFETY_MARGIN_PX } from './constants';
 import type {
   DashboardBootstrap,
   DashboardEmptyStateCopy,
+  DashboardUiCopy,
   GridConfig,
   GridCell,
   GridGeometry,
@@ -35,6 +36,7 @@ export type {
   DashboardConfiguration,
   DashboardEmptyStateCopy,
   DashboardTheme,
+  DashboardUiCopy,
   GridConfig,
   GridCell,
   GridGeometry,
@@ -42,6 +44,7 @@ export type {
   ViewportSize,
   WidgetInstance,
   WidgetPlacement,
+  WidgetRuntimeState,
   LayoutResolveResult,
 } from './types';
 
@@ -52,9 +55,11 @@ export interface CreateDashboardBootstrapInput {
   readonly layoutId: string;
   readonly layout: GridConfig;
   readonly widgets?: DashboardBootstrap['widgets'];
+  readonly widgetRuntime?: DashboardBootstrap['widgetRuntime'];
   readonly theme?: DashboardBootstrap['theme'];
   readonly locale?: string;
   readonly emptyState: DashboardEmptyStateCopy;
+  readonly copy?: DashboardUiCopy;
 }
 
 export function createDashboardBootstrap(
@@ -74,9 +79,11 @@ export function createDashboardBootstrap(
       columns: input.layout.columns,
     },
     widgets: input.widgets ?? [],
+    widgetRuntime: input.widgetRuntime ?? {},
     theme: resolveDashboardTheme(input.theme),
     locale: input.locale ?? 'en',
     emptyState: input.emptyState,
+    copy: input.copy ?? defaultDashboardUiCopy(),
   };
 }
 
@@ -91,6 +98,34 @@ export function createEmptyStateCopy(
     idLabel: translate('pages.recognized.hardwareId'),
     layoutLabel: translate('pages.recognized.layout'),
     gridLabel: translate('pages.diagnostics.gridSize'),
+  };
+}
+
+export function createDashboardUiCopy(
+  translate: (key: string) => string,
+): DashboardUiCopy {
+  return {
+    light: {
+      on: translate('widgets.light.on'),
+      off: translate('widgets.light.off'),
+      unavailable: translate('widgets.light.unavailable'),
+    },
+    widgetFailed: translate('pages.dashboard.widgetFailed'),
+  };
+}
+
+/**
+ * English fallback used by tests and as a last resort if bootstrap copy is omitted.
+ * Production always injects Homey translations via {@link createDashboardUiCopy}.
+ */
+export function defaultDashboardUiCopy(): DashboardUiCopy {
+  return {
+    light: {
+      on: 'On',
+      off: 'Off',
+      unavailable: 'Device unavailable',
+    },
+    widgetFailed: 'Widget failed',
   };
 }
 

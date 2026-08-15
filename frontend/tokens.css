@@ -22,6 +22,12 @@
   --empty-panel-muted: #6a7a82;
   --empty-panel-border: #c5d0d5;
   --empty-panel-shadow: 0 8px 28px rgba(31, 42, 48, 0.12);
+  --light-on-accent: #ffd56a;
+  --light-tile-on: rgba(255, 213, 106, 0.18);
+  --light-tile-on-border: rgba(255, 213, 106, 0.42);
+  --light-tile-off: rgba(255, 255, 255, 0.07);
+  --light-tile-border: rgba(255, 255, 255, 0.12);
+  --light-tile-unavailable: rgba(255, 255, 255, 0.04);
 }
 
 :root[data-theme="light"],
@@ -37,4 +43,10 @@
   --empty-panel-muted: #6a7a82;
   --empty-panel-border: #c5d0d5;
   --empty-panel-shadow: 0 8px 28px rgba(31, 42, 48, 0.1);
+  --light-on-accent: #c48a00;
+  --light-tile-on: rgba(255, 213, 106, 0.55);
+  --light-tile-on-border: rgba(196, 138, 0, 0.35);
+  --light-tile-off: rgba(255, 255, 255, 0.72);
+  --light-tile-border: rgba(31, 42, 48, 0.12);
+  --light-tile-unavailable: rgba(31, 42, 48, 0.06);
 }

@@ -9,6 +9,7 @@ import type {
   OnlineStatus,
   RegisteredDisplay,
 } from './types';
+import type { LightWidgetDiagnostic } from '../widgets/light/types';
 
 function emptyRuntime(): RegisteredDisplay['runtime'] {
   return {
@@ -20,6 +21,7 @@ function emptyRuntime(): RegisteredDisplay['runtime'] {
     lastLayoutErrorKey: null,
     lastDashboardErrorKey: null,
     lastDashboardLoadedAt: null,
+    lastLightWidgetDiagnostics: [],
   };
 }
 
@@ -154,6 +156,18 @@ export class DisplayRegistry {
     }
 
     entry.runtime.lastDashboardErrorKey = errorKey;
+  }
+
+  public markLightWidgetDiagnostics(
+    displayId: string,
+    diagnostics: readonly LightWidgetDiagnostic[],
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.lastLightWidgetDiagnostics = diagnostics;
   }
 
   public getOnlineStatus(

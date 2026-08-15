@@ -1,6 +1,6 @@
 {
   "id": "dev.dadda.simpledashboard",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -9,15 +9,15 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla widget dashboard for Homey Pro wall displays with an App Settings editor.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro, con editor nelle Impostazioni app."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays, with a read-only Light widget bound to Homey devices.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro, con widget Luce in sola lettura collegato ai dispositivi Homey."
   },
   "category": ["tools"],
   "tags": {
-    "en": ["http", "dashboard", "wall display", "widgets", "diagnostics"],
-    "it": ["http", "dashboard", "wall display", "widget", "diagnostica"]
+    "en": ["http", "dashboard", "wall display", "widgets", "light", "diagnostics"],
+    "it": ["http", "dashboard", "wall display", "widget", "luce", "diagnostica"]
   },
-  "permissions": [],
+  "permissions": ["homey:manager:api"],
   "images": {
     "small": "/assets/images/small.png",
     "large": "/assets/images/large.png",

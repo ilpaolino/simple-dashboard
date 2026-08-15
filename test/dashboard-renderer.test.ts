@@ -6,8 +6,11 @@ import {
   placementGridArea,
   layoutVariantClass,
   widgetChromeClass,
+  type WidgetRenderer,
 } from '../frontend/widgets/types';
+import { createFrontendWidgetRegistry } from '../frontend/widgets/registry/WidgetRegistry';
 import type { DashboardEmptyStateCopy } from '../lib/dashboard/types';
+import type { LightWidgetConfig } from '../lib/widgets/light/types';
 import type { WidgetInstance } from '../lib/widgets/types';
 
 const emptyState: DashboardEmptyStateCopy = {
@@ -263,6 +266,107 @@ describe('DashboardRenderer applyConfiguration', () => {
     const widget = grid!.children[0];
     assert.ok(widget);
     assert.match(widget!.className, /widget-title/);
+    renderer.destroy();
+  });
+});
+
+describe('LightWidget renderer', () => {
+  it('renders ON and OFF from runtime state without timers', () => {
+    const timers = installDomShim();
+    const root = document.createElement('div');
+    const renderer = new DashboardRenderer(root);
+
+    renderer.applyConfiguration({
+      displayId: 'disp-1',
+      displayName: 'Kitchen',
+      typeLabel: 'Shelly Wall Display',
+      layoutId: '2x2',
+      layout: { rows: 2, columns: 2 },
+      widgets: [
+        {
+          id: 'light-1',
+          type: 'light',
+          placement: { row: 0, column: 0, rowSpan: 1, columnSpan: 1 },
+          config: { deviceId: 'dev-1' },
+        },
+      ],
+      widgetRuntime: {
+        'light-1': {
+          type: 'light',
+          deviceId: 'dev-1',
+          name: 'Lampada tavolo',
+          available: true,
+          on: true,
+          error: null,
+        },
+      },
+      locale: 'en',
+      emptyState,
+    });
+
+    const grid = (root as unknown as FakeElement).children[0];
+    const widget = grid!.children[0];
+    assert.match(widget!.className, /widget-light--state-on/);
+    assert.equal(widget!.children[1]!.textContent, 'Lampada tavolo');
+    assert.equal(widget!.children[0]!.textContent, 'On');
+    assert.equal(timers.active.size, 0);
+
+    renderer.updateWidgetState('light-1', {
+      type: 'light',
+      deviceId: 'dev-1',
+      name: 'Lampada tavolo',
+      available: true,
+      on: false,
+      error: null,
+    });
+    assert.match(widget!.className, /widget-light--state-off/);
+    assert.equal(widget!.children[0]!.textContent, 'Off');
+    renderer.destroy();
+  });
+
+  it('keeps other widgets when a LightWidget renderer throws', () => {
+    installDomShim();
+    const registry = createFrontendWidgetRegistry();
+    const throwing: WidgetRenderer<LightWidgetConfig> = {
+      type: 'light',
+      mount() {
+        throw new Error('boom');
+      },
+    };
+    registry.registerRenderer(throwing);
+
+    const root = document.createElement('div');
+    const renderer = new DashboardRenderer(root, registry);
+
+    renderer.applyConfiguration({
+      displayId: 'disp-1',
+      displayName: 'Kitchen',
+      typeLabel: 'Shelly Wall Display',
+      layoutId: '2x2',
+      layout: { rows: 2, columns: 2 },
+      widgets: [
+        {
+          id: 'title-1',
+          type: 'title',
+          placement: { row: 0, column: 0, rowSpan: 1, columnSpan: 2 },
+          config: { text: 'Kitchen', alignment: 'left' },
+        },
+        {
+          id: 'light-1',
+          type: 'light',
+          placement: { row: 1, column: 0, rowSpan: 1, columnSpan: 1 },
+          config: { deviceId: 'dev-1' },
+        },
+      ],
+      locale: 'en',
+      emptyState,
+    });
+
+    assert.equal(renderer.getMountedCount(), 2);
+    const grid = (root as unknown as FakeElement).children[0];
+    assert.equal(grid!.children.length, 2);
+    assert.match(grid!.children[0]!.className, /widget-title/);
+    assert.match(grid!.children[1]!.className, /widget--failed/);
     renderer.destroy();
   });
 });

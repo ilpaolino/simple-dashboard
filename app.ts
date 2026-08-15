@@ -15,6 +15,15 @@ import { HttpServer } from './lib/HttpServer';
 import { AppLogger } from './lib/Logger';
 import { SettingsManager } from './lib/SettingsManager';
 import {
+  HomeyDeviceRepository,
+  UnavailableHomeyWebApi,
+} from './lib/homey/HomeyDeviceRepository';
+import { createHomeyWebApi } from './lib/homey/createHomeyWebApi';
+import type { CompatibleDeviceOption } from './lib/homey/types';
+import { validateLightWidgetBinding } from './lib/widgets/light/runtime';
+import type { LightBindingError } from './lib/widgets/light/types';
+
+import {
   createDefaultWidgetRegistry,
   parseDashboardConfiguration,
   validateDashboardConfiguration,
@@ -38,10 +47,12 @@ class WelcomeWallApp extends Homey.App {
 
   public readonly displayRegistry = new DisplayRegistry();
   public readonly diagnosticsLog = new DiagnosticsLog();
+  private deviceRepository!: HomeyDeviceRepository;
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
     this.settingsManager = new SettingsManager(this.homey.settings, this.logger);
+    this.deviceRepository = await this.initDeviceRepository();
 
     const adapters = createDefaultAdapterRegistry();
     this.requestHandler = new DisplayRequestHandler({
@@ -55,6 +66,7 @@ class WelcomeWallApp extends Homey.App {
       isServerListening: () => this.httpServer.isListening(),
       getPort: () => this.httpServer.getPort(),
       getUptimeSeconds: () => this.httpServer.getUptimeSeconds(),
+      deviceRepository: this.deviceRepository,
     });
 
     this.httpServer = new HttpServer({
@@ -164,6 +176,8 @@ class WelcomeWallApp extends Homey.App {
       throw new Error(this.homey.__('pages.invalidLayout.heading'));
     }
 
+    const devices = await this.loadLightDevicesForEditor();
+
     return {
       displayId: snapshot.displayId,
       name: snapshot.name,
@@ -176,6 +190,10 @@ class WelcomeWallApp extends Homey.App {
         allowedSpans: definition.allowedSpans,
         defaultConfig: definition.defaultConfig,
       })),
+      compatibleDevices: {
+        light: devices.devices,
+      },
+      deviceLoadError: devices.error,
     };
   }
 
@@ -227,6 +245,17 @@ class WelcomeWallApp extends Homey.App {
         widgetId: validation.widgetId,
       });
       throw new Error(this.homey.__(errorKeyForValidation(validation.error)));
+    }
+
+    const binding = await this.validateLightBindings(parsed.configuration);
+    if (!binding.ok) {
+      this.logger.warn('Rejected dashboard save: light device binding failed', {
+        displayId,
+        error: binding.error,
+        widgetId: binding.widgetId,
+        deviceId: binding.deviceId,
+      });
+      throw new Error(this.homey.__(errorKeyForBinding(binding.error)));
     }
 
     await device.setStoreValue(DASHBOARD_STORE_KEY, parsed.configuration);
@@ -284,6 +313,69 @@ class WelcomeWallApp extends Homey.App {
     }
     return null;
   }
+
+  private async initDeviceRepository(): Promise<HomeyDeviceRepository> {
+    try {
+      const api = await createHomeyWebApi(this.homey);
+      this.logger.info('Homey Web API client initialized', {
+        permission: 'homey:manager:api',
+      });
+      return new HomeyDeviceRepository(api);
+    } catch (error) {
+      this.logger.error('Failed to initialize Homey Web API', error);
+      return new HomeyDeviceRepository(new UnavailableHomeyWebApi());
+    }
+  }
+
+  private async loadLightDevicesForEditor(): Promise<{
+    readonly devices: readonly CompatibleDeviceOption[];
+    readonly error: string | null;
+  }> {
+    try {
+      const devices = await this.deviceRepository.listCompatibleLightDevices();
+      return { devices, error: null };
+    } catch (error) {
+      this.logger.error('Failed to load Homey devices for Dashboard Editor', error);
+      return {
+        devices: [],
+        error: this.homey.__('widgets.light.failedToLoadDevice'),
+      };
+    }
+  }
+
+  private async validateLightBindings(
+    configuration: DashboardConfiguration,
+  ): Promise<
+    | { readonly ok: true }
+    | {
+        readonly ok: false;
+        readonly error: LightBindingError;
+        readonly widgetId: string;
+        readonly deviceId: string;
+      }
+  > {
+    for (const widget of configuration.widgets) {
+      if (widget.type !== 'light') {
+        continue;
+      }
+
+      const result = await validateLightWidgetBinding({
+        config: widget.config,
+        repository: this.deviceRepository,
+      });
+
+      if (!result.ok) {
+        return {
+          ok: false,
+          error: result.error,
+          widgetId: widget.id,
+          deviceId: widget.config.deviceId,
+        };
+      }
+    }
+
+    return { ok: true };
+  }
 }
 
 interface EditorDisplaySummary {
@@ -311,6 +403,10 @@ interface EditorDashboardPayload {
     }[];
     readonly defaultConfig: unknown;
   }[];
+  readonly compatibleDevices: {
+    readonly light: readonly CompatibleDeviceOption[];
+  };
+  readonly deviceLoadError: string | null;
 }
 
 function resolveTypeIdForDriver(
@@ -323,6 +419,20 @@ function resolveTypeIdForDriver(
     return DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY;
   }
   return null;
+}
+
+function errorKeyForBinding(error: LightBindingError): string {
+  switch (error) {
+    case 'device_missing':
+      return 'widgets.light.failedToLoadDevice';
+    case 'device_not_compatible':
+      return 'widgets.light.deviceNotCompatible';
+    case 'missing_onoff':
+      return 'widgets.light.missingOnoff';
+    case 'device_api_error':
+    default:
+      return 'widgets.light.failedToLoadDevice';
+  }
 }
 
 function errorKeyForValidation(error: PlacementValidationError): string {

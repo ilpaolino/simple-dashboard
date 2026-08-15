@@ -2,6 +2,13 @@
  * Shared widget contracts for Homey backend validation and vanilla frontend.
  */
 
+import type {
+  LightWidgetConfig,
+  LightWidgetRuntimeState,
+} from './light/types';
+
+export type { LightWidgetConfig, LightWidgetRuntimeState } from './light/types';
+
 /**
  * Explicit widget placement. `(row, column)` is the top-left cell (0-based).
  * The widget extends right and down by its spans.
@@ -18,7 +25,7 @@ export interface WidgetSpan {
   readonly columnSpan: number;
 }
 
-export type WidgetTypeId = 'title' | 'date-time';
+export type WidgetTypeId = 'title' | 'date-time' | 'light';
 
 export type TextAlignment = 'left' | 'center' | 'right';
 
@@ -54,6 +61,7 @@ export function resolveWidgetChrome(config: {
 export type WidgetConfigMap = {
   readonly title: TitleWidgetConfig;
   readonly 'date-time': DateTimeWidgetConfig;
+  readonly light: LightWidgetConfig;
 };
 
 /**
@@ -71,7 +79,15 @@ export type WidgetInstance =
       readonly type: 'date-time';
       readonly placement: WidgetPlacement;
       readonly config: DateTimeWidgetConfig;
+    }
+  | {
+      readonly id: string;
+      readonly type: 'light';
+      readonly placement: WidgetPlacement;
+      readonly config: LightWidgetConfig;
     };
+
+export type WidgetRuntimeState = LightWidgetRuntimeState;
 
 export type DashboardTheme = 'dark' | 'light';
 
