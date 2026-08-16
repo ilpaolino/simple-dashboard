@@ -1,17 +1,24 @@
 # Known issues
 
+## Fixed / superseded during Milestone 9
+
+- **CoverWidget is read-only.** Cover is interactive: tile tap opens `WidgetControlOverlay` + `CoverControlPanel` with send-on-release position control, Open/Close, and conditional Stop.
+- **No cover command path.** Widget intents `set-position` / `stop`, backend validation, progress-aware confirmation, and `command-succeeded` are implemented.
+
 ## Fixed / superseded during Milestone 8
 
-- **No CoverWidget.** Read-only CoverWidget with `windowcoverings_set` is implemented.
+- **No CoverWidget.** CoverWidget with `windowcoverings_set` (read path + shared device visuals) is implemented; M9 adds control.
 - **LightWidget without decorative icon.** Light and Cover share the device-widget visual language.
 
-## Deferred by design (Milestone 8)
+## Deferred by design (Milestone 9)
 
-- **CoverWidget is read-only.** No open/close/stop, slider, or position commands yet.
-- **No inferred cover motion.** Bar updates only on Homey-reported values.
+- **Stop only with `windowcoverings_state`.** Devices that expose only `windowcoverings_set` can set position but never show Stop. No invented stop path.
+- **Command timeouts are per-type, not user-configurable.** Light toggle **4000 ms**; cover `set-position` **8000 ms**; cover `stop` **4000 ms**.
+- **No movement interpolation.** Tile and overlay paint Homey-reported percent only; progress appears when Homey emits updates.
+- **Overlay close does not cancel Homey commands.** Pending continues until confirm / reject / timeout.
 - **No Homey device icons on tiles.** `Device.icon` / `iconObj` exist in the Web API, but there is no documented auth-free URL for this app’s LAN dashboard; inline SVG fallbacks are used.
-- **No dim / color / color temperature.** Light compatibility and commands remain `onoff` only.
-- **No advanced gestures.** Architecture reserves `double-tap` / `long-press` / `swipe`; only LightWidget `tap → toggle` is implemented.
+- **No dim / color / color temperature.** Light compatibility and commands remain `onoff` only (overlay shell is reusable for a future panel).
+- **No advanced gestures.** Architecture reserves `double-tap` / `long-press` / `swipe`; LightWidget uses `tap → toggle`; CoverWidget uses `tap → open overlay`.
 - **No offline command queue / auto-retry.** Disconnect clears pending; reconnect uses a full snapshot.
 - **No event replay.** Offline gaps are corrected by a full snapshot after reconnect only.
 - **No Socket.IO.** `ws` only, shared HTTP port.
@@ -23,9 +30,9 @@
 - **No hostname pairing / LAN discovery.** IPv4 only.
 - **Generic identity is a UUID generated at pairing.** Avoid duplicate IPs in the registry.
 - **Existing M1 `wall_display` devices** are not migrated automatically.
-- **Widget CSS is still simple** (Homey-inspired tiles, shared device grammar started in M8, not a final visual system).
+- **Widget CSS is still simple** (Homey-inspired tiles, shared device grammar from M8, control overlay from M9 — not a final visual system).
 - **Local IP trust only.** No cloud auth; clients must match a configured Display IP.
-- **Command timeout is fixed** at 4000 ms (not user-configurable).
+- **No multi-cover groups, timers, or simulated motion.**
 
 ## Runtime constraints (still true)
 
@@ -47,4 +54,4 @@
 
 ## Tests that cannot run in CI without Homey
 
-Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONE-8.md](MILESTONE-8.md).
+Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime and confirmation, overlay/control panel behavior, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONE-9.md](MILESTONE-9.md).

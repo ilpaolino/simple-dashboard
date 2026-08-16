@@ -49,9 +49,11 @@
 
 - Dimmer, color, color temperature, sliders
 - Long press / double click / swipe gestures (architecture reserved only)
-- Popups, overlays beyond connection loss, notifications, cameras
+- Notifications, cameras
 - Flow cards
 - Socket.IO
+
+**Note:** Cover control overlays arrived in Milestone 9 (reusable `WidgetControlOverlay`). Light dimmer/color panels remain deferred.
 
 ## Milestone 8 — CoverWidget Read-Only & Device Visual Language
 
@@ -59,7 +61,7 @@
 
 ### In scope (implemented)
 
-- CoverWidget read-only (`windowcoverings_set`)
+- CoverWidget read path (`windowcoverings_set`)
 - Compatibility filter + editor device picker (name + zone)
 - Normalization 0–100% (0 closed, 100 open)
 - Vertical bar + decorative icons
@@ -68,19 +70,43 @@
 - Diagnostics with raw + normalized values
 - Automated tests + LightWidget visual regression coverage
 
+### Out of scope (explicitly deferred to M9 / later)
+
+- Cover commands (open/close/stop/slider) → **done in Milestone 9**
+- Interpolated movement / advanced gestures
+- Other device widgets
+
+## Milestone 9 — Interactive CoverWidget & Position Control
+
+**Status:** Done. Details: [MILESTONE-9.md](MILESTONE-9.md).
+
+### In scope (implemented)
+
+- Tap CoverWidget → open `WidgetControlOverlay` (no direct move from the tile)
+- Global reusable overlay (one at a time; outside the grid)
+- `CoverControlPanel`: name, current, target, vertical slider, Open/Close, conditional Stop
+- Send-on-release via Pointer Events
+- Widget intents: `set-position` (+ `positionPercent`), `stop`
+- Backend validation + denormalization to Homey `windowcoverings_set` `[0,1]`
+- Stop via official `windowcoverings_state` → `idle` only when capability present
+- Runtime flags `{ canSetPosition, canStop }`
+- Progress-aware confirmation + per-type timeouts; `command-succeeded` protocol message
+- Live config: overlay closes if widget removed / unsafe rebind; close does not cancel in-flight Homey commands
+- Diagnostics cover counters; IT/EN; automated tests; LightWidget regression preserved
+
 ### Out of scope (explicitly deferred)
 
-- Cover commands (open/close/stop/slider)
-- Interpolated movement / gestures / popups
-- Other device widgets
+- Advanced tile gestures (double-tap, long-press, swipe)
+- Light dimmer/color panels
+- Multi-cover groups, timers, simulated motion, Flow/Scene
 
 ## Later milestones (not started)
 
-- CoverWidget interactive control
 - Dim / color / temperature on the same `deviceId`
 - Additional widget types (sensors, thermostats)
 - Display hardware controls beyond recognition
+- Flow cards
 
-## Manual test checklist (Milestone 8)
+## Manual test checklist (Milestone 9)
 
-See the full checklist in [MILESTONE-8.md](MILESTONE-8.md).
+See the full checklist in [MILESTONE-9.md](MILESTONE-9.md).

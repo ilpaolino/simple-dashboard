@@ -8,7 +8,10 @@ export {
   RECONNECT_FACTOR,
   REALTIME_LIGHT_CAPABILITY_ID,
   REALTIME_COVER_CAPABILITY_ID,
+  REALTIME_COVER_STATE_CAPABILITY_ID,
+  COMMAND_TIMEOUTS,
   COMMAND_TIMEOUT_MS,
+  COVER_POSITION_CONFIRM_TOLERANCE_PERCENT,
   COMMAND_DIAGNOSTICS_HISTORY_LIMIT,
   COMMAND_ERROR_FEEDBACK_MS,
 } from './constants';
@@ -43,6 +46,7 @@ export {
   PendingCommandManager,
   type PendingCommandRecord,
   type PendingCommandStatus,
+  type PendingExpectedValue,
   type CommandDiagnosticEntry,
 } from './PendingCommandManager';
 export {

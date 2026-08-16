@@ -2,8 +2,8 @@
  * Typed WebSocket protocol (discriminated unions). No arbitrary JSON payloads.
  * Shared by Homey backend and vanilla frontend (bundled into dashboard.js).
  *
- * Clients send widget intents (`widgetId` + `action`), never raw Homey
- * `deviceId` / capability / value. The backend resolves and validates.
+ * Clients send widget intents (`widgetId` + `action` [+ positionPercent]),
+ * never raw Homey `deviceId` / capability / value. The backend resolves and validates.
  */
 
 import type {
@@ -17,6 +17,7 @@ import type {
   GridConfig,
 } from '../dashboard/types';
 import { REALTIME_PROTOCOL_VERSION } from './constants';
+import { isValidPositionPercent } from '../widgets/cover/normalize';
 
 export type RealtimeProtocolVersion = typeof REALTIME_PROTOCOL_VERSION;
 
@@ -28,11 +29,10 @@ export type RealtimeErrorCode =
   | 'realtime_unavailable';
 
 /**
- * Extensible widget action ids. Milestone 7 supports `toggle` only.
- * Future gesture mapping (double-tap, long-press, …) can target new actions
- * without changing the wire envelope.
+ * Extensible widget action ids sent over the wire.
+ * Local-only UI actions (e.g. open-control) are not protocol actions.
  */
-export type WidgetActionId = 'toggle';
+export type WidgetActionId = 'toggle' | 'set-position' | 'stop';
 
 export type CommandRejectReason =
   | 'display_session_invalid'
@@ -43,6 +43,7 @@ export type CommandRejectReason =
   | 'capability_missing'
   | 'device_unavailable'
   | 'invalid_state'
+  | 'invalid_position'
   | 'homey_api_error'
   | 'already_pending'
   | 'unexpected_state';
@@ -91,6 +92,10 @@ export type ServerMessage =
       readonly requestId: string;
     }
   | {
+      readonly type: 'command-succeeded';
+      readonly requestId: string;
+    }
+  | {
       readonly type: 'command-rejected';
       readonly requestId: string;
       readonly reason: CommandRejectReason;
@@ -116,12 +121,25 @@ export type ClientMessage =
   | {
       readonly type: 'widget-action';
       readonly widgetId: string;
-      readonly action: WidgetActionId;
+      readonly action: 'toggle';
+      readonly requestId: string;
+    }
+  | {
+      readonly type: 'widget-action';
+      readonly widgetId: string;
+      readonly action: 'set-position';
+      readonly requestId: string;
+      readonly positionPercent: number;
+    }
+  | {
+      readonly type: 'widget-action';
+      readonly widgetId: string;
+      readonly action: 'stop';
       readonly requestId: string;
     };
 
 export function isWidgetActionId(value: unknown): value is WidgetActionId {
-  return value === 'toggle';
+  return value === 'toggle' || value === 'set-position' || value === 'stop';
 }
 
 export function isCommandRejectReason(
@@ -136,6 +154,7 @@ export function isCommandRejectReason(
     case 'capability_missing':
     case 'device_unavailable':
     case 'invalid_state':
+    case 'invalid_position':
     case 'homey_api_error':
     case 'already_pending':
     case 'unexpected_state':
@@ -159,6 +178,7 @@ export function isServerMessage(value: unknown): value is ServerMessage {
     case 'error':
       return true;
     case 'command-accepted':
+    case 'command-succeeded':
     case 'command-timeout': {
       const requestId = (value as { readonly requestId?: unknown }).requestId;
       return typeof requestId === 'string' && requestId.trim() !== '';
@@ -189,6 +209,7 @@ export function isClientMessage(value: unknown): value is ClientMessage {
     readonly widgetId?: unknown;
     readonly action?: unknown;
     readonly requestId?: unknown;
+    readonly positionPercent?: unknown;
     readonly at?: unknown;
   };
 
@@ -200,17 +221,26 @@ export function isClientMessage(value: unknown): value is ClientMessage {
     return true;
   }
 
-  if (candidate.type === 'widget-action') {
-    return (
-      typeof candidate.widgetId === 'string' &&
-      candidate.widgetId.trim() !== '' &&
-      isWidgetActionId(candidate.action) &&
-      typeof candidate.requestId === 'string' &&
-      candidate.requestId.trim() !== ''
-    );
+  if (candidate.type !== 'widget-action') {
+    return false;
   }
 
-  return false;
+  if (
+    typeof candidate.widgetId !== 'string' ||
+    candidate.widgetId.trim() === '' ||
+    typeof candidate.requestId !== 'string' ||
+    candidate.requestId.trim() === '' ||
+    !isWidgetActionId(candidate.action)
+  ) {
+    return false;
+  }
+
+  if (candidate.action === 'set-position') {
+    return isValidPositionPercent(candidate.positionPercent);
+  }
+
+  // toggle / stop must not carry a position payload
+  return candidate.positionPercent === undefined;
 }
 
 export function parseClientMessage(raw: string): ClientMessage | null {

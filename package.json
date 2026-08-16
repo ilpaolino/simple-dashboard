@@ -1,7 +1,7 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.9.0",
-  "description": "Simple Dashboard — CoverWidget read-only and device visual language for Homey Pro wall displays",
+  "version": "0.10.0",
+  "description": "Simple Dashboard — interactive CoverWidget with control overlay for Homey Pro wall displays",
   "main": "app.js",
   "scripts": {
     "build": "tsc && npm run build:frontend",

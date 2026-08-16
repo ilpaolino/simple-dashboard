@@ -196,6 +196,7 @@ export class DisplayRealtimeSession {
         readonly widgetId?: unknown;
         readonly action?: unknown;
         readonly requestId?: unknown;
+        readonly positionPercent?: unknown;
       };
       if (
         typeof candidate.widgetId !== 'string' ||
@@ -208,11 +209,44 @@ export class DisplayRealtimeSession {
         return;
       }
 
+      const widgetId = candidate.widgetId.trim();
+      const requestId = candidate.requestId.trim();
+
+      if (candidate.action === 'set-position') {
+        if (
+          typeof candidate.positionPercent !== 'number' ||
+          !Number.isInteger(candidate.positionPercent) ||
+          candidate.positionPercent < 0 ||
+          candidate.positionPercent > 100
+        ) {
+          this.onProtocolError(this, 'invalid_widget_action');
+          return;
+        }
+        this.onClientMessage(this, {
+          type: 'widget-action',
+          widgetId,
+          action: 'set-position',
+          requestId,
+          positionPercent: candidate.positionPercent,
+        });
+        return;
+      }
+
+      if (candidate.action === 'stop') {
+        this.onClientMessage(this, {
+          type: 'widget-action',
+          widgetId,
+          action: 'stop',
+          requestId,
+        });
+        return;
+      }
+
       this.onClientMessage(this, {
         type: 'widget-action',
-        widgetId: candidate.widgetId.trim(),
-        action: candidate.action,
-        requestId: candidate.requestId.trim(),
+        widgetId,
+        action: 'toggle',
+        requestId,
       });
       return;
     }

@@ -4,7 +4,9 @@
 @import './widgets/date-time/DateTimeWidget.css';
 @import './widgets/light/LightWidget.css';
 @import './widgets/cover/CoverWidget.css';
+@import './widgets/cover/CoverControlPanel.css';
 @import './realtime/ConnectionOverlay.css';
+@import './overlays/widget-control/WidgetControlOverlay.css';
 
 :root {
   color-scheme: dark;

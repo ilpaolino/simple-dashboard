@@ -129,9 +129,33 @@ describe('CoverWidget runtime resolver', () => {
     assert.equal(resolved.state.positionPercent, 62);
     assert.equal(resolved.state.name, 'Tapparella cucina');
     assert.equal(resolved.state.error, null);
+    assert.deepEqual(resolved.state.capabilities, {
+      canSetPosition: true,
+      canStop: false,
+    });
     assert.equal(resolved.diagnostic.rawValue, 0.62);
     assert.equal(resolveCoverVisualState(resolved.state), 'available');
     assert.equal(formatCoverPositionPercent(62), '62%');
+  });
+
+  it('uses optional custom title instead of Homey device name', async () => {
+    const repository = new HomeyDeviceRepository(
+      new MemoryHomeyWebApi([coverDevice()]),
+    );
+    const resolved = await resolveCoverWidgetRuntime({
+      widgetId: 'w1',
+      config: { deviceId: 'cover-1', title: '  Cucina  ' },
+      repository,
+    });
+    assert.equal(resolved.state.name, 'Cucina');
+
+    const fromSnapshot = resolveCoverWidgetRuntimeFromSnapshot({
+      widgetId: 'w1',
+      deviceId: 'cover-1',
+      device: coverDevice(),
+      title: 'Soggiorno',
+    });
+    assert.equal(fromSnapshot.state.name, 'Soggiorno');
   });
 
   it('marks unavailable and removed devices without dropping the widget', async () => {

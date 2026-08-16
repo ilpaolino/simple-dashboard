@@ -352,6 +352,23 @@
               <select class="homey-form-select" id="coverDevice"></select>
               <p id="coverDeviceHelp" class="homey-form-help" hidden></p>
             </div>
+            <div class="homey-form-group">
+              <label class="homey-form-label" for="coverTitle" data-i18n="widgets.cover.customTitle">
+                Custom title
+              </label>
+              <input
+                class="homey-form-input"
+                id="coverTitle"
+                type="text"
+                maxlength="40"
+                autocomplete="off"
+                data-i18n-placeholder="widgets.cover.customTitlePlaceholder"
+                placeholder="Leave empty to use Homey name"
+              />
+              <p class="homey-form-help" data-i18n="widgets.cover.customTitleHelp">
+                Optional. Shown on the tile and control panel.
+              </p>
+            </div>
           </div>
 
           <div class="editor-actions">

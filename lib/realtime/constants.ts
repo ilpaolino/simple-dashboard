@@ -25,11 +25,33 @@ export const REALTIME_LIGHT_CAPABILITY_ID = 'onoff';
 /** Capability used by CoverWidget realtime (official Homey windowcoverings_set). */
 export const REALTIME_COVER_CAPABILITY_ID = 'windowcoverings_set';
 
+/** Capability used for official cover stop (windowcoverings_state → idle). */
+export const REALTIME_COVER_STATE_CAPABILITY_ID = 'windowcoverings_state';
+
 /**
- * Max wait for Homey realtime confirmation after a capability command.
- * Not user-configurable in this milestone.
+ * Per-command-type timeouts (ms). Not user-configurable in this milestone.
+ *
+ * Cover set-position waits for Homey to acknowledge movement (first coherent
+ * progress or target within tolerance) — not the full physical travel time.
  */
-export const COMMAND_TIMEOUT_MS = 4_000;
+export const COMMAND_TIMEOUTS = {
+  lightToggle: 4_000,
+  coverSetPosition: 8_000,
+  coverStop: 4_000,
+} as const;
+
+/**
+ * Max wait for Homey realtime confirmation after a light toggle.
+ * Alias of {@link COMMAND_TIMEOUTS.lightToggle} for backward compatibility.
+ */
+export const COMMAND_TIMEOUT_MS = COMMAND_TIMEOUTS.lightToggle;
+
+/**
+ * Cover position confirmation tolerance in UX percent points.
+ * Homey reports [0,1] with two decimals; 1% matches that resolution.
+ * @see {@link COVER_POSITION_CONFIRM_TOLERANCE_PERCENT} in cover/confirmation
+ */
+export { COVER_POSITION_CONFIRM_TOLERANCE_PERCENT } from '../widgets/cover/confirmation';
 
 /** Bounded recent-command buffer for /diagnostics. */
 export const COMMAND_DIAGNOSTICS_HISTORY_LIMIT = 20;

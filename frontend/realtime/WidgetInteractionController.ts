@@ -17,6 +17,7 @@ export interface WidgetActionDispatch {
   readonly widgetId: string;
   readonly action: WidgetActionId;
   readonly requestId: string;
+  readonly positionPercent?: number;
 }
 
 export interface WidgetCommandFeedback {
@@ -24,6 +25,7 @@ export interface WidgetCommandFeedback {
   readonly requestId: string;
   readonly status: CommandStatus;
   readonly reason?: CommandRejectReason;
+  readonly targetPercent?: number;
 }
 
 export interface WidgetInteractionControllerOptions {
@@ -38,6 +40,7 @@ interface PendingEntry {
   readonly widgetId: string;
   readonly requestId: string;
   readonly action: WidgetActionId;
+  readonly targetPercent: number | null;
 }
 
 /**
@@ -61,8 +64,8 @@ export class WidgetInteractionController {
   }
 
   /**
-   * Maps a gesture to an action for a widget. Milestone 7 only uses tap→toggle
-   * for LightWidget; the signature stays open for future gestures.
+   * Maps a gesture to an action for a widget. LightWidget uses tap→toggle.
+   * CoverWidget tap opens the overlay locally (not via this method).
    */
   public handleGesture(options: {
     readonly widgetId: string;
@@ -75,45 +78,37 @@ export class WidgetInteractionController {
     }
 
     if (options.gesture !== 'tap') {
-      // Future gestures are reserved; ignore until implemented.
       return false;
     }
 
-    if (this.pendingByWidget.has(options.widgetId)) {
-      return false;
-    }
-
-    const requestId = this.createRequestId();
-    const dispatched = this.sendAction({
+    return this.dispatchAction({
       widgetId: options.widgetId,
       action: options.action,
-      requestId,
+      allowReplacePending: false,
     });
+  }
 
-    if (!dispatched) {
-      this.emit(options.widgetId, {
-        widgetId: options.widgetId,
-        requestId,
-        status: 'error',
-      });
-      this.scheduleErrorClear(options.widgetId, requestId);
-      return false;
-    }
-
-    const entry: PendingEntry = {
-      widgetId: options.widgetId,
-      requestId,
-      action: options.action,
-    };
-    this.pendingByWidget.set(options.widgetId, entry);
-    this.pendingByRequest.set(requestId, entry);
-    this.clearErrorTimer(options.widgetId);
-    this.emit(options.widgetId, {
-      widgetId: options.widgetId,
-      requestId,
-      status: 'pending',
+  public requestSetPosition(
+    widgetId: string,
+    positionPercent: number,
+  ): boolean {
+    return this.dispatchAction({
+      widgetId,
+      action: 'set-position',
+      positionPercent,
+      allowReplacePending: false,
     });
-    return true;
+  }
+
+  /**
+   * Stop may replace an in-flight set-position for the same widget.
+   */
+  public requestStop(widgetId: string): boolean {
+    return this.dispatchAction({
+      widgetId,
+      action: 'stop',
+      allowReplacePending: true,
+    });
   }
 
   public onStatus(
@@ -142,10 +137,28 @@ export class WidgetInteractionController {
     return this.pendingByWidget.get(widgetId)?.requestId ?? null;
   }
 
+  public getPendingTargetPercent(widgetId: string): number | null {
+    return this.pendingByWidget.get(widgetId)?.targetPercent ?? null;
+  }
+
   /** Backend accepted the Homey API call — still waiting for realtime confirmation. */
   public handleCommandAccepted(requestId: string): void {
-    // Keep pending UI until Homey confirms via widget-state / timeout / reject.
     void this.pendingByRequest.get(requestId);
+  }
+
+  /** Homey realtime confirmed the expected state. */
+  public handleCommandSucceeded(requestId: string): void {
+    const entry = this.pendingByRequest.get(requestId);
+    if (!entry) {
+      return;
+    }
+    this.clearPending(entry);
+    this.emit(entry.widgetId, {
+      widgetId: entry.widgetId,
+      requestId,
+      status: 'success',
+      targetPercent: entry.targetPercent ?? undefined,
+    });
   }
 
   public handleCommandRejected(
@@ -162,6 +175,7 @@ export class WidgetInteractionController {
       requestId,
       status: 'error',
       reason,
+      targetPercent: entry.targetPercent ?? undefined,
     });
     this.scheduleErrorClear(entry.widgetId, requestId);
   }
@@ -176,13 +190,15 @@ export class WidgetInteractionController {
       widgetId: entry.widgetId,
       requestId,
       status: 'timeout',
+      targetPercent: entry.targetPercent ?? undefined,
     });
     this.scheduleErrorClear(entry.widgetId, requestId);
   }
 
   /**
-   * Homey realtime confirmation path: any widget-state for a pending widget
-   * clears pending (matched or mismatched). Real state comes from the state update.
+   * Homey realtime confirmation path: clears pending for the widget.
+   * Cover intermediate progress updates may arrive while still pending —
+   * only call this when the backend has confirmed (or light widget-state matched).
    */
   public handleWidgetStateConfirmed(widgetId: string): void {
     const entry = this.pendingByWidget.get(widgetId);
@@ -194,6 +210,7 @@ export class WidgetInteractionController {
       widgetId,
       requestId: entry.requestId,
       status: 'success',
+      targetPercent: entry.targetPercent ?? undefined,
     });
   }
 
@@ -219,6 +236,66 @@ export class WidgetInteractionController {
   public destroy(): void {
     this.handleDisconnect();
     this.listeners.clear();
+  }
+
+  private dispatchAction(options: {
+    readonly widgetId: string;
+    readonly action: WidgetActionId;
+    readonly positionPercent?: number;
+    readonly allowReplacePending: boolean;
+  }): boolean {
+    const existing = this.pendingByWidget.get(options.widgetId);
+    if (existing && !options.allowReplacePending) {
+      return false;
+    }
+
+    if (existing && options.allowReplacePending) {
+      this.clearPending(existing);
+    }
+
+    const requestId = this.createRequestId();
+    const targetPercent =
+      options.action === 'set-position' &&
+      typeof options.positionPercent === 'number'
+        ? options.positionPercent
+        : null;
+
+    const dispatched = this.sendAction({
+      widgetId: options.widgetId,
+      action: options.action,
+      requestId,
+      ...(targetPercent !== null
+        ? { positionPercent: targetPercent }
+        : {}),
+    });
+
+    if (!dispatched) {
+      this.emit(options.widgetId, {
+        widgetId: options.widgetId,
+        requestId,
+        status: 'error',
+        targetPercent: targetPercent ?? undefined,
+      });
+      this.scheduleErrorClear(options.widgetId, requestId);
+      return false;
+    }
+
+    const entry: PendingEntry = {
+      widgetId: options.widgetId,
+      requestId,
+      action: options.action,
+      targetPercent,
+    };
+    this.pendingByWidget.set(options.widgetId, entry);
+    this.pendingByRequest.set(requestId, entry);
+    this.clearErrorTimer(options.widgetId);
+    this.emit(options.widgetId, {
+      widgetId: options.widgetId,
+      requestId,
+      status: 'pending',
+      targetPercent: targetPercent ?? undefined,
+    });
+    return true;
   }
 
   private clearPending(entry: PendingEntry): void {

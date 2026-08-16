@@ -10,7 +10,8 @@ import {
   validatePlacementAgainstWidgets,
 } from '../../lib/widgets/placement';
 import { createWidgetId } from '../../lib/widgets/validation';
-import { isCoverWidgetConfig } from '../../lib/widgets/cover/definition';
+import { isCoverWidgetConfig, buildCoverWidgetConfig } from '../../lib/widgets/cover/definition';
+import { COVER_TITLE_MAX_LENGTH } from '../../lib/widgets/cover/types';
 import { isDateTimeWidgetConfig } from '../../lib/widgets/date-time/definition';
 import { isLightWidgetConfig } from '../../lib/widgets/light/definition';
 import { isTitleWidgetConfig } from '../../lib/widgets/title/definition';
@@ -109,6 +110,7 @@ interface DraftWidget {
   dateTimeMode: 'time' | 'date' | 'date-time';
   chrome: WidgetChrome;
   deviceId: string;
+  coverTitle: string;
   isNew: boolean;
 }
 
@@ -248,6 +250,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
       dateTimeMode: 'date-time',
       chrome: 'plain',
       deviceId: '',
+      coverTitle: '',
       isNew: true,
     };
     state.selectedWidgetId = state.draft.id;
@@ -266,6 +269,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
   });
 
   applyDraftButton?.addEventListener('click', () => {
+    readDraftForm();
     if (!applyDraftToWidgets()) {
       renderAll();
       return;
@@ -328,6 +332,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
     'widgetChrome',
     'lightDevice',
     'coverDevice',
+    'coverTitle',
   ]) {
     document.getElementById(id)?.addEventListener('change', () => {
       readDraftForm();
@@ -403,10 +408,13 @@ async function saveDashboard(Homey: HomeySettingsApi): Promise<void> {
     return;
   }
 
-  if (state.draft && !applyDraftToWidgets()) {
-    Homey.alert(t(state.errorKey ?? 'editor.errors.invalidPosition'));
-    renderAll();
-    return;
+  if (state.draft) {
+    readDraftForm();
+    if (!applyDraftToWidgets()) {
+      Homey.alert(t(state.errorKey ?? 'editor.errors.invalidPosition'));
+      renderAll();
+      return;
+    }
   }
 
   const configuration: DashboardConfiguration = {
@@ -501,8 +509,11 @@ function draftToWidget(draft: DraftWidget): WidgetInstance | null {
   }
 
   if (draft.type === 'cover') {
-    const config = { deviceId: draft.deviceId };
-    if (!isCoverWidgetConfig(config)) {
+    const config = buildCoverWidgetConfig({
+      deviceId: draft.deviceId,
+      title: draft.coverTitle,
+    });
+    if (!config || !isCoverWidgetConfig(config)) {
       return null;
     }
     return {
@@ -662,6 +673,16 @@ function syncDraftForm(): void {
   if (titleAlignment) titleAlignment.value = state.draft.titleAlignment;
   if (dateTimeMode) dateTimeMode.value = state.draft.dateTimeMode;
   if (widgetChrome) widgetChrome.checked = state.draft.chrome === 'card';
+
+  const coverTitle = document.getElementById(
+    'coverTitle',
+  ) as HTMLInputElement | null;
+  if (coverTitle) {
+    coverTitle.value = state.draft.coverTitle;
+    coverTitle.maxLength = COVER_TITLE_MAX_LENGTH;
+    coverTitle.placeholder = t('widgets.cover.customTitlePlaceholder');
+  }
+
   fillLightDeviceOptions();
   fillCoverDeviceOptions();
 }
@@ -701,6 +722,9 @@ function readDraftForm(): void {
   const coverDevice = document.getElementById(
     'coverDevice',
   ) as HTMLSelectElement | null;
+  const coverTitle = document.getElementById(
+    'coverTitle',
+  ) as HTMLInputElement | null;
 
   if (typeSelect && isWidgetTypeId(typeSelect.value)) {
     if (state.draft.type !== typeSelect.value) {
@@ -759,6 +783,9 @@ function readDraftForm(): void {
     state.draft.deviceId = lightDevice.value;
   } else if (state.draft.type === 'cover' && coverDevice) {
     state.draft.deviceId = coverDevice.value;
+  }
+  if (state.draft.type === 'cover' && coverTitle) {
+    state.draft.coverTitle = coverTitle.value.slice(0, COVER_TITLE_MAX_LENGTH);
   }
 }
 
@@ -964,6 +991,7 @@ function selectExistingWidget(widget: WidgetInstance): void {
     dateTimeMode: 'date-time' as const,
     chrome: 'plain' as const,
     deviceId: '',
+    coverTitle: '',
     isNew: false,
   };
 
@@ -987,6 +1015,7 @@ function selectExistingWidget(widget: WidgetInstance): void {
       ...base,
       type: 'cover',
       deviceId: widget.config.deviceId,
+      coverTitle: widget.config.title ?? '',
     };
   } else {
     state.draft = {
@@ -1001,6 +1030,12 @@ function selectExistingWidget(widget: WidgetInstance): void {
 }
 
 function widgetLabel(widget: WidgetInstance): string {
+  if (widget.type === 'cover' && widget.config.title?.trim()) {
+    return widget.config.title.trim();
+  }
+  if (widget.type === 'title' && widget.config.text.trim()) {
+    return widget.config.text.trim();
+  }
   const meta = state.payload?.widgetTypes.find(
     (item) => item.type === widget.type,
   );

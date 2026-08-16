@@ -12,13 +12,19 @@ export type PendingCommandStatus =
   | 'mismatched'
   | 'cancelled';
 
+/** Homey confirmation target: onoff boolean, cover percent, or cover state enum. */
+export type PendingExpectedValue = boolean | number | string;
+
 export interface PendingCommandRecord {
   readonly requestId: string;
   readonly displayId: string;
   readonly widgetId: string;
   readonly deviceId: string;
+  readonly capabilityId: string;
   readonly action: WidgetActionId;
-  readonly expectedValue: boolean;
+  readonly expectedValue: PendingExpectedValue;
+  /** Cover set-position: UX percent at command time (progress baseline). */
+  readonly baselineValue: number | null;
   readonly startedAt: number;
 }
 
@@ -27,6 +33,9 @@ export interface CommandDiagnosticEntry {
   readonly displayId: string;
   readonly widgetId: string;
   readonly action: WidgetActionId;
+  readonly capabilityId: string;
+  readonly expectedValue: PendingExpectedValue;
+  readonly baselineValue: number | null;
   readonly status: PendingCommandStatus;
   readonly durationMs: number;
   readonly at: string;
@@ -91,8 +100,11 @@ export class PendingCommandManager {
     readonly displayId: string;
     readonly widgetId: string;
     readonly deviceId: string;
+    readonly capabilityId: string;
     readonly action: WidgetActionId;
-    readonly expectedValue: boolean;
+    readonly expectedValue: PendingExpectedValue;
+    readonly baselineValue?: number | null;
+    readonly timeoutMs?: number;
   }): boolean {
     const key = widgetKey(command.displayId, command.widgetId);
     if (this.byWidgetKey.has(key) || this.byRequestId.has(command.requestId)) {
@@ -100,6 +112,7 @@ export class PendingCommandManager {
     }
 
     const startedAt = this.now();
+    const timeoutMs = command.timeoutMs ?? this.timeoutMs;
     const timer = setTimeout(() => {
       const current = this.byRequestId.get(command.requestId);
       if (!current) {
@@ -107,7 +120,7 @@ export class PendingCommandManager {
       }
       this.finish(current, 'timed_out');
       this.onTimeout(publicRecord(current));
-    }, this.timeoutMs);
+    }, timeoutMs);
 
     // Avoid keeping the event loop alive solely for command timeouts in tests.
     if (typeof timer === 'object' && 'unref' in timer) {
@@ -115,7 +128,14 @@ export class PendingCommandManager {
     }
 
     const entry: InternalPending = {
-      ...command,
+      requestId: command.requestId,
+      displayId: command.displayId,
+      widgetId: command.widgetId,
+      deviceId: command.deviceId,
+      capabilityId: command.capabilityId,
+      action: command.action,
+      expectedValue: command.expectedValue,
+      baselineValue: command.baselineValue ?? null,
       startedAt,
       timer,
     };
@@ -163,6 +183,18 @@ export class PendingCommandManager {
       .map((entry) => publicRecord(entry));
   }
 
+  public findByDeviceAndCapability(
+    deviceId: string,
+    capabilityId: string,
+  ): readonly PendingCommandRecord[] {
+    return [...this.byRequestId.values()]
+      .filter(
+        (entry) =>
+          entry.deviceId === deviceId && entry.capabilityId === capabilityId,
+      )
+      .map((entry) => publicRecord(entry));
+  }
+
   public destroy(): void {
     for (const entry of [...this.byRequestId.values()]) {
       clearTimeout(entry.timer);
@@ -198,6 +230,9 @@ export class PendingCommandManager {
       displayId: entry.displayId,
       widgetId: entry.widgetId,
       action: entry.action,
+      capabilityId: entry.capabilityId,
+      expectedValue: entry.expectedValue,
+      baselineValue: entry.baselineValue,
       status,
       durationMs,
       at: new Date(this.now()).toISOString(),
@@ -219,8 +254,10 @@ function publicRecord(entry: InternalPending): PendingCommandRecord {
     displayId: entry.displayId,
     widgetId: entry.widgetId,
     deviceId: entry.deviceId,
+    capabilityId: entry.capabilityId,
     action: entry.action,
     expectedValue: entry.expectedValue,
+    baselineValue: entry.baselineValue,
     startedAt: entry.startedAt,
   };
 }

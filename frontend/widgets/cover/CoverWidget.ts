@@ -16,8 +16,8 @@ import {
 } from '../types';
 
 /**
- * Read-only CoverWidget: device name, integer percent, vertical bar, decorative icon.
- * No commands / gestures in Milestone 8.
+ * Interactive CoverWidget: tap opens the global control overlay.
+ * The tile always paints Homey-confirmed position — never the pending target.
  */
 export class CoverWidgetRenderer implements WidgetRenderer<CoverWidgetConfig> {
   public readonly type = 'cover' as const;
@@ -36,6 +36,7 @@ export class CoverWidgetRenderer implements WidgetRenderer<CoverWidgetConfig> {
     element.style.gridArea = placementGridArea(instance.placement);
     element.dataset.widgetId = instance.id;
     element.dataset.widgetType = instance.type;
+    element.setAttribute('role', 'button');
 
     const iconEl = createDeviceWidgetIcon({ kind: 'cover' });
 
@@ -65,9 +66,11 @@ export class CoverWidgetRenderer implements WidgetRenderer<CoverWidgetConfig> {
 
     let runtime: CoverWidgetRuntimeState | undefined =
       context.runtime?.type === 'cover' ? context.runtime : undefined;
+    let suppressClickUntil = 0;
 
     const paint = (): void => {
       const visual = resolveCoverVisualState(runtime);
+      const interactive = visual === 'available';
       element.className = [
         'widget',
         'widget-cover',
@@ -76,6 +79,9 @@ export class CoverWidgetRenderer implements WidgetRenderer<CoverWidgetConfig> {
         coverVisualStateClass(visual),
       ].join(' ');
       element.dataset.visualState = visual;
+      element.dataset.interactive = interactive ? 'true' : 'false';
+      element.tabIndex = interactive ? 0 : -1;
+      element.setAttribute('aria-disabled', interactive ? 'false' : 'true');
 
       const copy = context.copy.cover;
 
@@ -97,9 +103,43 @@ export class CoverWidgetRenderer implements WidgetRenderer<CoverWidgetConfig> {
       barEl.dataset.level = String(height);
       element.setAttribute(
         'aria-label',
-        `${runtime?.name ?? ''} — ${formatted ?? copy.invalidPosition}`,
+        `${runtime?.name ?? ''} — ${formatted ?? copy.invalidPosition}. ${copy.openControl}`,
       );
     };
+
+    const openControl = (): void => {
+      const visual = resolveCoverVisualState(runtime);
+      if (visual !== 'available') {
+        return;
+      }
+      context.interactions?.openCoverControl(instance.id);
+    };
+
+    const onPointerUp = (event: PointerEvent): void => {
+      if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+        suppressClickUntil = Date.now() + 400;
+        openControl();
+      }
+    };
+
+    const onClick = (event: MouseEvent): void => {
+      if (Date.now() < suppressClickUntil) {
+        event.preventDefault();
+        return;
+      }
+      openControl();
+    };
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openControl();
+      }
+    };
+
+    element.addEventListener('pointerup', onPointerUp);
+    element.addEventListener('click', onClick);
+    element.addEventListener('keydown', onKeyDown);
 
     paint();
 
@@ -112,8 +152,13 @@ export class CoverWidgetRenderer implements WidgetRenderer<CoverWidgetConfig> {
         }
         runtime = state;
         paint();
+        context.interactions?.notifyCoverRuntime(instance.id, state);
       },
       destroy() {
+        element.removeEventListener('pointerup', onPointerUp);
+        element.removeEventListener('click', onClick);
+        element.removeEventListener('keydown', onKeyDown);
+        context.interactions?.notifyCoverWidgetDestroyed(instance.id);
         element.remove();
       },
     };

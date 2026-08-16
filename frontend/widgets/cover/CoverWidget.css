@@ -8,6 +8,12 @@
   background: var(--cover-tile-surface);
   color: var(--widget-fg);
   box-shadow: inset 0 0 0 1px var(--cover-tile-border);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.widget-cover[aria-disabled='true'] {
+  cursor: default;
 }
 
 .widget-cover__name {

@@ -51,6 +51,9 @@ export class DashboardRenderer {
   private widgetRuntime: Record<string, WidgetRuntimeState> = {};
   private copy: DashboardUiCopy = defaultDashboardUiCopy();
   private interactions: WidgetInteractionsApi | undefined;
+  private onConfigurationApplied:
+    | ((widgetIds: ReadonlySet<string>) => void)
+    | undefined;
 
   public constructor(
     root: HTMLElement,
@@ -62,6 +65,12 @@ export class DashboardRenderer {
 
   public setInteractions(interactions: WidgetInteractionsApi | undefined): void {
     this.interactions = interactions;
+  }
+
+  public setOnConfigurationApplied(
+    listener: ((widgetIds: ReadonlySet<string>) => void) | undefined,
+  ): void {
+    this.onConfigurationApplied = listener;
   }
 
   public applyConfiguration(config: DashboardConfigurationView): void {
@@ -76,10 +85,14 @@ export class DashboardRenderer {
 
     if (config.widgets.length === 0) {
       this.renderEmptyState(config);
+      this.onConfigurationApplied?.(new Set());
       return;
     }
 
     this.renderWidgets(config);
+    this.onConfigurationApplied?.(
+      new Set(config.widgets.map((widget) => widget.id)),
+    );
   }
 
   public applyBootstrap(bootstrap: DashboardBootstrap): void {
@@ -105,6 +118,10 @@ export class DashboardRenderer {
     this.widgetRuntime[widgetId] = state;
     const mounted = this.mounted.find((item) => item.widgetId === widgetId);
     mounted?.updateState?.(state);
+  }
+
+  public getWidgetRuntime(widgetId: string): WidgetRuntimeState | undefined {
+    return this.widgetRuntime[widgetId];
   }
 
   public getMountedCount(): number {

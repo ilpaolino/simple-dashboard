@@ -4,6 +4,8 @@ import type { Logger } from '../../types';
 import {
   COVER_CAPABILITY_ID,
   hasWindowcoveringsSetCapability,
+  hasWindowcoveringsStateCapability,
+  resolveCoverWidgetCapabilities,
 } from './compatibility';
 import { normalizeWindowcoveringsSet } from './normalize';
 import type {
@@ -13,6 +15,7 @@ import type {
   CoverWidgetRuntimeState,
   CoverRuntimeError,
 } from './types';
+import { normalizeCoverTitle, resolveCoverDisplayName } from './types';
 
 export interface CoverRuntimeResolveResult {
   readonly state: CoverWidgetRuntimeState;
@@ -28,9 +31,15 @@ export async function resolveCoverWidgetRuntime(options: {
   readonly repository: HomeyDeviceRepository;
   readonly logger?: Logger;
 }): Promise<CoverRuntimeResolveResult> {
+  const title = normalizeCoverTitle(options.config.title);
   try {
     const device = await options.repository.getDevice(options.config.deviceId);
-    return runtimeFromDevice(options.widgetId, options.config.deviceId, device);
+    return runtimeFromDevice(
+      options.widgetId,
+      options.config.deviceId,
+      device,
+      title,
+    );
   } catch (error) {
     options.logger?.error('Failed to read Homey device for CoverWidget', {
       widgetId: options.widgetId,
@@ -41,6 +50,7 @@ export async function resolveCoverWidgetRuntime(options: {
       options.widgetId,
       options.config.deviceId,
       'api_error',
+      title,
     );
   }
 }
@@ -49,8 +59,14 @@ export function resolveCoverWidgetRuntimeFromSnapshot(options: {
   readonly widgetId: string;
   readonly deviceId: string;
   readonly device: HomeyDeviceSnapshot | null;
+  readonly title?: string;
 }): CoverRuntimeResolveResult {
-  return runtimeFromDevice(options.widgetId, options.deviceId, options.device);
+  return runtimeFromDevice(
+    options.widgetId,
+    options.deviceId,
+    options.device,
+    normalizeCoverTitle(options.title),
+  );
 }
 
 export async function validateCoverWidgetBinding(options: {
@@ -81,12 +97,14 @@ function runtimeFromDevice(
   widgetId: string,
   deviceId: string,
   device: HomeyDeviceSnapshot | null,
+  title: string | undefined,
 ): CoverRuntimeResolveResult {
   if (!device) {
-    return runtimeFromError(widgetId, deviceId, 'missing_device');
+    return runtimeFromError(widgetId, deviceId, 'missing_device', title);
   }
 
   const hasCapability = hasWindowcoveringsSetCapability(device);
+  const hasState = hasWindowcoveringsStateCapability(device);
   const normalized = normalizeWindowcoveringsSet(
     device.capabilityValues[COVER_CAPABILITY_ID],
   );
@@ -108,12 +126,15 @@ function runtimeFromDevice(
     positionPercent = null;
   }
 
+  const capabilities = resolveCoverWidgetCapabilities(device, available);
+
   const state: CoverWidgetRuntimeState = {
     type: 'cover',
     deviceId,
-    name: device.name,
+    name: resolveCoverDisplayName(title, device.name),
     available,
     positionPercent,
+    capabilities,
     error,
   };
 
@@ -124,6 +145,8 @@ function runtimeFromDevice(
       deviceId,
       resolved: true,
       hasWindowcoveringsSet: hasCapability,
+      hasWindowcoveringsState: hasState,
+      canStop: capabilities.canStop,
       available,
       rawValue: hasCapability ? normalized.rawValue : null,
       positionPercent,
@@ -136,13 +159,15 @@ function runtimeFromError(
   widgetId: string,
   deviceId: string,
   error: Extract<CoverRuntimeError, 'missing_device' | 'api_error'>,
+  title?: string,
 ): CoverRuntimeResolveResult {
   const state: CoverWidgetRuntimeState = {
     type: 'cover',
     deviceId,
-    name: '',
+    name: resolveCoverDisplayName(title, ''),
     available: false,
     positionPercent: null,
+    capabilities: { canSetPosition: false, canStop: false },
     error,
   };
 
@@ -153,6 +178,8 @@ function runtimeFromError(
       deviceId,
       resolved: false,
       hasWindowcoveringsSet: false,
+      hasWindowcoveringsState: false,
+      canStop: false,
       available: false,
       rawValue: null,
       positionPercent: null,
@@ -164,6 +191,7 @@ function runtimeFromError(
 export function createCoverApiErrorRuntime(
   widgetId: string,
   deviceId: string,
+  title?: string,
 ): CoverRuntimeResolveResult {
-  return runtimeFromError(widgetId, deviceId, 'api_error');
+  return runtimeFromError(widgetId, deviceId, 'api_error', title);
 }

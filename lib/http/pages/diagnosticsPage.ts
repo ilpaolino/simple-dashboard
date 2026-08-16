@@ -362,6 +362,7 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
         <td>${escapeHtml(item.deviceId)}</td>
         <td>${escapeHtml(item.resolved ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
         <td>${escapeHtml(item.hasWindowcoveringsSet ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.canStop ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
         <td>${escapeHtml(item.available ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
         <td>${escapeHtml(raw)}</td>
         <td>${escapeHtml(percent)}</td>
@@ -384,6 +385,7 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
           <th>${escapeHtml(t('pages.diagnostics.deviceId'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.deviceResolved'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.hasWindowcoveringsSet'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.canStop'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.availability'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.rawValue'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.normalizedPercent'))}</th>
@@ -414,6 +416,16 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.diagnostics.commandsFailed'))}</dt><dd>${escapeHtml(String(metrics.commandsFailed ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.commandsTimedOut'))}</dt><dd>${escapeHtml(String(metrics.commandsTimedOut ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.activePendingCommands'))}</dt><dd>${escapeHtml(String(metrics.activePendingCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverCommandsReceived'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsReceived ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverSetPositionCommands'))}</dt><dd>${escapeHtml(String(metrics.coverSetPositionCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverOpenCommands'))}</dt><dd>${escapeHtml(String(metrics.coverOpenCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverCloseCommands'))}</dt><dd>${escapeHtml(String(metrics.coverCloseCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverStopCommands'))}</dt><dd>${escapeHtml(String(metrics.coverStopCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverCommandsAccepted'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsAccepted ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverCommandsRejected'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsRejected ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverCommandsFailed'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsFailed ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverCommandsTimedOut'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsTimedOut ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.coverPendingCommands'))}</dt><dd>${escapeHtml(String(metrics.coverPendingCommands ?? 0))}</dd>
     </dl>`;
 
   const recentCommands = Array.isArray(metrics?.recentCommands)
@@ -428,6 +440,8 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
           <th>${escapeHtml(t('pages.diagnostics.widgetId'))}</th>
           <th>${escapeHtml(t('pages.recognized.name'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.commandAction'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.capabilityId'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.commandTarget'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.commandStatus'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.commandDuration'))}</th>
         </tr>
@@ -438,10 +452,20 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
             if (!item || typeof item !== 'object') {
               return '';
             }
+            const target =
+              item.expectedValue === undefined || item.expectedValue === null
+                ? none
+                : String(item.expectedValue);
+            const baseline =
+              item.baselineValue === null || item.baselineValue === undefined
+                ? none
+                : String(item.baselineValue);
             return `<tr>
           <td>${escapeHtml(item.widgetId)}</td>
           <td>${escapeHtml(item.displayId)}</td>
           <td>${escapeHtml(item.action)}</td>
+          <td>${escapeHtml(item.capabilityId ?? none)}</td>
+          <td>${escapeHtml(`${baseline} → ${target}`)}</td>
           <td>${escapeHtml(item.status)}</td>
           <td>${escapeHtml(`${item.durationMs}ms`)}</td>
         </tr>`;

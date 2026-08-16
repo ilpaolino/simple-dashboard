@@ -11,6 +11,17 @@ import type { WidgetInteractionController } from '../realtime/WidgetInteractionC
 
 export interface WidgetInteractionsApi {
   readonly requestToggle: (widgetId: string) => boolean;
+  readonly requestCoverSetPosition: (
+    widgetId: string,
+    positionPercent: number,
+  ) => boolean;
+  readonly requestCoverStop: (widgetId: string) => boolean;
+  readonly openCoverControl: (widgetId: string) => void;
+  readonly notifyCoverRuntime: (
+    widgetId: string,
+    state: import('../../lib/widgets/cover/types').CoverWidgetRuntimeState,
+  ) => void;
+  readonly notifyCoverWidgetDestroyed: (widgetId: string) => void;
   readonly onStatus: WidgetInteractionController['onStatus'];
   readonly notifyStateConfirmed: (widgetId: string) => void;
   readonly isPending: (widgetId: string) => boolean;

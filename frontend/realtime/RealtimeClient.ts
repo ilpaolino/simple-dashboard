@@ -1,5 +1,6 @@
 import type { DashboardRenderer } from '../layout/DashboardRenderer';
 import type { DashboardUiCopy } from '../../lib/dashboard/types';
+import type { CoverWidgetRuntimeState } from '../../lib/widgets/cover/types';
 import {
   RECONNECT_FACTOR,
   RECONNECT_INITIAL_MS,
@@ -13,6 +14,8 @@ import {
   type DashboardSnapshotPayload,
   type ServerMessage,
 } from '../../lib/realtime/protocol';
+import { WidgetControlOverlay } from '../overlays/widget-control/WidgetControlOverlay';
+import { CoverControlPanel } from '../widgets/cover/CoverControlPanel';
 import { ConnectionOverlay } from './ConnectionOverlay';
 import {
   WidgetInteractionController,
@@ -23,6 +26,7 @@ export interface RealtimeClientOptions {
   readonly renderer: DashboardRenderer;
   readonly copy: DashboardUiCopy;
   readonly overlay?: ConnectionOverlay;
+  readonly controlOverlay?: WidgetControlOverlay;
   readonly interactions?: WidgetInteractionController;
 }
 
@@ -35,12 +39,15 @@ export class RealtimeClient {
   private readonly renderer: DashboardRenderer;
   private copy: DashboardUiCopy;
   private readonly overlay: ConnectionOverlay;
+  private readonly controlOverlay: WidgetControlOverlay;
   private readonly interactions: WidgetInteractionController;
 
   private socket: WebSocket | null = null;
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
+  private activeCoverPanel: CoverControlPanel | null = null;
+  private openCoverDeviceId: string | null = null;
   private displayMeta: {
     displayId: string;
     displayName: string;
@@ -55,6 +62,7 @@ export class RealtimeClient {
     this.renderer = options.renderer;
     this.copy = options.copy;
     this.overlay = options.overlay ?? new ConnectionOverlay();
+    this.controlOverlay = options.controlOverlay ?? new WidgetControlOverlay();
     this.interactions =
       options.interactions ??
       new WidgetInteractionController({
@@ -79,6 +87,7 @@ export class RealtimeClient {
     this.destroyed = true;
     this.clearReconnectTimer();
     this.interactions.destroy();
+    this.controlOverlay.destroy();
     if (this.socket) {
       this.socket.onopen = null;
       this.socket.onclose = null;
@@ -103,12 +112,87 @@ export class RealtimeClient {
           action: 'toggle',
           interactive: true,
         }),
+      requestCoverSetPosition: (widgetId, positionPercent) =>
+        this.interactions.requestSetPosition(widgetId, positionPercent),
+      requestCoverStop: (widgetId) => this.interactions.requestStop(widgetId),
+      openCoverControl: (widgetId) => this.openCoverControl(widgetId),
+      notifyCoverRuntime: (widgetId, state) =>
+        this.onCoverRuntime(widgetId, state),
+      notifyCoverWidgetDestroyed: (widgetId) => {
+        if (this.controlOverlay.getActiveWidgetId() === widgetId) {
+          this.controlOverlay.close();
+        }
+      },
       onStatus: (widgetId, listener) =>
         this.interactions.onStatus(widgetId, listener),
       notifyStateConfirmed: (widgetId) =>
         this.interactions.handleWidgetStateConfirmed(widgetId),
       isPending: (widgetId) => this.interactions.isPending(widgetId),
     });
+
+    this.renderer.setOnConfigurationApplied((widgetIds) => {
+      this.controlOverlay.handleWidgetsChanged(widgetIds);
+    });
+  }
+
+  private openCoverControl(widgetId: string): void {
+    const runtime = this.renderer.getWidgetRuntime(widgetId);
+    if (!runtime || runtime.type !== 'cover') {
+      return;
+    }
+
+    this.openCoverDeviceId = runtime.deviceId;
+    const coverCopy = this.copy.cover;
+    this.controlOverlay.open({
+      widgetId,
+      title: runtime.name || coverCopy.name,
+      ariaLabel: `${runtime.name || coverCopy.name}. ${coverCopy.openControl}`,
+      closeLabel: coverCopy.closeControl,
+      render: (surface) => {
+        const panel = new CoverControlPanel({
+          copy: coverCopy,
+          initialRuntime: runtime,
+          actions: {
+            setPosition: (positionPercent) =>
+              this.interactions.requestSetPosition(widgetId, positionPercent),
+            stop: () => this.interactions.requestStop(widgetId),
+            isPending: () => this.interactions.isPending(widgetId),
+            onStatus: (listener) =>
+              this.interactions.onStatus(widgetId, (feedback) => {
+                listener(feedback.status);
+              }),
+          },
+        });
+        panel.mount(surface);
+        this.activeCoverPanel = panel;
+        return () => {
+          panel.destroy();
+          if (this.activeCoverPanel === panel) {
+            this.activeCoverPanel = null;
+          }
+          this.openCoverDeviceId = null;
+        };
+      },
+    });
+  }
+
+  private onCoverRuntime(
+    widgetId: string,
+    state: CoverWidgetRuntimeState,
+  ): void {
+    if (this.controlOverlay.getActiveWidgetId() !== widgetId) {
+      return;
+    }
+
+    if (
+      this.openCoverDeviceId !== null &&
+      state.deviceId !== this.openCoverDeviceId
+    ) {
+      this.controlOverlay.close();
+      return;
+    }
+
+    this.activeCoverPanel?.updateRuntime(state);
   }
 
   private connect(): void {
@@ -169,6 +253,9 @@ export class RealtimeClient {
           break;
         case 'command-accepted':
           this.interactions.handleCommandAccepted(message.requestId);
+          break;
+        case 'command-succeeded':
+          this.interactions.handleCommandSucceeded(message.requestId);
           break;
         case 'command-rejected':
           this.interactions.handleCommandRejected(
@@ -245,10 +332,32 @@ export class RealtimeClient {
   }
 
   private sendWidgetAction(message: WidgetActionDispatch): boolean {
+    if (message.action === 'set-position') {
+      if (typeof message.positionPercent !== 'number') {
+        return false;
+      }
+      return this.send({
+        type: 'widget-action',
+        widgetId: message.widgetId,
+        action: 'set-position',
+        requestId: message.requestId,
+        positionPercent: message.positionPercent,
+      });
+    }
+
+    if (message.action === 'stop') {
+      return this.send({
+        type: 'widget-action',
+        widgetId: message.widgetId,
+        action: 'stop',
+        requestId: message.requestId,
+      });
+    }
+
     return this.send({
       type: 'widget-action',
       widgetId: message.widgetId,
-      action: message.action,
+      action: 'toggle',
       requestId: message.requestId,
     });
   }

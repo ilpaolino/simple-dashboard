@@ -35,3 +35,25 @@ export function normalizeWindowcoveringsSet(
     positionPercent: Math.round(value * 100),
   };
 }
+
+/**
+ * Convert a UX integer percent (0–100) to Homey `windowcoverings_set` [0, 1].
+ * Callers must validate the percent range before invoking.
+ */
+export function denormalizePositionPercent(positionPercent: number): number {
+  const clamped = Math.max(0, Math.min(100, Math.round(positionPercent)));
+  return clamped / 100;
+}
+
+/**
+ * True when `positionPercent` is an integer in [0, 100].
+ */
+export function isValidPositionPercent(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 100
+  );
+}

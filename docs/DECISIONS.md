@@ -1,12 +1,82 @@
 # Decisions
 
+Architectural choices for Milestone 9. Earlier decisions remain in force below and in prior milestone docs.
+
+## Cover tile opens control overlay
+
+**Choice:** Tapping CoverWidget opens `WidgetControlOverlay` with `CoverControlPanel`. The tile does not send open/close/stop or position commands directly.
+
+**Why:** Cover control needs a target preview, Open/Close shortcuts, and optional Stop. Putting that UX in a dedicated panel keeps the grid tile simple and reusable for other widget types later.
+
+## WidgetControlOverlay
+
+**Choice:** One global overlay shell outside the grid (backdrop, title area, close affordances, Escape). Hosts widget-specific panels; only one overlay at a time.
+
+**Why:** Shared chrome for future control panels (e.g. light dimmer) without inventing a second overlay stack or embedding modals inside grid cells.
+
+## Send on release
+
+**Choice:** The vertical slider updates a local target preview while dragging. A single `set-position` intent is sent on pointer release. Open/Close send one position command each.
+
+**Why:** Avoids flooding Homey with intermediate values during a drag. Pointer Events keep touch and mouse consistent on wall displays.
+
+## Current state and target are distinct
+
+**Choice:** UI always shows Homey-confirmed current percent separately from the pending/preview target.
+
+**Why:** Homey remains source of truth. Collapsing current and target would imply the cover has already arrived at the commanded position.
+
+## No movement interpolation
+
+**Choice:** Neither the tile bar nor the overlay invents mid-travel positions. Progress appears only when Homey reports capability updates.
+
+**Why:** Same as Milestone 8: simulated motion lies when devices move slowly or report sparsely.
+
+## Open/Close use position commands
+
+**Choice:** Open = `set-position` 100%; Close = `set-position` 0%. No separate Homey “open/close” capability writes.
+
+**Why:** Official control path for position covers is `windowcoverings_set`. Reuses one intent, one confirmation path, and one denormalization rule.
+
+**Refs:** [windowcoverings_set](https://github.com/athombv/node-homey-lib/blob/master/assets/capability/capabilities/windowcoverings_set.json), [Window coverings best practices](https://apps.developer.homey.app/the-basics/devices/best-practices/window-coverings).
+
+## Stop only when officially supported
+
+**Choice:** Stop is exposed only when Homey documents `windowcoverings_state` on the device. Stop writes `idle`. Devices without that capability never show Stop.
+
+**Why:** Do not invent stop via undocumented APIs or guessed capabilities. Matches Homey’s official stop semantics.
+
+**Refs:** [windowcoverings_state](https://github.com/athombv/node-homey-lib/blob/master/assets/capability/capabilities/windowcoverings_state.json).
+
+## Cover confirmation is progress-aware
+
+**Choice:** `set-position` confirms on Homey percent within **1%** of target **or** the first coherent progress from the baseline toward the target. Timeout **8000 ms** (acknowledgement / start of motion, not full travel). Stop confirms when `windowcoverings_state === idle` (timeout **4000 ms**) and may replace an in-flight set-position. Successful confirmation emits `command-succeeded`.
+
+**Why:** Waiting for full physical travel would leave wall UX pending for tens of seconds. First coherent progress (or near-target report) is enough to know Homey accepted the command. Intermediate reports must not leave the client stuck pending without an explicit success signal.
+
+## Overlay close does not cancel commands
+
+**Choice:** Closing the overlay (backdrop, X, Escape, or live-config dismiss) does not abort Homey writes already sent. Pending lifecycle continues until confirm / reject / timeout.
+
+**Why:** Homey already received the command. Cancelling UI must not pretend the device stopped, and must not orphan pending bookkeeping.
+
+## Live config while overlay is open
+
+**Choice:** If the open widget is removed from the live dashboard configuration, or the bound device changes unsafely, the overlay closes. Otherwise capability `widget-state` updates continue to feed the panel.
+
+**Why:** Avoid controlling a widget/device that no longer exists on this Display, without discarding unrelated live updates.
+
+---
+
 Architectural choices for Milestone 8. Earlier decisions remain in force below and in prior milestone docs.
 
 ## CoverWidget read-only first
 
-**Choice:** The first CoverWidget implementation shows only state/position. No open/close/stop, slider, or gestures.
+**Choice (M8):** The first CoverWidget implementation shows only state/position. No open/close/stop, slider, or gestures.
 
-**Why:** Matches the successful LightWidget pattern (read snapshot/realtime first). Control can reuse the Milestone 7 widget-intent command path later without rewriting the tile.
+**Status:** Partially superseded by Milestone 9. The read path, normalization, and tile visuals remain; interactive control now uses WidgetControlOverlay + widget intents (`set-position` / `stop`).
+
+**Why (historical):** Matched the successful LightWidget pattern (read snapshot/realtime first). Control reuses the Milestone 7 widget-intent command path without rewriting the tile.
 
 ## 0–100 normalized UX
 
@@ -21,6 +91,8 @@ Architectural choices for Milestone 8. Earlier decisions remain in force below a
 **Choice:** The vertical bar paints only the latest Homey value. No interpolation, simulated travel, or estimated mid-positions.
 
 **Why:** Homey remains source of truth. Invented motion would lie when devices move slowly or report sparsely.
+
+**Note:** Milestone 9 keeps this rule for both the tile and the control panel.
 
 ## Device icons are decorative
 
@@ -44,7 +116,7 @@ Architectural choices for Milestone 8. Earlier decisions remain in force below a
 
 **Choice:** `RealtimeSubscriptionManager` keys listeners by `(deviceId, capabilityId)` instead of device id alone.
 
-**Why:** CoverWidget needs `windowcoverings_set` while LightWidget needs `onoff`. Same manager, no duplicate infrastructure.
+**Why:** CoverWidget needs `windowcoverings_set` while LightWidget needs `onoff`. Same manager, no duplicate infrastructure. Milestone 9 may also subscribe `windowcoverings_state` when present.
 
 ---
 
@@ -52,31 +124,31 @@ Architectural choices for Milestone 7. Earlier decisions remain in force below a
 
 ## Commands use widget intents
 
-**Choice:** The client sends `{ type: 'widget-action', widgetId, action, requestId }`. It never sends Homey `deviceId`, capability id, or target value.
+**Choice:** The client sends `{ type: 'widget-action', widgetId, action, requestId }` (plus action-specific fields such as `positionPercent`). It never sends Homey `deviceId`, capability id, or raw Homey values.
 
 **Why:** A wall browser must not be able to command arbitrary Homey devices. The backend resolves `widgetId` against the Display’s current dashboard configuration and allowed actions.
 
 ## Homey confirms final state
 
-**Choice:** Visual success is only applied when Homey realtime delivers a matching `onoff` update. `command-accepted` means “validated and sent to Homey”, not “device confirmed”.
+**Choice:** Visual success is only applied when Homey realtime delivers a matching capability update. `command-accepted` means “validated and sent to Homey”, not “device confirmed”. Milestone 9 adds `command-succeeded` when confirmation matches.
 
 **Why:** Homey remains source of truth. API acceptance and WebSocket send success are not sufficient.
 
-**API used:** `Device#setCapabilityValue({ capabilityId: 'onoff', value })` via `homey-api` / `HomeyAPI.createAppAPI`.
+**API used:** `Device#setCapabilityValue({ capabilityId, value })` via `homey-api` / `HomeyAPI.createAppAPI`.
 
 **Refs:** [Device#setCapabilityValue](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#setCapabilityValue), [Device#makeCapabilityInstance](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#makeCapabilityInstance).
 
 ## Pending is separate from real state
 
-**Choice:** LightWidget keeps painting the last Homey-confirmed ON/OFF and overlays pending/error feedback.
+**Choice:** LightWidget keeps painting the last Homey-confirmed ON/OFF and overlays pending/error feedback. CoverWidget keeps painting Homey-confirmed percent and shows target/pending separately in the panel.
 
 **Why:** Optimistic UI would lie about device state on slow or failed devices. Pending is a command lifecycle state, not a capability value.
 
 ## No concurrent commands per widget
 
-**Choice:** While a widget is pending, further taps are ignored. The backend also rejects `already_pending`.
+**Choice:** While a widget is pending, further taps are ignored. The backend also rejects `already_pending`. Milestone 9 allows cover **stop** to replace an in-flight set-position.
 
-**Why:** Prevents toggle races and duplicate Homey writes without introducing a command queue.
+**Why:** Prevents toggle races and duplicate Homey writes without introducing a command queue. Stop is the intentional interrupt.
 
 ## No offline command queue
 
@@ -86,27 +158,29 @@ Architectural choices for Milestone 7. Earlier decisions remain in force below a
 
 ## Interaction architecture is extensible
 
-**Choice:** `WidgetDefinition.interactions` maps gestures (`tap` | `double-tap` | `long-press` | `swipe`) to action ids. Milestone 7 only implements `tap → toggle` for LightWidget.
+**Choice:** `WidgetDefinition.interactions` maps gestures (`tap` | `double-tap` | `long-press` | `swipe`) to action ids. Milestone 7 implements `tap → toggle` for LightWidget. Milestone 9 uses tile tap to open the cover overlay; panel actions map to `set-position` / `stop`.
 
 **Why:** Future gestures should not require rewriting the WebSocket envelope or the interaction controller.
 
 ## Command timeout is fixed at 4000 ms
 
-**Choice:** `COMMAND_TIMEOUT_MS = 4000`. Not user-configurable in this milestone.
+**Choice (M7):** `COMMAND_TIMEOUT_MS = 4000` for light toggle. Not user-configurable.
 
-**Why:** Fast enough for wall UX, long enough for typical Homey/device round-trips. Keeps settings surface small.
+**Status:** Still true for light toggle and cover stop. Milestone 9 adds per-type timeouts: cover `set-position` = **8000 ms**. See `COMMAND_TIMEOUTS` in `lib/realtime/constants.ts`.
+
+**Why:** Fast enough for wall UX, long enough for typical Homey/device round-trips. Cover set-position needs a slightly longer ack window without waiting for full travel.
 
 ## Realtime mismatch clears pending
 
-**Choice:** If Homey reports an `onoff` value different from the pending target, adopt Homey’s value, clear pending, send `command-rejected` with `unexpected_state`, and do not retry.
+**Choice:** If Homey reports a value inconsistent with the pending intent, adopt Homey’s value, clear pending, send `command-rejected` with `unexpected_state`, and do not retry.
 
-**Why:** Deterministic; Homey always wins; avoids leaving the UI stuck in pending when another actor changed the light.
+**Why:** Deterministic; Homey always wins; avoids leaving the UI stuck in pending when another actor changed the device.
 
 ## Toggle target is server-derived
 
-**Choice:** Backend reads current Homey `onoff` and sets the opposite. The client cannot impose the target.
+**Choice:** For light toggle, backend reads current Homey `onoff` and sets the opposite. The client cannot impose the target.
 
-**Why:** Prevents stale-client desync and forged capability values.
+**Why:** Prevents stale-client desync and forged capability values. Cover `set-position` is different: the client sends a validated UX percent; the backend denormalizes to Homey `[0, 1]`.
 
 ---
 
@@ -142,15 +216,15 @@ Architectural choices for Milestone 6. Earlier decisions remain in force below a
 
 ## Selective subscriptions
 
-**Choice:** Only Homey devices referenced by the Display’s dashboard widgets are subscribed (`extractReferencedDeviceIds`).
+**Choice:** Only Homey devices referenced by the Display’s dashboard widgets are subscribed (`extractReferencedDeviceIds` / capability pairs).
 
 **Why:** Homey Pro RAM and listener budget; never subscribe to the whole device list.
 
 ## Reference-counted subscriptions
 
-**Choice:** `RealtimeSubscriptionManager` shares one Homey `makeCapabilityInstance('onoff')` across Displays that reference the same device; unsubscribe at `refCount === 0`.
+**Choice:** `RealtimeSubscriptionManager` shares one Homey `makeCapabilityInstance` across Displays that reference the same device+capability; unsubscribe at `refCount === 0`.
 
-**Why:** Avoid duplicate Homey realtime listeners when multiple wall displays show the same light.
+**Why:** Avoid duplicate Homey realtime listeners when multiple wall displays show the same device.
 
 **Refs:** [Device#makeCapabilityInstance](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.html#makeCapabilityInstance), [DeviceCapability#destroy](https://athombv.github.io/node-homey-api/HomeyAPIV3.ManagerDevices.Device.DeviceCapability.html).
 
@@ -208,7 +282,7 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 **Permission:** `homey:manager:api` is required. It grants ManagerApi / Homey Web API access so this app can read devices that it does not own. Implications: stricter App Store review, not allowed on Homey Cloud (this app is already `platforms: ["local"]`), and the app is in the Tools category as Homey recommends for this permission. No other permissions are requested.
 
-**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`, `Device#makeCapabilityInstance` / `DeviceCapability#destroy` for selective realtime, and (from Milestone 7) `Device#setCapabilityValue` for LightWidget toggle.
+**APIs used:** `homey.api.getOwnerApiToken()`, `homey.api.getLocalUrl()`, `homey.cloud.getHomeyId()` (inside `createAppAPI`); then `devices.getDevices()`, `devices.getDevice({ id })`, `zones.getZones()`, `Device#makeCapabilityInstance` / `DeviceCapability#destroy` for selective realtime, and (from Milestone 7+) `Device#setCapabilityValue` for widget commands.
 
 **Package:** `homey-api@3.16.1` — last stable line that supports Node `>=16`. `3.17+` requires Node 24, which is incompatible with Homey `>=12.9.0` (Node 22).
 
@@ -228,17 +302,17 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 ## Read-only first
 
-**Superseded by Milestone 7:** LightWidget can toggle `onoff` via validated widget intents. Dim/color remain deferred.
+**Superseded by Milestone 7:** LightWidget can toggle `onoff` via validated widget intents. Dim/color remain deferred. Cover control arrived in Milestone 9.
 
 ## Snapshot plus realtime
 
-**Choice:** Homey state is still snapshotted at HTTP bootstrap and after every WebSocket connect. Live `onoff` updates use official capability instances; `DashboardRenderer.updateWidgetState` applies them without rebuilding the grid.
+**Choice:** Homey state is still snapshotted at HTTP bootstrap and after every WebSocket connect. Live capability updates use official capability instances; `DashboardRenderer.updateWidgetState` applies them without rebuilding the grid.
 
 **Why:** Snapshot remains the reconnect source of truth; realtime patches keep the open display current without polling.
 
 ## Broken references remain visible
 
-**Choice:** If the bound device is removed, unreachable, unavailable, or no longer exposes `onoff`, the widget stays on the grid in the `unavailable` visual state. The stored `deviceId` is never auto-replaced or deleted.
+**Choice:** If the bound device is removed, unreachable, unavailable, or no longer exposes the required capability, the widget stays on the grid in the `unavailable` visual state. The stored `deviceId` is never auto-replaced or deleted.
 
 **Why:** The user must see that the configuration still exists. Correction is explicit in the Dashboard Editor.
 

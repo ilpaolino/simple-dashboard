@@ -21,10 +21,19 @@ import {
   parseOnoff,
   LIGHT_CAPABILITY_ID,
   COVER_CAPABILITY_ID,
+  COVER_STATE_CAPABILITY_ID,
+  COVER_STOP_STATE_VALUE,
+  evaluateCoverPositionConfirmation,
+  hasWindowcoveringsStateCapability,
+  normalizeWindowcoveringsSet,
 } from '../widgets';
 import { DISPLAY_TYPE_IDS } from '../display/types';
 import { REALTIME_PROTOCOL_VERSION, REALTIME_WEBSOCKET_PATH } from './constants';
-import { extractReferencedCapabilitySubscriptions } from './extractReferencedDeviceIds';
+import {
+  extractReferencedCapabilitySubscriptions,
+  subscriptionKey,
+  type HomeyCapabilityRef,
+} from './extractReferencedDeviceIds';
 import {
   DisplayRealtimeSession,
 } from './DisplayRealtimeSession';
@@ -87,11 +96,17 @@ export class RealtimeGateway {
     this.pendingCommands = new PendingCommandManager({
       onTimeout: (command) => {
         this.metrics.recordCommandTimedOut();
-        this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
-        this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+        if (
+          command.action === 'set-position' ||
+          command.action === 'stop'
+        ) {
+          this.metrics.recordCoverCommandTimedOut();
+        }
+        this.syncPendingMetrics();
         this.logger.warn('Command timed out', {
           displayId: command.displayId,
           widgetId: command.widgetId,
+          action: command.action,
           requestId: command.requestId,
         });
         this.sessions.sendToDisplay(command.displayId, {
@@ -155,8 +170,7 @@ export class RealtimeGateway {
   }
 
   public getMetrics() {
-    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
-    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+    this.syncPendingMetrics();
     return this.metrics.snapshot();
   }
 
@@ -241,7 +255,7 @@ export class RealtimeGateway {
       return;
     }
 
-    const subscriptions = extractReferencedCapabilitySubscriptions(
+    const subscriptions = await this.resolveCapabilitySubscriptions(
       entry.config.dashboard,
     );
 
@@ -284,11 +298,10 @@ export class RealtimeGateway {
 
   private async handleWidgetAction(
     session: DisplayRealtimeSession,
-    message: {
-      readonly widgetId: string;
-      readonly action: 'toggle';
-      readonly requestId: string;
-    },
+    message: Extract<
+      import('./protocol').ClientMessage,
+      { readonly type: 'widget-action' }
+    >,
   ): Promise<void> {
     if (!session.isOpen()) {
       return;
@@ -299,15 +312,18 @@ export class RealtimeGateway {
       widgetId: message.widgetId,
       action: message.action,
       requestId: message.requestId,
+      positionPercent:
+        message.action === 'set-position'
+          ? message.positionPercent
+          : undefined,
     });
 
-    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
-    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+    this.syncPendingMetrics();
 
     if (!session.isOpen()) {
       // Socket dropped while Homey API was in flight — drop pending, no replay.
       this.pendingCommands.cancel(message.requestId);
-      this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+      this.syncPendingMetrics();
       return;
     }
 
@@ -405,7 +421,7 @@ export class RealtimeGateway {
       return;
     }
 
-    const subscriptions = extractReferencedCapabilitySubscriptions(
+    const subscriptions = await this.resolveCapabilitySubscriptions(
       snapshot.configuration,
     );
     await this.subscriptions.setDisplaySubscriptions(
@@ -479,8 +495,7 @@ export class RealtimeGateway {
         displayId: session.displayId,
         count: cancelled.length,
       });
-      this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
-      this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+      this.syncPendingMetrics();
     }
 
     await this.subscriptions.removeDisplay(session.displayId);
@@ -494,13 +509,19 @@ export class RealtimeGateway {
   ): Promise<void> {
     if (capabilityId === LIGHT_CAPABILITY_ID) {
       const on = parseOnoff(value);
-      this.resolvePendingForCapability(deviceId, on);
+      this.resolvePendingForLight(deviceId, on);
       await this.routeLightCapabilityUpdate(deviceId, on, value);
       return;
     }
 
     if (capabilityId === COVER_CAPABILITY_ID) {
+      this.resolvePendingForCoverPosition(deviceId, value);
       await this.routeCoverCapabilityUpdate(deviceId, value);
+      return;
+    }
+
+    if (capabilityId === COVER_STATE_CAPABILITY_ID) {
+      this.resolvePendingForCoverStop(deviceId, value);
     }
   }
 
@@ -615,8 +636,13 @@ export class RealtimeGateway {
                     [COVER_CAPABILITY_ID]: value,
                   },
                 },
+                title: widget.config.title,
               })
-            : createCoverApiErrorRuntime(widget.id, deviceId);
+            : createCoverApiErrorRuntime(
+                widget.id,
+                deviceId,
+                widget.config.title,
+              );
 
           this.sessions.sendToDisplay(displayId, {
             type: 'widget-state',
@@ -636,17 +662,20 @@ export class RealtimeGateway {
   }
 
   /**
-   * Homey realtime is the only confirmation of success.
+   * Homey realtime is the only confirmation of success for light toggles.
    *
    * Mismatch policy (deterministic): if a pending command expected ON and Homey
    * reports OFF (or the reverse), clear pending, adopt Homey's value via the
    * normal widget-state path, and count the command as failed — no auto-retry.
    */
-  private resolvePendingForCapability(
+  private resolvePendingForLight(
     deviceId: string,
     on: boolean | null,
   ): void {
-    const pending = this.pendingCommands.findByDeviceId(deviceId);
+    const pending = this.pendingCommands.findByDeviceAndCapability(
+      deviceId,
+      LIGHT_CAPABILITY_ID,
+    );
     if (pending.length === 0 || on === null) {
       return;
     }
@@ -660,6 +689,10 @@ export class RealtimeGateway {
           widgetId: command.widgetId,
           requestId: command.requestId,
           value: on,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-succeeded',
+          requestId: command.requestId,
         });
       } else {
         this.pendingCommands.resolveMismatch(command.requestId);
@@ -679,27 +712,219 @@ export class RealtimeGateway {
       }
     }
 
+    this.syncPendingMetrics();
+  }
+
+  /**
+   * Cover set-position confirmation: first coherent progress toward target OR
+   * reported percent within tolerance. Intermediate Homey values still update
+   * the tile via widget-state while pending remains until confirmed / failed.
+   */
+  private resolvePendingForCoverPosition(
+    deviceId: string,
+    value: unknown,
+  ): void {
+    const normalized = normalizeWindowcoveringsSet(value);
+    const reportedPercent = normalized.positionPercent;
+    if (reportedPercent === null) {
+      return;
+    }
+
+    const pending = this.pendingCommands.findByDeviceAndCapability(
+      deviceId,
+      COVER_CAPABILITY_ID,
+    );
+    if (pending.length === 0) {
+      return;
+    }
+
+    for (const command of pending) {
+      if (
+        command.action !== 'set-position' ||
+        typeof command.expectedValue !== 'number'
+      ) {
+        continue;
+      }
+
+      const result = evaluateCoverPositionConfirmation({
+        targetPercent: command.expectedValue,
+        baselinePercent: command.baselineValue,
+        reportedPercent,
+      });
+
+      this.logger.info('Cover realtime progress', {
+        displayId: command.displayId,
+        widgetId: command.widgetId,
+        requestId: command.requestId,
+        current: reportedPercent,
+        target: command.expectedValue,
+        result,
+      });
+
+      if (result === 'confirmed') {
+        this.pendingCommands.resolveSuccess(command.requestId);
+        this.metrics.recordCommandSucceeded();
+        this.logger.info('Cover command confirmation received', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+          current: reportedPercent,
+          target: command.expectedValue,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-succeeded',
+          requestId: command.requestId,
+        });
+      } else if (result === 'mismatched') {
+        this.pendingCommands.resolveMismatch(command.requestId);
+        this.metrics.recordCommandFailed();
+        this.metrics.recordCoverCommandFailed();
+        this.logger.warn('Cover command cleared by mismatched Homey state', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+          expected: command.expectedValue,
+          actual: reportedPercent,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-rejected',
+          requestId: command.requestId,
+          reason: 'unexpected_state',
+        });
+      }
+    }
+
+    this.syncPendingMetrics();
+  }
+
+  /**
+   * Stop confirmation: Homey reports `windowcoverings_state` === `idle`.
+   */
+  private resolvePendingForCoverStop(
+    deviceId: string,
+    value: unknown,
+  ): void {
+    const pending = this.pendingCommands.findByDeviceAndCapability(
+      deviceId,
+      COVER_STATE_CAPABILITY_ID,
+    );
+    if (pending.length === 0) {
+      return;
+    }
+
+    for (const command of pending) {
+      if (command.action !== 'stop') {
+        continue;
+      }
+
+      if (value === COVER_STOP_STATE_VALUE) {
+        this.pendingCommands.resolveSuccess(command.requestId);
+        this.metrics.recordCommandSucceeded();
+        this.logger.info('Cover stop confirmation received', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-succeeded',
+          requestId: command.requestId,
+        });
+      }
+    }
+
+    this.syncPendingMetrics();
+  }
+
+  private syncPendingMetrics(): void {
     this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
     this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+    const coverPending = this.pendingCommands
+      .listActive()
+      .filter(
+        (entry) =>
+          entry.action === 'set-position' || entry.action === 'stop',
+      ).length;
+    this.metrics.setCoverPendingCommands(coverPending);
+  }
+
+  /**
+   * Base refs from dashboard widgets, plus `windowcoverings_state` when Homey
+   * documents that capability on the bound cover device (for Stop confirmation).
+   */
+  private async resolveCapabilitySubscriptions(
+    configuration: import('../widgets/types').DashboardConfiguration,
+  ): Promise<readonly HomeyCapabilityRef[]> {
+    const base = extractReferencedCapabilitySubscriptions(configuration);
+    const keys = new Set(
+      base.map((ref) => subscriptionKey(ref.deviceId, ref.capabilityId)),
+    );
+    const enriched: HomeyCapabilityRef[] = [...base];
+
+    for (const ref of base) {
+      if (ref.capabilityId !== COVER_CAPABILITY_ID) {
+        continue;
+      }
+      const stateKey = subscriptionKey(ref.deviceId, COVER_STATE_CAPABILITY_ID);
+      if (keys.has(stateKey)) {
+        continue;
+      }
+      try {
+        const device = await this.deviceRepository.getDevice(ref.deviceId);
+        if (device && hasWindowcoveringsStateCapability(device)) {
+          keys.add(stateKey);
+          enriched.push({
+            deviceId: ref.deviceId,
+            capabilityId: COVER_STATE_CAPABILITY_ID,
+          });
+        }
+      } catch (error) {
+        this.logger.warn('Failed to probe cover stop capability for subscription', {
+          deviceId: ref.deviceId,
+          error,
+        });
+      }
+    }
+
+    enriched.sort((left, right) => {
+      const byDevice = left.deviceId.localeCompare(right.deviceId);
+      if (byDevice !== 0) {
+        return byDevice;
+      }
+      return left.capabilityId.localeCompare(right.capabilityId);
+    });
+
+    return enriched;
   }
 
   private async handleDeviceRemoved(
     deviceId: string,
     capabilityId: string,
   ): Promise<void> {
-    if (capabilityId === LIGHT_CAPABILITY_ID) {
-      const pending = this.pendingCommands.findByDeviceId(deviceId);
+    if (
+      capabilityId === LIGHT_CAPABILITY_ID ||
+      capabilityId === COVER_CAPABILITY_ID ||
+      capabilityId === COVER_STATE_CAPABILITY_ID
+    ) {
+      const pending = this.pendingCommands.findByDeviceAndCapability(
+        deviceId,
+        capabilityId,
+      );
       for (const command of pending) {
         this.pendingCommands.resolveFailed(command.requestId);
         this.metrics.recordCommandFailed();
+        if (
+          command.action === 'set-position' ||
+          command.action === 'stop'
+        ) {
+          this.metrics.recordCoverCommandFailed();
+        }
         this.sessions.sendToDisplay(command.displayId, {
           type: 'command-rejected',
           requestId: command.requestId,
           reason: 'device_missing',
         });
       }
-      this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
-      this.metrics.setRecentCommands(this.pendingCommands.listRecent());
+      this.syncPendingMetrics();
     }
 
     const displayIds = this.subscriptions.getDisplayIdsForDevice(
@@ -730,7 +955,11 @@ export class RealtimeGateway {
           if (widget.type !== 'cover' || widget.config.deviceId !== deviceId) {
             continue;
           }
-          const resolved = createCoverApiErrorRuntime(widget.id, deviceId);
+          const resolved = createCoverApiErrorRuntime(
+            widget.id,
+            deviceId,
+            widget.config.title,
+          );
           this.sessions.sendToDisplay(displayId, {
             type: 'widget-state',
             widgetId: widget.id,

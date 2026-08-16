@@ -63,6 +63,7 @@ export {
 export {
   coverWidgetDefinition,
   isCoverWidgetConfig,
+  buildCoverWidgetConfig,
 } from './cover/definition';
 export {
   isCompatibleWithLightWidget,
@@ -70,9 +71,26 @@ export {
 } from './light/compatibility';
 export {
   isCompatibleWithCoverWidget,
+  hasWindowcoveringsStateCapability,
+  resolveCoverWidgetCapabilities,
   COVER_CAPABILITY_ID,
+  COVER_STATE_CAPABILITY_ID,
+  COVER_STOP_STATE_VALUE,
 } from './cover/compatibility';
-export { normalizeWindowcoveringsSet } from './cover/normalize';
+export {
+  normalizeWindowcoveringsSet,
+  denormalizePositionPercent,
+  isValidPositionPercent,
+} from './cover/normalize';
+export {
+  evaluateCoverPositionConfirmation,
+  COVER_POSITION_CONFIRM_TOLERANCE_PERCENT,
+} from './cover/confirmation';
+export {
+  normalizeCoverTitle,
+  resolveCoverDisplayName,
+  COVER_TITLE_MAX_LENGTH,
+} from './cover/types';
 export { resolveLightVisualState, lightVisualStateClass } from './light/visual';
 export {
   resolveCoverVisualState,

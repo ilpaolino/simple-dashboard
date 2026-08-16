@@ -21,6 +21,16 @@ export interface RealtimeMetricsSnapshot {
   readonly commandsTimedOut: number;
   readonly activePendingCommands: number;
   readonly recentCommands: readonly CommandDiagnosticEntry[];
+  readonly coverCommandsReceived: number;
+  readonly coverSetPositionCommands: number;
+  readonly coverOpenCommands: number;
+  readonly coverCloseCommands: number;
+  readonly coverStopCommands: number;
+  readonly coverCommandsAccepted: number;
+  readonly coverCommandsRejected: number;
+  readonly coverCommandsFailed: number;
+  readonly coverCommandsTimedOut: number;
+  readonly coverPendingCommands: number;
 }
 
 export class RealtimeMetrics {
@@ -41,6 +51,16 @@ export class RealtimeMetrics {
   private commandsTimedOut = 0;
   private activePendingCommands = 0;
   private recentCommands: CommandDiagnosticEntry[] = [];
+  private coverCommandsReceived = 0;
+  private coverSetPositionCommands = 0;
+  private coverOpenCommands = 0;
+  private coverCloseCommands = 0;
+  private coverStopCommands = 0;
+  private coverCommandsAccepted = 0;
+  private coverCommandsRejected = 0;
+  private coverCommandsFailed = 0;
+  private coverCommandsTimedOut = 0;
+  private coverPendingCommands = 0;
 
   public recordConnectionOpened(): void {
     this.connectionsOpened += 1;
@@ -108,6 +128,45 @@ export class RealtimeMetrics {
     this.recentCommands = [...entries];
   }
 
+  public recordCoverCommandReceived(
+    action: 'set-position' | 'stop',
+  ): void {
+    this.coverCommandsReceived += 1;
+    if (action === 'set-position') {
+      this.coverSetPositionCommands += 1;
+    } else {
+      this.coverStopCommands += 1;
+    }
+  }
+
+  public recordCoverOpenCommand(): void {
+    this.coverOpenCommands += 1;
+  }
+
+  public recordCoverCloseCommand(): void {
+    this.coverCloseCommands += 1;
+  }
+
+  public recordCoverCommandAccepted(): void {
+    this.coverCommandsAccepted += 1;
+  }
+
+  public recordCoverCommandRejected(): void {
+    this.coverCommandsRejected += 1;
+  }
+
+  public recordCoverCommandFailed(): void {
+    this.coverCommandsFailed += 1;
+  }
+
+  public recordCoverCommandTimedOut(): void {
+    this.coverCommandsTimedOut += 1;
+  }
+
+  public setCoverPendingCommands(count: number): void {
+    this.coverPendingCommands = Math.max(0, count);
+  }
+
   public snapshot(): RealtimeMetricsSnapshot {
     return {
       connectionsOpened: this.connectionsOpened,
@@ -127,6 +186,16 @@ export class RealtimeMetrics {
       commandsTimedOut: this.commandsTimedOut,
       activePendingCommands: this.activePendingCommands,
       recentCommands: [...this.recentCommands],
+      coverCommandsReceived: this.coverCommandsReceived,
+      coverSetPositionCommands: this.coverSetPositionCommands,
+      coverOpenCommands: this.coverOpenCommands,
+      coverCloseCommands: this.coverCloseCommands,
+      coverStopCommands: this.coverStopCommands,
+      coverCommandsAccepted: this.coverCommandsAccepted,
+      coverCommandsRejected: this.coverCommandsRejected,
+      coverCommandsFailed: this.coverCommandsFailed,
+      coverCommandsTimedOut: this.coverCommandsTimedOut,
+      coverPendingCommands: this.coverPendingCommands,
     };
   }
 
@@ -148,5 +217,15 @@ export class RealtimeMetrics {
     this.commandsTimedOut = 0;
     this.activePendingCommands = 0;
     this.recentCommands = [];
+    this.coverCommandsReceived = 0;
+    this.coverSetPositionCommands = 0;
+    this.coverOpenCommands = 0;
+    this.coverCloseCommands = 0;
+    this.coverStopCommands = 0;
+    this.coverCommandsAccepted = 0;
+    this.coverCommandsRejected = 0;
+    this.coverCommandsFailed = 0;
+    this.coverCommandsTimedOut = 0;
+    this.coverPendingCommands = 0;
   }
 }

@@ -128,6 +128,7 @@ function resolveOneCover(options: {
     return createCoverApiErrorRuntime(
       options.widget.id,
       options.widget.config.deviceId,
+      options.widget.config.title,
     );
   }
 
@@ -138,5 +139,6 @@ function resolveOneCover(options: {
     widgetId: options.widget.id,
     deviceId: options.widget.config.deviceId,
     device,
+    title: options.widget.config.title,
   });
 }

@@ -140,7 +140,19 @@ function isDashboardCopy(value: unknown): boolean {
   const cover = candidate.cover as Record<string, unknown>;
   if (
     typeof cover.unavailable !== 'string' ||
-    typeof cover.invalidPosition !== 'string'
+    typeof cover.invalidPosition !== 'string' ||
+    typeof cover.name !== 'string' ||
+    typeof cover.open !== 'string' ||
+    typeof cover.close !== 'string' ||
+    typeof cover.stop !== 'string' ||
+    typeof cover.currentPosition !== 'string' ||
+    typeof cover.targetPosition !== 'string' ||
+    typeof cover.moveToPosition !== 'string' ||
+    typeof cover.commandInProgress !== 'string' ||
+    typeof cover.commandFailed !== 'string' ||
+    typeof cover.commandTimeout !== 'string' ||
+    typeof cover.openControl !== 'string' ||
+    typeof cover.closeControl !== 'string'
   ) {
     return false;
   }

@@ -53,8 +53,20 @@ export interface DashboardUiCopy {
     readonly commandTimeout: string;
   };
   readonly cover: {
+    readonly name: string;
     readonly unavailable: string;
     readonly invalidPosition: string;
+    readonly open: string;
+    readonly close: string;
+    readonly stop: string;
+    readonly currentPosition: string;
+    readonly targetPosition: string;
+    readonly moveToPosition: string;
+    readonly commandInProgress: string;
+    readonly commandFailed: string;
+    readonly commandTimeout: string;
+    readonly openControl: string;
+    readonly closeControl: string;
   };
   readonly widgetFailed: string;
   readonly realtime: {

@@ -359,6 +359,7 @@ describe('LightWidget renderer', () => {
           name: 'Tapparella cucina',
           available: true,
           positionPercent: 20,
+          capabilities: { canSetPosition: true, canStop: false },
           error: null,
         },
       },
@@ -390,6 +391,7 @@ describe('LightWidget renderer', () => {
       name: 'Tapparella cucina',
       available: true,
       positionPercent: 70,
+      capabilities: { canSetPosition: true, canStop: false },
       error: null,
     });
     assert.equal(body.children[0]!.textContent, '70%');
@@ -402,6 +404,7 @@ describe('LightWidget renderer', () => {
       name: 'Tapparella cucina',
       available: false,
       positionPercent: null,
+      capabilities: { canSetPosition: false, canStop: false },
       error: 'missing_device',
     });
     assert.match(cover!.className, /widget-cover--state-unavailable/);

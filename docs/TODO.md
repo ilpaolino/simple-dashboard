@@ -1,18 +1,18 @@
 # TODO
 
-## Milestone 8 follow-up (optional, not blocking)
+## Milestone 9 follow-up (optional, not blocking)
 
-- [ ] Exercise CoverWidget on Homey Pro with a physical shutter / blind that exposes `windowcoverings_set`
-- [ ] Confirm realtime percent + bar updates on a Shelly Wall Display browser
-- [ ] Measure RSS/heap on Homey Pro via `/diagnostics` with mixed Light + Cover dashboards
+- [ ] Exercise CoverWidget control on Homey Pro with a physical shutter / blind that exposes `windowcoverings_set`
+- [ ] Verify Stop on devices that also expose `windowcoverings_state` (hidden when absent)
+- [ ] Confirm send-on-release, current vs target, and realtime progress on a Shelly Wall Display browser
+- [ ] Measure RSS/heap on Homey Pro via `/diagnostics` with mixed Light + Cover (overlay open/closed) dashboards
 - [ ] If Homey CLI compose rewrites `app.json`, commit the generated file as-is
 
 ## Next milestone (do not start here)
 
 Only when a later milestone is requested:
 
-- [ ] CoverWidget interactive control (open / close / stop / position set) via widget intents
-- [ ] Dim / color / color temperature on the same `deviceId`
+- [ ] Dim / color / color temperature on the same `deviceId` (likely via WidgetControlOverlay panels)
 - [ ] Additional widget types (sensors, thermostats)
 - [ ] Flow cards
 - [ ] Drag & drop editor enhancements (still Homey App Settings only)
@@ -36,4 +36,7 @@ Only when a later milestone is requested:
 - Prefer `widget-state` for capability patches and full `dashboard-configuration` for structural edits
 - Extend the typed WebSocket protocol with new discriminants — do not send untyped JSON
 - New gestures should map through `WidgetDefinition.interactions` + `WidgetInteractionController`
+- Reuse `WidgetControlOverlay` for future control panels; do not invent a second overlay stack
 - Device icons remain decorative; use official Homey assets only when documented and LAN-safe
+- Cover Stop remains gated on official `windowcoverings_state`; do not invent stop paths
+- Closing overlays must not cancel Homey commands already sent
