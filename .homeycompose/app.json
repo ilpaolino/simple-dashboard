@@ -1,6 +1,6 @@
 {
   "id": "dev.dadda.simpledashboard",
-  "version": "0.11.0",
+  "version": "0.13.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -9,13 +9,13 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive light and cover controls over WebSocket realtime.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi di luci e tapparelle via WebSocket realtime."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, and native Homey Flow notification actions.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center e azioni Flow native per le notifiche."
   },
   "category": ["tools"],
   "tags": {
-    "en": ["http", "websocket", "dashboard", "wall display", "widgets", "light", "cover", "realtime", "diagnostics"],
-    "it": ["http", "websocket", "dashboard", "wall display", "widget", "luce", "tapparella", "realtime", "diagnostica"]
+    "en": ["http", "websocket", "dashboard", "wall display", "widgets", "light", "cover", "notifications", "flow", "realtime", "diagnostics"],
+    "it": ["http", "websocket", "dashboard", "wall display", "widget", "luce", "tapparella", "notifiche", "flow", "realtime", "diagnostica"]
   },
   "permissions": ["homey:manager:api"],
   "images": {
@@ -39,6 +39,22 @@
     "saveDashboard": {
       "method": "PUT",
       "path": "/displays/:displayId/dashboard"
+    },
+    "listNotifications": {
+      "method": "GET",
+      "path": "/notifications"
+    },
+    "publishNotification": {
+      "method": "POST",
+      "path": "/notifications"
+    },
+    "updateNotification": {
+      "method": "PUT",
+      "path": "/notifications"
+    },
+    "removeNotification": {
+      "method": "DELETE",
+      "path": "/notifications/:notificationId"
     }
   }
 }

@@ -34,6 +34,7 @@ export {
   isClientMessage,
   isWidgetActionId,
   isCommandRejectReason,
+  isDisplayNotification,
   parseClientMessage,
   parseServerMessage,
   serializeServerMessage,

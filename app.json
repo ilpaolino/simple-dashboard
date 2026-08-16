@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "dev.dadda.simpledashboard",
-  "version": "0.11.0",
+  "version": "0.13.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": [
@@ -12,8 +12,8 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive light and cover controls over WebSocket realtime.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi di luci e tapparelle via WebSocket realtime."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, and native Homey Flow notification actions.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center e azioni Flow native per le notifiche."
   },
   "category": [
     "tools"
@@ -27,6 +27,8 @@
       "widgets",
       "light",
       "cover",
+      "notifications",
+      "flow",
       "realtime",
       "diagnostics"
     ],
@@ -38,6 +40,8 @@
       "widget",
       "luce",
       "tapparella",
+      "notifiche",
+      "flow",
       "realtime",
       "diagnostica"
     ]
@@ -66,7 +70,473 @@
     "saveDashboard": {
       "method": "PUT",
       "path": "/displays/:displayId/dashboard"
+    },
+    "listNotifications": {
+      "method": "GET",
+      "path": "/notifications"
+    },
+    "publishNotification": {
+      "method": "POST",
+      "path": "/notifications"
+    },
+    "updateNotification": {
+      "method": "PUT",
+      "path": "/notifications"
+    },
+    "removeNotification": {
+      "method": "DELETE",
+      "path": "/notifications/:notificationId"
     }
+  },
+  "flow": {
+    "actions": [
+      {
+        "id": "show_notification",
+        "title": {
+          "en": "Show notification",
+          "it": "Mostra notifica"
+        },
+        "titleFormatted": {
+          "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]])",
+          "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]])"
+        },
+        "hint": {
+          "en": "Creates or updates a notification on this Wall Display using a deterministic Notification Key (upsert).",
+          "it": "Crea o aggiorna una notifica su questo Wall Display usando una Notification Key deterministica (upsert)."
+        },
+        "highlight": true,
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=generic_web_display"
+          },
+          {
+            "type": "text",
+            "name": "notification_key",
+            "title": {
+              "en": "Notification Key",
+              "it": "Chiave notifica"
+            },
+            "placeholder": {
+              "en": "e.g. laundry-done",
+              "it": "es. lavatrice-finita"
+            }
+          },
+          {
+            "type": "text",
+            "name": "title",
+            "title": {
+              "en": "Title",
+              "it": "Titolo"
+            },
+            "required": false
+          },
+          {
+            "type": "text",
+            "name": "message",
+            "title": {
+              "en": "Message",
+              "it": "Messaggio"
+            }
+          },
+          {
+            "type": "dropdown",
+            "name": "severity",
+            "title": {
+              "en": "Severity",
+              "it": "Severity"
+            },
+            "values": [
+              {
+                "id": "critical",
+                "label": {
+                  "en": "Critical",
+                  "it": "Critico"
+                }
+              },
+              {
+                "id": "warning",
+                "label": {
+                  "en": "Warning",
+                  "it": "Attenzione"
+                }
+              },
+              {
+                "id": "success",
+                "label": {
+                  "en": "Success",
+                  "it": "Successo"
+                }
+              },
+              {
+                "id": "info",
+                "label": {
+                  "en": "Info",
+                  "it": "Informazione"
+                }
+              }
+            ]
+          },
+          {
+            "type": "dropdown",
+            "name": "icon",
+            "title": {
+              "en": "Icon",
+              "it": "Icona"
+            },
+            "required": false,
+            "values": [
+              {
+                "id": "info",
+                "label": {
+                  "en": "Info",
+                  "it": "Info"
+                }
+              },
+              {
+                "id": "warning",
+                "label": {
+                  "en": "Warning",
+                  "it": "Attenzione"
+                }
+              },
+              {
+                "id": "success",
+                "label": {
+                  "en": "Success",
+                  "it": "Successo"
+                }
+              },
+              {
+                "id": "error",
+                "label": {
+                  "en": "Error",
+                  "it": "Errore"
+                }
+              },
+              {
+                "id": "home",
+                "label": {
+                  "en": "Home",
+                  "it": "Casa"
+                }
+              },
+              {
+                "id": "bell",
+                "label": {
+                  "en": "Bell",
+                  "it": "Campanella"
+                }
+              },
+              {
+                "id": "door",
+                "label": {
+                  "en": "Door",
+                  "it": "Porta"
+                }
+              },
+              {
+                "id": "washing-machine",
+                "label": {
+                  "en": "Washing machine",
+                  "it": "Lavatrice"
+                }
+              }
+            ]
+          },
+          {
+            "type": "checkbox",
+            "name": "highlight",
+            "title": {
+              "en": "Highlight",
+              "it": "Evidenzia"
+            },
+            "value": false
+          },
+          {
+            "type": "checkbox",
+            "name": "dismissable",
+            "title": {
+              "en": "Dismissable",
+              "it": "Può essere nascosta"
+            },
+            "value": true
+          }
+        ]
+      },
+      {
+        "id": "remove_notification",
+        "title": {
+          "en": "Remove notification",
+          "it": "Rimuovi notifica"
+        },
+        "titleFormatted": {
+          "en": "Remove notification [[notification_key]]",
+          "it": "Rimuovi notifica [[notification_key]]"
+        },
+        "hint": {
+          "en": "Removes the notification identified by Notification Key on this Display. Safe if the key does not exist.",
+          "it": "Rimuove la notifica identificata dalla Notification Key su questo Display. Sicuro se la chiave non esiste."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=generic_web_display"
+          },
+          {
+            "type": "text",
+            "name": "notification_key",
+            "title": {
+              "en": "Notification Key",
+              "it": "Chiave notifica"
+            }
+          }
+        ]
+      },
+      {
+        "id": "remove_all_notifications",
+        "title": {
+          "en": "Remove all notifications",
+          "it": "Rimuovi tutte le notifiche"
+        },
+        "hint": {
+          "en": "Removes every active notification for this Wall Display only. Other Displays are unchanged.",
+          "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=generic_web_display"
+          }
+        ]
+      },
+      {
+        "id": "shelly_show_notification",
+        "title": {
+          "en": "Show notification",
+          "it": "Mostra notifica"
+        },
+        "titleFormatted": {
+          "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]])",
+          "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]])"
+        },
+        "hint": {
+          "en": "Creates or updates a notification on this Wall Display using a deterministic Notification Key (upsert).",
+          "it": "Crea o aggiorna una notifica su questo Wall Display usando una Notification Key deterministica (upsert)."
+        },
+        "highlight": true,
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=shelly_wall_display"
+          },
+          {
+            "type": "text",
+            "name": "notification_key",
+            "title": {
+              "en": "Notification Key",
+              "it": "Chiave notifica"
+            },
+            "placeholder": {
+              "en": "e.g. laundry-done",
+              "it": "es. lavatrice-finita"
+            }
+          },
+          {
+            "type": "text",
+            "name": "title",
+            "title": {
+              "en": "Title",
+              "it": "Titolo"
+            },
+            "required": false
+          },
+          {
+            "type": "text",
+            "name": "message",
+            "title": {
+              "en": "Message",
+              "it": "Messaggio"
+            }
+          },
+          {
+            "type": "dropdown",
+            "name": "severity",
+            "title": {
+              "en": "Severity",
+              "it": "Severity"
+            },
+            "values": [
+              {
+                "id": "critical",
+                "label": {
+                  "en": "Critical",
+                  "it": "Critico"
+                }
+              },
+              {
+                "id": "warning",
+                "label": {
+                  "en": "Warning",
+                  "it": "Attenzione"
+                }
+              },
+              {
+                "id": "success",
+                "label": {
+                  "en": "Success",
+                  "it": "Successo"
+                }
+              },
+              {
+                "id": "info",
+                "label": {
+                  "en": "Info",
+                  "it": "Informazione"
+                }
+              }
+            ]
+          },
+          {
+            "type": "dropdown",
+            "name": "icon",
+            "title": {
+              "en": "Icon",
+              "it": "Icona"
+            },
+            "required": false,
+            "values": [
+              {
+                "id": "info",
+                "label": {
+                  "en": "Info",
+                  "it": "Info"
+                }
+              },
+              {
+                "id": "warning",
+                "label": {
+                  "en": "Warning",
+                  "it": "Attenzione"
+                }
+              },
+              {
+                "id": "success",
+                "label": {
+                  "en": "Success",
+                  "it": "Successo"
+                }
+              },
+              {
+                "id": "error",
+                "label": {
+                  "en": "Error",
+                  "it": "Errore"
+                }
+              },
+              {
+                "id": "home",
+                "label": {
+                  "en": "Home",
+                  "it": "Casa"
+                }
+              },
+              {
+                "id": "bell",
+                "label": {
+                  "en": "Bell",
+                  "it": "Campanella"
+                }
+              },
+              {
+                "id": "door",
+                "label": {
+                  "en": "Door",
+                  "it": "Porta"
+                }
+              },
+              {
+                "id": "washing-machine",
+                "label": {
+                  "en": "Washing machine",
+                  "it": "Lavatrice"
+                }
+              }
+            ]
+          },
+          {
+            "type": "checkbox",
+            "name": "highlight",
+            "title": {
+              "en": "Highlight",
+              "it": "Evidenzia"
+            },
+            "value": false
+          },
+          {
+            "type": "checkbox",
+            "name": "dismissable",
+            "title": {
+              "en": "Dismissable",
+              "it": "Può essere nascosta"
+            },
+            "value": true
+          }
+        ]
+      },
+      {
+        "id": "shelly_remove_notification",
+        "title": {
+          "en": "Remove notification",
+          "it": "Rimuovi notifica"
+        },
+        "titleFormatted": {
+          "en": "Remove notification [[notification_key]]",
+          "it": "Rimuovi notifica [[notification_key]]"
+        },
+        "hint": {
+          "en": "Removes the notification identified by Notification Key on this Display. Safe if the key does not exist.",
+          "it": "Rimuove la notifica identificata dalla Notification Key su questo Display. Sicuro se la chiave non esiste."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=shelly_wall_display"
+          },
+          {
+            "type": "text",
+            "name": "notification_key",
+            "title": {
+              "en": "Notification Key",
+              "it": "Chiave notifica"
+            }
+          }
+        ]
+      },
+      {
+        "id": "shelly_remove_all_notifications",
+        "title": {
+          "en": "Remove all notifications",
+          "it": "Rimuovi tutte le notifiche"
+        },
+        "hint": {
+          "en": "Removes every active notification for this Wall Display only. Other Displays are unchanged.",
+          "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=shelly_wall_display"
+          }
+        ]
+      }
+    ]
   },
   "drivers": [
     {
@@ -75,7 +545,10 @@
         "it": "Generic Web Display"
       },
       "class": "other",
-      "capabilities": [],
+      "capabilities": [
+        "notification_count",
+        "highest_notification_severity"
+      ],
       "platforms": [
         "local"
       ],
@@ -189,7 +662,10 @@
         "it": "Shelly Wall Display"
       },
       "class": "other",
-      "capabilities": [],
+      "capabilities": [
+        "notification_count",
+        "highest_notification_severity"
+      ],
       "platforms": [
         "local"
       ],
@@ -328,5 +804,68 @@
         }
       ]
     }
-  ]
+  ],
+  "capabilities": {
+    "highest_notification_severity": {
+      "type": "enum",
+      "title": {
+        "en": "Highest notification severity",
+        "it": "Severity massima notifiche"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": null,
+      "insights": false,
+      "values": [
+        {
+          "id": "none",
+          "title": {
+            "en": "None",
+            "it": "Nessuna"
+          }
+        },
+        {
+          "id": "info",
+          "title": {
+            "en": "Info",
+            "it": "Informazione"
+          }
+        },
+        {
+          "id": "success",
+          "title": {
+            "en": "Success",
+            "it": "Successo"
+          }
+        },
+        {
+          "id": "warning",
+          "title": {
+            "en": "Warning",
+            "it": "Attenzione"
+          }
+        },
+        {
+          "id": "critical",
+          "title": {
+            "en": "Critical",
+            "it": "Critico"
+          }
+        }
+      ]
+    },
+    "notification_count": {
+      "type": "number",
+      "title": {
+        "en": "Active notifications",
+        "it": "Notifiche attive"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": null,
+      "insights": false,
+      "min": 0,
+      "step": 1
+    }
+  }
 }

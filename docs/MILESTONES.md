@@ -121,12 +121,53 @@
 - Double-click / swipe
 - Heavy color libraries
 
+## Milestone 11 — Notification Center, Carousel & Highlight States
+
+**Status:** Done. Details: [MILESTONE-11.md](MILESTONE-11.md).
+
+### In scope (implemented)
+
+- `NotificationManager` with per-Display routing
+- Severities `critical` > `warning` > `success` > `info`
+- Controlled icon keys; plain-text title/message
+- Local dismiss (runtime-only; not global remove)
+- Snapshot + incremental realtime protocol
+- Severity triangle indicator + Notification Center carousel
+- Touch swipe + explicit previous/next (no loop)
+- CSS highlight pulse + `prefers-reduced-motion`
+- Diagnostics + metrics; IT/EN; Flow-ready API (no Flow UI yet)
+
+### Out of scope (explicitly deferred)
+
+- Homey Flow cards UI → **done in Milestone 11B**
+- Persistent dismiss / notification history DB
+- Arbitrary HTML/SVG icons
+
+## Milestone 11B — Native Homey Flow Integration for Notifications
+
+**Status:** Done. Details: [MILESTONE-11B.md](MILESTONE-11B.md).
+
+### In scope (implemented)
+
+- Device Flow Action Cards shared by Shelly + Generic (`show_notification`, `remove_notification`, `remove_all_notifications`)
+- `notificationKey` upsert (`displayId + key`); idempotent remove by key; remove-all per Display
+- Thin Flow layer → existing `NotificationManager` (no Notification Center rewrite)
+- Optional SoT capabilities: `notification_count`, `highest_notification_severity`
+- Diagnostics Flow counters; IT/EN Flow strings; automated key/upsert tests
+
+### Out of scope (explicitly deferred)
+
+- Global “notify all Displays” Flow
+- Using capabilities as notification payload transport
+- Persistent dismiss / notification history DB
+
 ## Later milestones (not started)
 
 - Additional widget types (sensors, thermostats)
 - Display hardware controls beyond recognition
-- Flow cards
+- Global notification Flow across all Displays (optional)
 
-## Manual test checklist (Milestone 10)
+## Manual test checklist
 
-See the full checklist in [MILESTONE-10.md](MILESTONE-10.md).
+- Milestone 11: [MILESTONE-11.md](MILESTONE-11.md)
+- Milestone 11B: [MILESTONE-11B.md](MILESTONE-11B.md)

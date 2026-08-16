@@ -18,6 +18,9 @@ import {
 import { WidgetControlOverlay } from '../overlays/widget-control/WidgetControlOverlay';
 import { CoverControlPanel } from '../widgets/cover/CoverControlPanel';
 import { LightControlPanel } from '../widgets/light/LightControlPanel';
+import { NotificationCenter } from '../notifications/NotificationCenter';
+import { NotificationController } from '../notifications/NotificationController';
+import { NotificationIndicator } from '../notifications/NotificationIndicator';
 import { ConnectionOverlay } from './ConnectionOverlay';
 import {
   WidgetInteractionController,
@@ -30,6 +33,7 @@ export interface RealtimeClientOptions {
   readonly overlay?: ConnectionOverlay;
   readonly controlOverlay?: WidgetControlOverlay;
   readonly interactions?: WidgetInteractionController;
+  readonly notifications?: NotificationController;
 }
 
 /**
@@ -43,6 +47,9 @@ export class RealtimeClient {
   private readonly overlay: ConnectionOverlay;
   private readonly controlOverlay: WidgetControlOverlay;
   private readonly interactions: WidgetInteractionController;
+  private readonly notifications: NotificationController;
+  private readonly notificationIndicator: NotificationIndicator;
+  private readonly notificationCenter: NotificationCenter;
 
   private socket: WebSocket | null = null;
   private reconnectAttempt = 0;
@@ -72,11 +79,28 @@ export class RealtimeClient {
       new WidgetInteractionController({
         sendAction: (message) => this.sendWidgetAction(message),
       });
+    this.notifications = options.notifications ?? new NotificationController();
+    this.notificationIndicator = new NotificationIndicator(
+      this.notifications,
+      this.copy.notifications,
+    );
+    this.notificationCenter = new NotificationCenter({
+      controller: this.notifications,
+      copy: this.copy.notifications,
+      onDismiss: (notificationId) => this.dismissNotification(notificationId),
+      onOpened: () => {
+        this.send({ type: 'notification-center-opened' });
+      },
+    });
     this.bindInteractions();
   }
 
   public getInteractionController(): WidgetInteractionController {
     return this.interactions;
+  }
+
+  public getNotificationController(): NotificationController {
+    return this.notifications;
   }
 
   public start(): void {
@@ -92,6 +116,9 @@ export class RealtimeClient {
     this.clearReconnectTimer();
     this.interactions.destroy();
     this.controlOverlay.destroy();
+    this.notificationCenter.destroy();
+    this.notificationIndicator.destroy();
+    this.notifications.destroy();
     if (this.socket) {
       this.socket.onopen = null;
       this.socket.onclose = null;
@@ -346,6 +373,20 @@ export class RealtimeClient {
         case 'widget-state':
           this.renderer.updateWidgetState(message.widgetId, message.state);
           break;
+        case 'notification-snapshot':
+          this.notifications.applySnapshot(message.notifications);
+          break;
+        case 'notification-added':
+          this.notifications.addNotification(message.notification);
+          this.openNotificationCenterFromPush();
+          break;
+        case 'notification-updated':
+          this.notifications.updateNotification(message.notification);
+          this.openNotificationCenterFromPush();
+          break;
+        case 'notification-removed':
+          this.notifications.removeNotification(message.notificationId);
+          break;
         case 'command-accepted':
           this.interactions.handleCommandAccepted(message.requestId);
           break;
@@ -373,6 +414,8 @@ export class RealtimeClient {
 
   private applySnapshot(snapshot: DashboardSnapshotPayload): void {
     this.copy = snapshot.copy;
+    this.notificationIndicator.setCopy(this.copy.notifications);
+    this.notificationCenter.setCopy(this.copy.notifications);
     this.displayMeta = {
       displayId: snapshot.displayId,
       displayName: snapshot.displayName,
@@ -397,8 +440,32 @@ export class RealtimeClient {
       copy: snapshot.copy,
     });
 
+    this.notifications.applySnapshot(snapshot.notifications ?? []);
+
     this.reconnectAttempt = 0;
     this.overlay.hide();
+  }
+
+  private dismissNotification(notificationId: string): void {
+    const dismissed = this.notifications.dismissLocal(notificationId);
+    if (!dismissed) {
+      return;
+    }
+    this.send({
+      type: 'notification-dismiss',
+      notificationId,
+    });
+  }
+
+  /**
+   * Flow "Show notification" / realtime push should present the Center immediately
+   * (triangle alone is easy to miss on a wall display).
+   */
+  private openNotificationCenterFromPush(): void {
+    if (!this.notifications.openCenter(true)) {
+      return;
+    }
+    this.send({ type: 'notification-center-opened' });
   }
 
   private applyConfigurationUpdate(message: {

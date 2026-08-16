@@ -5,6 +5,7 @@ import {
   isDisplayAppHost,
 } from '../../lib/device/DisplayAppHost';
 import { withExpandedSupportedLayouts } from '../../lib/device/configuration';
+import { ensureNotificationCapabilities } from '../../lib/device/notificationCapabilities';
 import { parseWallDisplayStore } from '../../lib/device/types';
 import { validateDeviceSettingsChange } from '../../lib/device/settingsValidation';
 import { canonicalLayoutIdsForAdapter } from '../../lib/adapters/types';
@@ -21,6 +22,8 @@ class GenericWebDisplayDevice extends Homey.Device {
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
     await this.syncSupportedLayouts();
+    await ensureNotificationCapabilities(this);
+
     const snapshot = buildDisplaySnapshot({
       device: this,
       typeId: DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY,
@@ -34,6 +37,7 @@ class GenericWebDisplayDevice extends Homey.Device {
 
     if (snapshot && isDisplayAppHost(this.homey.app)) {
       this.homey.app.registerDisplay(snapshot);
+      this.homey.app.syncNotificationCapabilities?.(snapshot.displayId);
     }
   }
 

@@ -1,0 +1,20 @@
+/* Notification severity + chrome tokens */
+
+:root {
+  --notification-critical: #e25555;
+  --notification-warning: #e0a020;
+  --notification-success: #3cb371;
+  --notification-info: #5b9fd4;
+  --notification-modal-surface: #1e262b;
+  --notification-highlight-duration: 3.2s;
+  --notification-ribbon-size: 4.35rem;
+}
+
+:root[data-theme='light'],
+[data-theme='light'] {
+  --notification-critical: #c62828;
+  --notification-warning: #c77700;
+  --notification-success: #2e7d32;
+  --notification-info: #1565c0;
+  --notification-modal-surface: #f7f9fa;
+}

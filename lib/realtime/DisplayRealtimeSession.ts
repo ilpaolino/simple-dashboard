@@ -299,6 +299,28 @@ export class DisplayRealtimeSession {
       return;
     }
 
+    if (type === 'notification-dismiss') {
+      const notificationId = (parsed as { notificationId?: unknown })
+        .notificationId;
+      if (
+        typeof notificationId !== 'string' ||
+        notificationId.trim() === ''
+      ) {
+        this.onProtocolError(this, 'invalid_notification_dismiss');
+        return;
+      }
+      this.onClientMessage(this, {
+        type: 'notification-dismiss',
+        notificationId: notificationId.trim(),
+      });
+      return;
+    }
+
+    if (type === 'notification-center-opened') {
+      this.onClientMessage(this, { type: 'notification-center-opened' });
+      return;
+    }
+
     this.onProtocolError(this, 'unknown_client_message');
   }
 

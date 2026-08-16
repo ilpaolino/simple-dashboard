@@ -9,6 +9,7 @@
 @import './widgets/cover/CoverControlPanel.css';
 @import './realtime/ConnectionOverlay.css';
 @import './overlays/widget-control/WidgetControlOverlay.css';
+@import './notifications/NotificationCenter.css';
 
 :root {
   color-scheme: dark;

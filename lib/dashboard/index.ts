@@ -152,6 +152,21 @@ export function createDashboardUiCopy(
       snapshotFailed: translate('pages.realtime.snapshotFailed'),
       homeyConnectionError: translate('pages.realtime.homeyConnectionError'),
     },
+    notifications: {
+      title: translate('pages.notifications.title'),
+      openCenter: translate('pages.notifications.openCenter'),
+      close: translate('pages.notifications.close'),
+      hide: translate('pages.notifications.hide'),
+      dismiss: translate('pages.notifications.dismiss'),
+      previous: translate('pages.notifications.previous'),
+      next: translate('pages.notifications.next'),
+      noNotifications: translate('pages.notifications.noNotifications'),
+      severityCritical: translate('pages.notifications.severityCritical'),
+      severityWarning: translate('pages.notifications.severityWarning'),
+      severitySuccess: translate('pages.notifications.severitySuccess'),
+      severityInfo: translate('pages.notifications.severityInfo'),
+      position: translate('pages.notifications.position'),
+    },
   };
 }
 
@@ -207,6 +222,21 @@ export function defaultDashboardUiCopy(): DashboardUiCopy {
       displaySessionInvalid: 'Display session invalid',
       snapshotFailed: 'Snapshot failed',
       homeyConnectionError: 'Homey connection error',
+    },
+    notifications: {
+      title: 'Notifications',
+      openCenter: 'Open notifications',
+      close: 'Close',
+      hide: 'Hide',
+      dismiss: "Don't show again",
+      previous: 'Previous',
+      next: 'Next',
+      noNotifications: 'No notifications',
+      severityCritical: 'Critical',
+      severityWarning: 'Warning',
+      severitySuccess: 'Success',
+      severityInfo: 'Info',
+      position: '{current} / {total}',
     },
   };
 }

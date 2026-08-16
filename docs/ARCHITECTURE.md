@@ -6,6 +6,71 @@
 
 Adapters, PairingFlow, drivers, DisplayRegistry, Widget Engine, Dashboard Editor, HomeyDeviceRepository, and LightWidget contracts from earlier milestones remain in force.
 
+## Milestone 11 — Notification Center
+
+```text
+Homey Flow / Web API
+        │  upsert / remove by key / remove all
+        ▼
+NotificationManager
+        │  active notifications + key index (displayId + key)
+        │  Map<displayId, Set<notificationId>> dismissed (runtime)
+        │
+        ▼
+RealtimeGateway
+        │
+        ├─ dashboard-snapshot.notifications (visible only)
+        ├─ notification-added | notification-updated | notification-removed
+        └─ client: notification-dismiss | notification-center-opened
+                │
+Wall Display
+        │
+        ├─ NotificationController (visible array, carousel index)
+        ├─ NotificationIndicator (triangle, max severity color)
+        └─ NotificationCenter (modal carousel, swipe, highlight CSS)
+```
+
+### Milestone 11B — Homey Flow (incremental)
+
+```text
+Homey Flow Action Card (THEN)
+        │  device arg filtered to Shelly | Generic
+        ▼
+registerNotificationFlowCards (thin parse/validate)
+        │
+        ▼
+WelcomeWallApp → NotificationManager.upsertForDisplay / removeByKey / removeAllForDisplay
+        │
+        ├─ realtime push (if Display online)
+        └─ setCapabilityValue(notification_count, highest_notification_severity)
+```
+
+Flow cards are defined per driver under `drivers/*/driver.flow.compose.json`.
+Homey Compose injects `device` + `driver_id` so cards appear under that Wall Display in Flow
+(including Generic Web Display / Shelly, `class: other`). Shelly card IDs are prefixed because
+Homey requires unique Flow action IDs app-wide; run listeners are shared.
+Aggregate capabilities are **state only** (SoT counts/severity). Local dismiss does not change them.
+
+### Not widgets
+
+Notifications never occupy grid cells. Indicator and Center are dashboard chrome overlays (z-index below the connection-lost overlay).
+
+### Source of truth
+
+Homey/backend decides publish / update / remove. The frontend does not invent TTLs. Local dismiss only hides on that Display; the global notification stays active until Homey removes it.
+
+### Snapshot & reconnect
+
+`dashboard-snapshot` includes the visible notification list for that Display (dismiss already applied). After reconnect, the snapshot replaces the frontend list. Dismissed ids that are still active remain dismissed because dismiss state lives on the backend keyed by `displayId` (survives socket reconnect; cleared on app restart).
+
+### Severity
+
+Centralized priority: `critical` > `warning` > `success` > `info`. Triangle color = max severity among visible notifications.
+
+### Highlight
+
+CSS-only pulse using `--notification-*` tokens. `prefers-reduced-motion: reduce` disables the animation and keeps a static severity tint.
+
 ## Milestone 10 — Advanced LightWidget control panel
 
 ```text
@@ -243,8 +308,8 @@ Same trust model as HTTP: client IP → `DisplayRegistry.findByIp`. Unknown IPs 
 
 ### Protocol (discriminated unions)
 
-Server → client: `dashboard-snapshot` | `dashboard-configuration` | `widget-state` | `heartbeat` | `command-accepted` | `command-rejected` | `command-timeout` | `command-succeeded` | `error`  
-Client → server: `client-ready` | `heartbeat-ack` | `widget-action`
+Server → client: `dashboard-snapshot` | `dashboard-configuration` | `widget-state` | `notification-snapshot` | `notification-added` | `notification-updated` | `notification-removed` | `heartbeat` | `command-accepted` | `command-rejected` | `command-timeout` | `command-succeeded` | `error`  
+Client → server: `client-ready` | `heartbeat-ack` | `widget-action` | `notification-dismiss` | `notification-center-opened`
 
 `widget-action` actions include `toggle`, `set-dim`, `set-temperature`, `set-color` (light), `set-position` (cover + `positionPercent`), and `stop` (cover, when supported).
 

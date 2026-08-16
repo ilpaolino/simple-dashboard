@@ -25,6 +25,17 @@ import type { CoverBindingError } from './lib/widgets/cover/types';
 import { validateLightWidgetBinding } from './lib/widgets/light/runtime';
 import type { LightBindingError } from './lib/widgets/light/types';
 import { RealtimeGateway } from './lib/realtime';
+import { registerNotificationFlowCards } from './lib/flow/registerNotificationFlowCards';
+import { setNotificationAggregateCapabilities } from './lib/device/notificationCapabilities';
+import {
+  isNotificationIcon,
+  isNotificationSeverity,
+} from './lib/notifications';
+import type {
+  DisplayNotification,
+  PublishNotificationInput,
+  UpdateNotificationInput,
+} from './lib/notifications';
 
 import {
   createDefaultWidgetRegistry,
@@ -69,6 +80,18 @@ class WelcomeWallApp extends Homey.App {
       logger: this.logger,
       translate: (key: string) => this.homey.__(key),
       getLanguage: () => this.homey.i18n.getLanguage(),
+      onNotificationAggregatesChanged: (displayIds) => {
+        for (const displayId of displayIds) {
+          this.syncNotificationCapabilities(displayId);
+        }
+      },
+    });
+
+    registerNotificationFlowCards({
+      homey: this.homey,
+      app: this,
+      logger: this.logger,
+      translate: (key: string) => this.homey.__(key),
     });
 
     const adapters = createDefaultAdapterRegistry();
@@ -90,6 +113,8 @@ class WelcomeWallApp extends Homey.App {
         sessions: this.realtimeGateway.listSessions(),
         subscriptions: this.realtimeGateway.listSubscriptions(),
       }),
+      getNotificationDiagnostics: () =>
+        this.realtimeGateway.getNotificationDiagnostics(),
     });
 
     this.httpServer = new HttpServer({
@@ -152,6 +177,117 @@ class WelcomeWallApp extends Homey.App {
       ip: snapshot.ipAddress,
       layout: snapshot.layoutId,
     });
+  }
+
+  /**
+   * Push SoT aggregate notification state to Homey device capabilities.
+   * Local dismiss does not change these values.
+   */
+  public syncNotificationCapabilities(displayId: string): void {
+    const device = this.findWallDisplayDevice(displayId);
+    if (!device) {
+      return;
+    }
+
+    const count =
+      this.realtimeGateway.notifications.getActiveCountForDisplay(displayId);
+    const highestSeverity =
+      this.realtimeGateway.notifications.getHighestActiveSeverityForDisplay(
+        displayId,
+      );
+
+    void setNotificationAggregateCapabilities(device, {
+      count,
+      highestSeverity,
+    }).catch((error: unknown) => {
+      this.logger.error('Failed to sync notification capabilities', {
+        displayId,
+        error,
+      });
+    });
+  }
+
+  public upsertDisplayNotification(input: {
+    readonly displayId: string;
+    readonly notificationKey: string;
+    readonly title?: string;
+    readonly message: string;
+    readonly severity: string;
+    readonly icon?: string;
+    readonly dismissable?: boolean;
+    readonly highlight?: boolean;
+  }): {
+    readonly ok: true;
+    readonly created: boolean;
+    readonly notificationId: string;
+  } {
+    if (!isNotificationSeverity(input.severity)) {
+      throw new Error('invalid_severity');
+    }
+    if (input.icon !== undefined && !isNotificationIcon(input.icon)) {
+      throw new Error('invalid_icon');
+    }
+
+    const result = this.realtimeGateway.upsertForDisplay({
+      displayId: input.displayId,
+      notificationKey: input.notificationKey,
+      title: input.title,
+      message: input.message,
+      severity: input.severity,
+      icon: input.icon,
+      dismissable: input.dismissable,
+      highlight: input.highlight,
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message);
+    }
+
+    if (result.created) {
+      this.realtimeGateway.metrics.recordFlowNotificationPublished();
+    } else {
+      this.realtimeGateway.metrics.recordFlowNotificationUpdated();
+    }
+
+    return {
+      ok: true,
+      created: result.created === true,
+      notificationId: result.value.id,
+    };
+  }
+
+  public removeDisplayNotificationByKey(
+    displayId: string,
+    notificationKey: string,
+  ): { readonly ok: true; readonly removed: boolean } {
+    const result = this.realtimeGateway.removeNotificationByKey(
+      displayId,
+      notificationKey,
+    );
+    if (!result.ok) {
+      throw new Error(result.message);
+    }
+    if (result.value.removed) {
+      this.realtimeGateway.metrics.recordFlowNotificationRemoved();
+    }
+    return { ok: true, removed: result.value.removed };
+  }
+
+  public removeAllDisplayNotifications(displayId: string): {
+    readonly ok: true;
+    readonly removedCount: number;
+  } {
+    const result =
+      this.realtimeGateway.removeAllNotificationsForDisplay(displayId);
+    if (!result.ok) {
+      throw new Error(result.message);
+    }
+    this.realtimeGateway.metrics.recordFlowNotificationRemoveAll();
+    return { ok: true, removedCount: result.value.removedCount };
+  }
+
+  public recordFlowNotificationError(): void {
+    this.realtimeGateway.metrics.recordFlowNotificationError();
   }
 
   public async listDisplaysForEditor(): Promise<readonly EditorDisplaySummary[]> {
@@ -324,6 +460,55 @@ class WelcomeWallApp extends Homey.App {
     });
 
     return { ok: true, dashboard: parsed.configuration };
+  }
+
+  /**
+   * Flow-ready notification API (Milestone 11). Used by Homey Web API / future Flow cards.
+   */
+  public publishNotification(
+    body: unknown,
+  ): {
+    readonly ok: true;
+    readonly notification: DisplayNotification;
+  } {
+    const input = body as PublishNotificationInput;
+    const result = this.realtimeGateway.publishNotification(input);
+    if (!result.ok) {
+      throw new Error(result.message);
+    }
+    return { ok: true, notification: result.value };
+  }
+
+  public updateNotification(
+    body: unknown,
+  ): {
+    readonly ok: true;
+    readonly notification: DisplayNotification;
+  } {
+    const input = body as UpdateNotificationInput;
+    const result = this.realtimeGateway.updateNotification(input);
+    if (!result.ok) {
+      throw new Error(result.message);
+    }
+    return { ok: true, notification: result.value };
+  }
+
+  public removeNotification(notificationId: string): { readonly ok: true } {
+    const result = this.realtimeGateway.removeNotification(notificationId);
+    if (!result.ok) {
+      throw new Error(result.message);
+    }
+    return { ok: true };
+  }
+
+  public listNotifications(): {
+    readonly notifications: readonly DisplayNotification[];
+    readonly diagnostics: ReturnType<RealtimeGateway['getNotificationDiagnostics']>;
+  } {
+    return {
+      notifications: this.realtimeGateway.notifications.listActiveNotifications(),
+      diagnostics: this.realtimeGateway.getNotificationDiagnostics(),
+    };
   }
 
   public async onUninit(): Promise<void> {

@@ -1,0 +1,13 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Active notifications",
+    "it": "Notifiche attive"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": null,
+  "insights": false,
+  "min": 0,
+  "step": 1
+}

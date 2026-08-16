@@ -6,6 +6,7 @@ import { widgetTypesInConfiguration } from '../../widgets';
 import type { DisplayRealtimeSessionInfo } from '../../realtime/DisplayRealtimeSession';
 import type { RealtimeMetricsSnapshot } from '../../realtime/RealtimeMetrics';
 import type { SubscriptionDiagnostic } from '../../realtime/RealtimeSubscriptionManager';
+import type { NotificationDiagnosticsSnapshot } from '../../notifications';
 import { escapeHtml, TECHNICAL_PAGE_STYLES } from './html';
 
 export interface DiagnosticsRealtimeSection {
@@ -24,6 +25,7 @@ export interface DiagnosticsPageInput {
   readonly registry: DisplayRegistry;
   readonly recentErrors: readonly DiagnosticsRecentError[];
   readonly realtime?: DiagnosticsRealtimeSection | null;
+  readonly notifications?: NotificationDiagnosticsSnapshot | null;
   readonly now?: Date;
 }
 
@@ -446,7 +448,67 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.diagnostics.lightCommandsFailed'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsFailed ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.lightCommandsTimedOut'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsTimedOut ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.lightPendingCommands'))}</dt><dd>${escapeHtml(String(metrics.lightPendingCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.published'))}</dt><dd>${escapeHtml(String(metrics.notificationsPublished ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.updated'))}</dt><dd>${escapeHtml(String(metrics.notificationsUpdated ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.removed'))}</dt><dd>${escapeHtml(String(metrics.notificationsRemoved ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.dismissedLocally'))}</dt><dd>${escapeHtml(String(metrics.notificationsDismissedLocally ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.centerOpened'))}</dt><dd>${escapeHtml(String(metrics.notificationCenterOpened ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.messagesSent'))}</dt><dd>${escapeHtml(String(metrics.notificationMessagesSent ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.flowPublished'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationsPublished ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.flowUpdated'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationsUpdated ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.flowRemoved'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationsRemoved ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.flowRemoveAll'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationsRemoveAll ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.flowErrors'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationErrors ?? 0))}</dd>
     </dl>`;
+
+  const notificationDiagnostics = input.notifications;
+  const notificationSummaryHtml = !notificationDiagnostics
+    ? `<p>${escapeHtml(t('pages.notifications.noActive'))}</p>`
+    : `<dl>
+      <dt>${escapeHtml(t('pages.notifications.activeNotifications'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.activeCount))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.dismissedRuntime'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.dismissedRuntimeCount))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.criticalCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.criticalCount))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.warningCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.warningCount))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.successCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.successCount))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.infoCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.infoCount))}</dd>
+    </dl>`;
+
+  const notificationPerDisplay = Array.isArray(notificationDiagnostics?.perDisplay)
+    ? notificationDiagnostics.perDisplay
+    : [];
+  const notificationPerDisplayHtml =
+    notificationPerDisplay.length === 0
+      ? `<p>${escapeHtml(t('pages.notifications.noActive'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.diagnostics.displayIds'))}</th>
+          <th>${escapeHtml(t('pages.notifications.activeNotifications'))}</th>
+          <th>${escapeHtml(t('pages.notifications.visibleNotifications'))}</th>
+          <th>${escapeHtml(t('pages.notifications.dismissedRuntime'))}</th>
+          <th>${escapeHtml(t('pages.notifications.criticalCount'))}</th>
+          <th>${escapeHtml(t('pages.notifications.warningCount'))}</th>
+          <th>${escapeHtml(t('pages.notifications.successCount'))}</th>
+          <th>${escapeHtml(t('pages.notifications.infoCount'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${notificationPerDisplay
+          .map(
+            (item) => `<tr>
+          <td>${escapeHtml(item.displayId)}</td>
+          <td>${escapeHtml(String(item.activeCount))}</td>
+          <td>${escapeHtml(String(item.visibleCount))}</td>
+          <td>${escapeHtml(String(item.dismissedCount))}</td>
+          <td>${escapeHtml(String(item.criticalCount))}</td>
+          <td>${escapeHtml(String(item.warningCount))}</td>
+          <td>${escapeHtml(String(item.successCount))}</td>
+          <td>${escapeHtml(String(item.infoCount))}</td>
+        </tr>`,
+          )
+          .join('\n')}
+      </tbody>
+    </table>`;
 
   const recentCommands = Array.isArray(metrics?.recentCommands)
     ? metrics.recentCommands
@@ -588,6 +650,10 @@ ${diagnosticsStyles}
     ${coverTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.realtimeMetrics'))}</h1>
     ${realtimeMetricsHtml}
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.notifications.title'))}</h1>
+    ${notificationSummaryHtml}
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.notifications.perDisplay'))}</h1>
+    ${notificationPerDisplayHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentCommands'))}</h1>
     ${recentCommandsHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.subscriptions'))}</h1>

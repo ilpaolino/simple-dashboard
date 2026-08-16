@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 10 extends **LightWidget** with long-press → **LightControlPanel** (capability-driven ON/OFF, dim, temperature, color) inside the reusable **WidgetControlOverlay** introduced for CoverWidget in Milestone 9.
+It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added a global **Notification Center**. Milestone **11B** adds native **Homey Flow Action Cards** (show/upsert, remove by key, remove all) plus optional aggregate notification capabilities — without rewriting the Notification Center.
 
 ## Current status
 
-**Milestone 10 is implemented.** Milestone 0–9 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, LightWidget toggle, CoverWidget control overlay, WebSocket realtime, diagnostics).
+**Milestone 11B is implemented.** Milestone 0–11 behavior is preserved.
 
 | Area | Status |
 | --- | --- |
@@ -17,7 +17,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 10 exten
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M10) |
+| Diagnostics page | Done (M2–M11) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5/M8) |
@@ -26,19 +26,21 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 10 exten
 | CoverWidget (`windowcoverings_set` + control overlay) | Done (M8/M9) |
 | Shared device-widget visual language | Done (M8) |
 | WidgetControlOverlay + CoverControlPanel + LightControlPanel | Done (M9/M10) |
-| WebSocket realtime (same port) | Done (M6) |
+| NotificationManager + Notification Center | Done (M11) |
+| Homey Flow notification actions + aggregate capabilities | Done (M11B) |
+| WebSocket realtime (same port) | Done (M6/M11 notifications) |
 | Selective Homey capability subscriptions | Done (M6/M8/M9/M10 light optional caps) |
 | Live dashboard configuration | Done (M6) |
 | Bidirectional widget commands | Done (M7/M9/M10) |
 | Dim / color / color temperature | Done (M10) |
-| Flow cards | Not started |
+| Flow cards (notifications) | Done (M11B) |
 
 ## How to resume after a break
 
 1. Read this file, then [ARCHITECTURE.md](ARCHITECTURE.md) and [DECISIONS.md](DECISIONS.md).
 2. Check [MILESTONES.md](MILESTONES.md) for what is in / out of scope.
 3. Check [TODO.md](TODO.md) and [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before writing new code.
-4. Reuse `lib/realtime` (commands + subscriptions), `lib/homey`, `lib/display`, `lib/dashboard`, `lib/widgets`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer. Do not let the frontend call Homey APIs or send raw `deviceId`/`capability` commands.
+4. Reuse `lib/realtime`, `lib/notifications`, `lib/homey`, `lib/display`, `lib/dashboard`, `lib/widgets`, `lib/adapters`, `lib/pairing`, `lib/http`. Do not invent a second persistence layer. Do not let the frontend call Homey APIs or send raw `deviceId`/`capability` commands.
 
 ## Runtime constraints
 
@@ -67,8 +69,10 @@ homey app run --remote
 
 | Path | Role |
 | --- | --- |
-| `app.ts` | Homey App lifecycle; HTTP + WebSocket gateway + DisplayRegistry + HomeyDeviceRepository + editor API |
-| `api.ts` | Homey Web API for Dashboard Editor |
+| `app.ts` | Homey App lifecycle; HTTP + WebSocket gateway + DisplayRegistry + HomeyDeviceRepository + editor/notification API |
+| `api.ts` | Homey Web API for Dashboard Editor + notifications |
+| `lib/notifications/` | NotificationManager, severity, icons, keys, Flow upsert API |
+| `lib/flow/` | Thin Homey Flow Action registration for notifications |
 | `lib/realtime/` | WebSocket protocol, sessions, subscriptions, command handler, pending manager, gateway |
 | `lib/homey/` | Homey Web API client + HomeyDeviceRepository (backend only) |
 | `lib/widgets/` | Shared widget types, placement, validation, registry, runtime snapshot |
@@ -79,6 +83,7 @@ homey app run --remote
 | `lib/http/` | Request handler, dashboard HTML, static assets, diagnostics |
 | `frontend/` | Vanilla dashboard + settings editor source |
 | `frontend/realtime/` | WebSocket client, reconnect, connection overlay, WidgetInteractionController |
+| `frontend/notifications/` | NotificationController, Indicator, Center, swipe |
 | `frontend/overlays/widget-control/` | Reusable WidgetControlOverlay shell |
 | `frontend/widgets/` | Isolated widget renderers (title, date-time, light + LightControlPanel, cover + CoverControlPanel) |
 | `frontend/widgets/shared/` | Shared device-widget CSS, control-panel CSS, decorative icon helper |
@@ -99,3 +104,5 @@ The Homey device identity is `data.id` (Shelly device id when detected, otherwis
 Widget configuration is stored per Homey Device in the Device Store key `dashboard`.
 
 LightWidget and CoverWidget persist **only** `deviceId`. Name, zone, availability, and capability values are read from Homey (snapshot + realtime). Commands are issued as widget intents (`widgetId` + `action` [+ normalized UX fields]), never as raw Homey device writes from the browser.
+
+Notifications are runtime-only (not Device Store). Creation/update/remove are decided by Homey/backend; dismiss is local per Display and never persisted.

@@ -1,5 +1,130 @@
 # Decisions
 
+Architectural choices for Milestone 11B. Earlier decisions remain in force below and in prior milestone docs.
+
+## Notifications are controlled natively through Homey Flow
+
+**Choice:** Primary operational path is Homey Device Flow Action Cards → NotificationManager. External HTTP Web API remains available for diagnostics/tests but is not required for normal use.
+
+**Why:** Homey users expect Flow automation without custom HTTP callers.
+
+## Device Flow Action Cards for commands
+
+**Choice:** Parameterized notification commands use Device Flow Action Cards on each Wall Display driver (`driver.flow.compose.json`). Homey Compose injects the `device` argument with a per-driver `driver_id` filter so cards appear under the selected device in Flow.
+
+**Why:** App-level cards shared with `driver_id=a|b` validate, but `class: other` Wall Displays were hard to discover in the Flow device picker. Per-driver device cards match Homey’s Device cards pattern. Homey forbids duplicate Flow card IDs across drivers, so Shelly uses prefixed IDs (`shelly_show_notification`, …) with the same titles and shared run listeners.
+
+**Refs:** [Flow](https://apps.developer.homey.app/the-basics/flow), [Device cards](https://apps.developer.homey.app/the-basics/flow#device-cards), [Flow arguments](https://apps.developer.homey.app/the-basics/flow/arguments).
+
+## Notification Key enables deterministic upsert
+
+**Choice:** Logical identity is `displayId + notificationKey`. Same key on one Display upserts; same key on another Display is a separate instance. Internal UUID `id` is unchanged for frontend dismiss tracking.
+
+**Why:** Flow authors need stable keys (`lavatrice`, `raccolta-rifiuti`) without managing UUIDs.
+
+## Capabilities represent state, not notification payload
+
+**Choice:** Read-only `notification_count` and `highest_notification_severity` reflect Homey/backend SoT aggregates. Title/message/icon/highlight are never stuffed into capability strings/JSON.
+
+**Why:** Homey capabilities are for state; parameterized commands belong in Flow Action Cards.
+
+**Refs:** [Custom capabilities](https://apps.developer.homey.app/the-basics/devices/capabilities).
+
+## Local dismiss remains independent from Flow removal
+
+**Choice:** Display dismiss stays runtime-local. Flow remove / remove-all delete SoT notifications. Flow **Show / upsert** of the same key clears local dismiss on that Display so the notification can reappear (the card means “show”). Generic HTTP `updateNotification` of the same id without going through upsert still keeps dismiss. Remove then re-show creates a new id when the key was removed.
+
+**Why:** A silent upsert after dismiss left the gateway skipping the realtime push, so Wall Displays stayed empty while Homey still held an active notification. “Show notification” must be able to surface again.
+## Optional Flow title uses Homey `required: false`
+
+**Choice:** Title and icon Flow args use official `required: false`. Empty/omitted title → no title.
+
+**Why:** Documented Homey optional-argument pattern; no custom workaround.
+
+## Flow `titleFormatted` omits `[[device]]`
+
+**Choice:** Device Flow cards omit `[[device]]` from `titleFormatted` (Homey injects the device argument and rejects that token in formatted titles). Non-device args of show-notification cards are referenced in `titleFormatted` as required by validate.
+
+**Why:** Stay within official Homey validation rules.
+
+---
+
+Architectural choices for Milestone 11. Earlier decisions remain in force below and in prior milestone docs.
+
+## Notifications are global dashboard chrome
+
+**Choice:** Notifications do not occupy grid cells. The severity triangle and Notification Center are overlays outside the grid.
+
+**Why:** Notifications are Display-level alerts, not layout widgets. Grid geometry must not resize when they appear.
+
+## Four severity levels
+
+**Choice:** Exactly `critical` > `warning` > `success` > `info`, with centralized numeric priority (never alphabetical).
+
+**Why:** Deterministic indicator color and carousel ordering across IT/EN and future Flow cards.
+
+## Notification Center supports multiple notifications
+
+**Choice:** Active notifications are an array shown one-at-a-time in a carousel with previous/next and swipe.
+
+**Why:** Wall displays need a compact modal, not a scrolling list of cards.
+
+## Dismiss is local to a Display
+
+**Choice:** Dismiss hides a notification only on the current Display. Other Displays and the backend source of truth are unchanged.
+
+**Why:** Two kitchens may share an alert; one user clearing it must not silence the other screen.
+
+## Dismiss state is runtime-only
+
+**Choice:** `Map<displayId, Set<notificationId>>` in RAM. Never Homey Settings / disk / database. App restart clears dismiss.
+
+**Why:** Matches DisplayRegistry / realtime session philosophy. Intentional reappearance after reboot if Homey still considers the notification active.
+
+## Backend controls notification lifecycle
+
+**Choice:** Only Homey/backend publish, update, and remove. No frontend TTL timers.
+
+**Why:** Homey remains source of truth; Flow cards can drive the same API later.
+
+## Severity indicator
+
+**Choice:** Top-right **corner ribbon** (page-fold) uses the highest visible severity color; hidden when the visible list is empty. Realtime `notification-added` / `notification-updated` also open the Notification Center immediately.
+
+**Why:** At-a-glance urgency on a wall display; a floating triangle was easy to miss, and “Show notification” should present the modal without requiring a second tap.
+
+## Highlight uses CSS
+
+**Choice:** Highlight pulse is `@keyframes` between severity tint and modal gray. No JS animation loops. Respect `prefers-reduced-motion`.
+
+**Why:** Wall-display CPU/battery and accessibility.
+
+## Notification API prepared for Flow integration
+
+**Choice:** `NotificationManager.publishNotification` / `updateNotification` / `removeNotification` (+ Homey Web API) without Flow UI yet.
+
+**Why:** Milestone 12+ can add Flow cards without redesigning the Center.
+
+## Carousel does not loop
+
+**Choice:** Previous on first / next on last is a no-op.
+
+**Why:** Predictable touch UX; avoids accidental wrap on wall panels.
+
+## Controlled notification icons
+
+**Choice:** Fixed icon keys (`info`, `warning`, `success`, `error`, `home`, `bell`, `door`, `washing-machine`) rendered as inline SVG. No arbitrary HTML/SVG from payloads.
+
+**Why:** Security and footprint; extend the allow-list when needed.
+
+## Soft per-Display notification cap
+
+**Choice:** `MAX_NOTIFICATIONS_PER_DISPLAY = 32`.
+
+**Why:** Prevent unbounded growth without designing for thousands of alerts.
+
+---
+
 Architectural choices for Milestone 10. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Tap vs long press

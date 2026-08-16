@@ -356,6 +356,54 @@
       "displaySessionInvalid": "Sessione display non valida",
       "snapshotFailed": "Snapshot non riuscito",
       "homeyConnectionError": "Errore di connessione Homey"
+    },
+    "notifications": {
+      "title": "Notifiche",
+      "openCenter": "Apri notifiche",
+      "close": "Chiudi",
+      "hide": "Nascondi",
+      "dismiss": "Non mostrare più",
+      "previous": "Precedente",
+      "next": "Successiva",
+      "noNotifications": "Nessuna notifica",
+      "severityCritical": "Critico",
+      "severityWarning": "Attenzione",
+      "severitySuccess": "Successo",
+      "severityInfo": "Informazione",
+      "position": "{current} / {total}",
+      "activeNotifications": "Notifiche attive",
+      "visibleNotifications": "Notifiche visibili",
+      "dismissedRuntime": "Nascoste (runtime)",
+      "criticalCount": "Conteggio critical",
+      "warningCount": "Conteggio warning",
+      "successCount": "Conteggio success",
+      "infoCount": "Conteggio info",
+      "published": "Notifiche pubblicate",
+      "updated": "Notifiche aggiornate",
+      "removed": "Notifiche rimosse",
+      "dismissedLocally": "Notifiche nascoste localmente",
+      "centerOpened": "Notification Center aperti",
+      "messagesSent": "Messaggi notifica inviati",
+      "perDisplay": "Notifiche per display",
+      "noActive": "Nessuna notifica attiva.",
+      "flowPublished": "Notifiche Flow pubblicate",
+      "flowUpdated": "Notifiche Flow aggiornate",
+      "flowRemoved": "Notifiche Flow rimosse",
+      "flowRemoveAll": "Operazioni Flow rimuovi tutte",
+      "flowErrors": "Errori Flow notifiche"
+    }
+  },
+  "flow": {
+    "notifications": {
+      "errors": {
+        "invalidDevice": "Display non valido",
+        "invalidKey": "Chiave notifica non valida",
+        "messageRequired": "Messaggio obbligatorio",
+        "invalidSeverity": "Tipo di notifica non valido",
+        "invalidIcon": "Icona notifica non supportata",
+        "displayLimit": "Limite notifiche raggiunto per questo display",
+        "managerFailed": "Operazione notifica non riuscita"
+      }
     }
   },
   "errors": {

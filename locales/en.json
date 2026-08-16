@@ -356,6 +356,54 @@
       "displaySessionInvalid": "Display session invalid",
       "snapshotFailed": "Snapshot failed",
       "homeyConnectionError": "Homey connection error"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "openCenter": "Open notifications",
+      "close": "Close",
+      "hide": "Hide",
+      "dismiss": "Don't show again",
+      "previous": "Previous",
+      "next": "Next",
+      "noNotifications": "No notifications",
+      "severityCritical": "Critical",
+      "severityWarning": "Warning",
+      "severitySuccess": "Success",
+      "severityInfo": "Info",
+      "position": "{current} / {total}",
+      "activeNotifications": "Active notifications",
+      "visibleNotifications": "Visible notifications",
+      "dismissedRuntime": "Dismissed (runtime)",
+      "criticalCount": "Critical count",
+      "warningCount": "Warning count",
+      "successCount": "Success count",
+      "infoCount": "Info count",
+      "published": "Notifications published",
+      "updated": "Notifications updated",
+      "removed": "Notifications removed",
+      "dismissedLocally": "Notifications dismissed locally",
+      "centerOpened": "Notification Center opened",
+      "messagesSent": "Notification messages sent",
+      "perDisplay": "Notifications per display",
+      "noActive": "No active notifications.",
+      "flowPublished": "Flow notifications published",
+      "flowUpdated": "Flow notifications updated",
+      "flowRemoved": "Flow notifications removed",
+      "flowRemoveAll": "Flow remove-all operations",
+      "flowErrors": "Flow notification errors"
+    }
+  },
+  "flow": {
+    "notifications": {
+      "errors": {
+        "invalidDevice": "Invalid display device",
+        "invalidKey": "Invalid notification key",
+        "messageRequired": "Message is required",
+        "invalidSeverity": "Invalid notification severity",
+        "invalidIcon": "Unsupported notification icon",
+        "displayLimit": "Notification limit reached for this display",
+        "managerFailed": "Notification operation failed"
+      }
     }
   },
   "errors": {

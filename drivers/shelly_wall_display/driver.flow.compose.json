@@ -1,0 +1,114 @@
+{
+  "actions": [
+    {
+      "id": "shelly_show_notification",
+      "title": {
+        "en": "Show notification",
+        "it": "Mostra notifica"
+      },
+      "titleFormatted": {
+        "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]])",
+        "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]])"
+      },
+      "hint": {
+        "en": "Creates or updates a notification on this Wall Display using a deterministic Notification Key (upsert).",
+        "it": "Crea o aggiorna una notifica su questo Wall Display usando una Notification Key deterministica (upsert)."
+      },
+      "highlight": true,
+      "args": [
+        {
+          "type": "text",
+          "name": "notification_key",
+          "title": { "en": "Notification Key", "it": "Chiave notifica" },
+          "placeholder": { "en": "e.g. laundry-done", "it": "es. lavatrice-finita" }
+        },
+        {
+          "type": "text",
+          "name": "title",
+          "title": { "en": "Title", "it": "Titolo" },
+          "required": false
+        },
+        {
+          "type": "text",
+          "name": "message",
+          "title": { "en": "Message", "it": "Messaggio" }
+        },
+        {
+          "type": "dropdown",
+          "name": "severity",
+          "title": { "en": "Severity", "it": "Severity" },
+          "values": [
+            { "id": "critical", "label": { "en": "Critical", "it": "Critico" } },
+            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
+            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
+            { "id": "info", "label": { "en": "Info", "it": "Informazione" } }
+          ]
+        },
+        {
+          "type": "dropdown",
+          "name": "icon",
+          "title": { "en": "Icon", "it": "Icona" },
+          "required": false,
+          "values": [
+            { "id": "info", "label": { "en": "Info", "it": "Info" } },
+            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
+            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
+            { "id": "error", "label": { "en": "Error", "it": "Errore" } },
+            { "id": "home", "label": { "en": "Home", "it": "Casa" } },
+            { "id": "bell", "label": { "en": "Bell", "it": "Campanella" } },
+            { "id": "door", "label": { "en": "Door", "it": "Porta" } },
+            {
+              "id": "washing-machine",
+              "label": { "en": "Washing machine", "it": "Lavatrice" }
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "highlight",
+          "title": { "en": "Highlight", "it": "Evidenzia" },
+          "value": false
+        },
+        {
+          "type": "checkbox",
+          "name": "dismissable",
+          "title": { "en": "Dismissable", "it": "Può essere nascosta" },
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "shelly_remove_notification",
+      "title": {
+        "en": "Remove notification",
+        "it": "Rimuovi notifica"
+      },
+      "titleFormatted": {
+        "en": "Remove notification [[notification_key]]",
+        "it": "Rimuovi notifica [[notification_key]]"
+      },
+      "hint": {
+        "en": "Removes the notification identified by Notification Key on this Display. Safe if the key does not exist.",
+        "it": "Rimuove la notifica identificata dalla Notification Key su questo Display. Sicuro se la chiave non esiste."
+      },
+      "args": [
+        {
+          "type": "text",
+          "name": "notification_key",
+          "title": { "en": "Notification Key", "it": "Chiave notifica" }
+        }
+      ]
+    },
+    {
+      "id": "shelly_remove_all_notifications",
+      "title": {
+        "en": "Remove all notifications",
+        "it": "Rimuovi tutte le notifiche"
+      },
+      "hint": {
+        "en": "Removes every active notification for this Wall Display only. Other Displays are unchanged.",
+        "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano."
+      }
+    }
+  ]
+}

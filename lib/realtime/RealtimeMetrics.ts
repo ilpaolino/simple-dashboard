@@ -41,6 +41,17 @@ export interface RealtimeMetricsSnapshot {
   readonly lightCommandsFailed: number;
   readonly lightCommandsTimedOut: number;
   readonly lightPendingCommands: number;
+  readonly notificationsPublished: number;
+  readonly notificationsUpdated: number;
+  readonly notificationsRemoved: number;
+  readonly notificationsDismissedLocally: number;
+  readonly notificationCenterOpened: number;
+  readonly notificationMessagesSent: number;
+  readonly flowNotificationsPublished: number;
+  readonly flowNotificationsUpdated: number;
+  readonly flowNotificationsRemoved: number;
+  readonly flowNotificationsRemoveAll: number;
+  readonly flowNotificationErrors: number;
 }
 
 export class RealtimeMetrics {
@@ -81,6 +92,17 @@ export class RealtimeMetrics {
   private lightCommandsFailed = 0;
   private lightCommandsTimedOut = 0;
   private lightPendingCommands = 0;
+  private notificationsPublished = 0;
+  private notificationsUpdated = 0;
+  private notificationsRemoved = 0;
+  private notificationsDismissedLocally = 0;
+  private notificationCenterOpened = 0;
+  private notificationMessagesSent = 0;
+  private flowNotificationsPublished = 0;
+  private flowNotificationsUpdated = 0;
+  private flowNotificationsRemoved = 0;
+  private flowNotificationsRemoveAll = 0;
+  private flowNotificationErrors = 0;
 
   public recordConnectionOpened(): void {
     this.connectionsOpened += 1;
@@ -222,6 +244,50 @@ export class RealtimeMetrics {
     this.lightPendingCommands = Math.max(0, count);
   }
 
+  public recordNotificationPublished(): void {
+    this.notificationsPublished += 1;
+  }
+
+  public recordNotificationUpdated(): void {
+    this.notificationsUpdated += 1;
+  }
+
+  public recordNotificationRemoved(): void {
+    this.notificationsRemoved += 1;
+  }
+
+  public recordNotificationDismissedLocally(): void {
+    this.notificationsDismissedLocally += 1;
+  }
+
+  public recordNotificationCenterOpened(): void {
+    this.notificationCenterOpened += 1;
+  }
+
+  public recordNotificationMessageSent(count = 1): void {
+    this.notificationMessagesSent += Math.max(0, count);
+  }
+
+  public recordFlowNotificationPublished(): void {
+    this.flowNotificationsPublished += 1;
+  }
+
+  public recordFlowNotificationUpdated(): void {
+    this.flowNotificationsUpdated += 1;
+  }
+
+  public recordFlowNotificationRemoved(): void {
+    this.flowNotificationsRemoved += 1;
+  }
+
+  public recordFlowNotificationRemoveAll(): void {
+    this.flowNotificationsRemoveAll += 1;
+  }
+
+  public recordFlowNotificationError(): void {
+    this.flowNotificationErrors += 1;
+  }
+
   public snapshot(): RealtimeMetricsSnapshot {
     return {
       connectionsOpened: this.connectionsOpened,
@@ -261,6 +327,17 @@ export class RealtimeMetrics {
       lightCommandsFailed: this.lightCommandsFailed,
       lightCommandsTimedOut: this.lightCommandsTimedOut,
       lightPendingCommands: this.lightPendingCommands,
+      notificationsPublished: this.notificationsPublished,
+      notificationsUpdated: this.notificationsUpdated,
+      notificationsRemoved: this.notificationsRemoved,
+      notificationsDismissedLocally: this.notificationsDismissedLocally,
+      notificationCenterOpened: this.notificationCenterOpened,
+      notificationMessagesSent: this.notificationMessagesSent,
+      flowNotificationsPublished: this.flowNotificationsPublished,
+      flowNotificationsUpdated: this.flowNotificationsUpdated,
+      flowNotificationsRemoved: this.flowNotificationsRemoved,
+      flowNotificationsRemoveAll: this.flowNotificationsRemoveAll,
+      flowNotificationErrors: this.flowNotificationErrors,
     };
   }
 
@@ -302,5 +379,16 @@ export class RealtimeMetrics {
     this.lightCommandsFailed = 0;
     this.lightCommandsTimedOut = 0;
     this.lightPendingCommands = 0;
+    this.notificationsPublished = 0;
+    this.notificationsUpdated = 0;
+    this.notificationsRemoved = 0;
+    this.notificationsDismissedLocally = 0;
+    this.notificationCenterOpened = 0;
+    this.notificationMessagesSent = 0;
+    this.flowNotificationsPublished = 0;
+    this.flowNotificationsUpdated = 0;
+    this.flowNotificationsRemoved = 0;
+    this.flowNotificationsRemoveAll = 0;
+    this.flowNotificationErrors = 0;
   }
 }

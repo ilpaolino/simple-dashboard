@@ -7,6 +7,7 @@ export interface DisplayAppHost {
   registerDisplay(snapshot: DisplaySnapshot): void;
   unregisterDisplay(displayId: string): void;
   updateDisplay(snapshot: DisplaySnapshot): void;
+  syncNotificationCapabilities?(displayId: string): void;
 }
 
 export function isDisplayAppHost(value: unknown): value is DisplayAppHost {

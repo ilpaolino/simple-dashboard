@@ -16,6 +16,9 @@ import type {
   DashboardUiCopy,
   GridConfig,
 } from '../dashboard/types';
+import type { DisplayNotification } from '../notifications/types';
+import { isNotificationIcon } from '../notifications/icons';
+import { isNotificationSeverity } from '../notifications/severity';
 import { REALTIME_PROTOCOL_VERSION } from './constants';
 import { isValidPositionPercent } from '../widgets/cover/normalize';
 import { isValidPercent } from '../widgets/light/normalize';
@@ -69,6 +72,8 @@ export interface DashboardSnapshotPayload {
   readonly layout: GridConfig;
   readonly configuration: DashboardConfiguration;
   readonly widgetStates: Readonly<Record<string, WidgetRuntimeState>>;
+  /** Visible notifications for this Display (local dismiss already applied). */
+  readonly notifications: readonly DisplayNotification[];
   readonly theme: DashboardTheme;
   readonly locale: string;
   readonly emptyState: DashboardEmptyStateCopy;
@@ -90,6 +95,22 @@ export type ServerMessage =
       readonly type: 'widget-state';
       readonly widgetId: string;
       readonly state: WidgetRuntimeState;
+    }
+  | {
+      readonly type: 'notification-snapshot';
+      readonly notifications: readonly DisplayNotification[];
+    }
+  | {
+      readonly type: 'notification-added';
+      readonly notification: DisplayNotification;
+    }
+  | {
+      readonly type: 'notification-updated';
+      readonly notification: DisplayNotification;
+    }
+  | {
+      readonly type: 'notification-removed';
+      readonly notificationId: string;
     }
   | {
       readonly type: 'heartbeat';
@@ -166,6 +187,13 @@ export type ClientMessage =
       readonly widgetId: string;
       readonly action: 'stop';
       readonly requestId: string;
+    }
+  | {
+      readonly type: 'notification-dismiss';
+      readonly notificationId: string;
+    }
+  | {
+      readonly type: 'notification-center-opened';
     };
 
 export function isWidgetActionId(value: unknown): value is WidgetActionId {
@@ -202,6 +230,54 @@ export function isCommandRejectReason(
   }
 }
 
+export function isDisplayNotification(
+  value: unknown,
+): value is DisplayNotification {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as {
+    readonly id?: unknown;
+    readonly title?: unknown;
+    readonly message?: unknown;
+    readonly severity?: unknown;
+    readonly icon?: unknown;
+    readonly dismissable?: unknown;
+    readonly highlight?: unknown;
+    readonly publishedAt?: unknown;
+  };
+
+  if (typeof candidate.id !== 'string' || candidate.id.trim() === '') {
+    return false;
+  }
+  if (typeof candidate.message !== 'string' || candidate.message.trim() === '') {
+    return false;
+  }
+  if (!isNotificationSeverity(candidate.severity)) {
+    return false;
+  }
+  if (typeof candidate.dismissable !== 'boolean') {
+    return false;
+  }
+  if (typeof candidate.highlight !== 'boolean') {
+    return false;
+  }
+  if (
+    typeof candidate.publishedAt !== 'number' ||
+    !Number.isFinite(candidate.publishedAt)
+  ) {
+    return false;
+  }
+  if (candidate.title !== undefined && typeof candidate.title !== 'string') {
+    return false;
+  }
+  if (candidate.icon !== undefined && !isNotificationIcon(candidate.icon)) {
+    return false;
+  }
+  return true;
+}
+
 export function isServerMessage(value: unknown): value is ServerMessage {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -215,6 +291,25 @@ export function isServerMessage(value: unknown): value is ServerMessage {
     case 'heartbeat':
     case 'error':
       return true;
+    case 'notification-snapshot': {
+      const notifications = (value as { readonly notifications?: unknown })
+        .notifications;
+      return (
+        Array.isArray(notifications) &&
+        notifications.every(isDisplayNotification)
+      );
+    }
+    case 'notification-added':
+    case 'notification-updated': {
+      return isDisplayNotification(
+        (value as { readonly notification?: unknown }).notification,
+      );
+    }
+    case 'notification-removed': {
+      const notificationId = (value as { readonly notificationId?: unknown })
+        .notificationId;
+      return typeof notificationId === 'string' && notificationId.trim() !== '';
+    }
     case 'command-accepted':
     case 'command-succeeded':
     case 'command-timeout': {
@@ -259,6 +354,16 @@ export function isClientMessage(value: unknown): value is ClientMessage {
   }
 
   if (candidate.type === 'client-ready') {
+    return true;
+  }
+
+  if (candidate.type === 'notification-dismiss') {
+    const notificationId = (value as { readonly notificationId?: unknown })
+      .notificationId;
+    return typeof notificationId === 'string' && notificationId.trim() !== '';
+  }
+
+  if (candidate.type === 'notification-center-opened') {
     return true;
   }
 

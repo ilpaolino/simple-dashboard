@@ -59,6 +59,16 @@ import type {
   RealtimeUiCopy,
   ServerMessage,
 } from './protocol';
+import {
+  NotificationManager,
+  type NotificationChangeEvent,
+  type PublishNotificationInput,
+  type UpdateNotificationInput,
+  type UpsertDisplayNotificationInput,
+  type NotificationManagerResult,
+  type DisplayNotification,
+  type NotificationDiagnosticsSnapshot,
+} from '../notifications';
 
 export interface RealtimeGatewayOptions {
   readonly registry: DisplayRegistry;
@@ -67,6 +77,13 @@ export interface RealtimeGatewayOptions {
   readonly logger: Logger;
   readonly translate: (key: string) => string;
   readonly getLanguage: () => string;
+  /**
+   * Called when active (SoT) notifications change for Displays.
+   * Not fired for local dismiss.
+   */
+  readonly onNotificationAggregatesChanged?: (
+    displayIds: readonly string[],
+  ) => void;
 }
 
 /**
@@ -80,8 +97,12 @@ export class RealtimeGateway {
   private readonly logger: Logger;
   private readonly translate: (key: string) => string;
   private readonly getLanguage: () => string;
+  private readonly onNotificationAggregatesChanged:
+    | ((displayIds: readonly string[]) => void)
+    | null;
 
   public readonly metrics = new RealtimeMetrics();
+  public readonly notifications: NotificationManager;
   private readonly sessions: RealtimeSessionManager;
   private readonly subscriptions: RealtimeSubscriptionManager;
   private readonly pendingCommands: PendingCommandManager;
@@ -101,6 +122,8 @@ export class RealtimeGateway {
     this.logger = options.logger;
     this.translate = options.translate;
     this.getLanguage = options.getLanguage;
+    this.onNotificationAggregatesChanged =
+      options.onNotificationAggregatesChanged ?? null;
 
     this.pendingCommands = new PendingCommandManager({
       onTimeout: (command) => {
@@ -140,6 +163,12 @@ export class RealtimeGateway {
       logger: this.logger,
     });
 
+    this.notifications = new NotificationManager({
+      onChange: (event) => {
+        this.handleNotificationChange(event);
+      },
+    });
+
     this.sessions = new RealtimeSessionManager({
       metrics: this.metrics,
       logger: this.logger,
@@ -160,6 +189,14 @@ export class RealtimeGateway {
         }
         if (message.type === 'widget-action') {
           void this.handleWidgetAction(session, message);
+          return;
+        }
+        if (message.type === 'notification-dismiss') {
+          this.handleNotificationDismiss(session, message.notificationId);
+          return;
+        }
+        if (message.type === 'notification-center-opened') {
+          this.metrics.recordNotificationCenterOpened();
         }
       },
     });
@@ -187,7 +224,20 @@ export class RealtimeGateway {
 
   public getMetrics() {
     this.syncPendingMetrics();
-    return this.metrics.snapshot();
+    const base = this.metrics.snapshot();
+    const notifications = this.notifications.getDiagnostics();
+    return {
+      ...base,
+      notificationsPublished: notifications.notificationsPublished,
+      notificationsUpdated: notifications.notificationsUpdated,
+      notificationsRemoved: notifications.notificationsRemoved,
+      notificationsDismissedLocally:
+        notifications.notificationsDismissedLocally,
+      notificationMessagesSent: Math.max(
+        base.notificationMessagesSent,
+        notifications.notificationMessagesSent,
+      ),
+    };
   }
 
   public listSessions() {
@@ -255,7 +305,54 @@ export class RealtimeGateway {
   public async destroy(): Promise<void> {
     this.detach();
     await this.subscriptions.destroy();
+    this.notifications.reset();
     this.metrics.reset();
+  }
+
+  /**
+   * Flow-ready API: publish a notification to one or more Displays.
+   */
+  public publishNotification(
+    input: PublishNotificationInput,
+  ): NotificationManagerResult<DisplayNotification> {
+    return this.notifications.publishNotification(input);
+  }
+
+  public updateNotification(
+    input: UpdateNotificationInput,
+  ): NotificationManagerResult<DisplayNotification> {
+    return this.notifications.updateNotification(input);
+  }
+
+  public removeNotification(
+    notificationId: string,
+  ): NotificationManagerResult<true> {
+    return this.notifications.removeNotification(notificationId);
+  }
+
+  public getNotificationDiagnostics(): NotificationDiagnosticsSnapshot {
+    return this.notifications.getDiagnostics();
+  }
+
+  public upsertForDisplay(
+    input: UpsertDisplayNotificationInput,
+  ): NotificationManagerResult<DisplayNotification> & {
+    readonly created?: boolean;
+  } {
+    return this.notifications.upsertForDisplay(input);
+  }
+
+  public removeNotificationByKey(
+    displayId: string,
+    notificationKey: string,
+  ): NotificationManagerResult<{ readonly removed: boolean }> {
+    return this.notifications.removeByKey(displayId, notificationKey);
+  }
+
+  public removeAllNotificationsForDisplay(
+    displayId: string,
+  ): NotificationManagerResult<{ readonly removedCount: number }> {
+    return this.notifications.removeAllForDisplay(displayId);
   }
 
   /**
@@ -309,6 +406,7 @@ export class RealtimeGateway {
   public async notifyDisplayRemoved(displayId: string): Promise<void> {
     this.sessions.closeDisplay(displayId, 1001, 'display_removed');
     await this.subscriptions.removeDisplay(displayId);
+    this.notifications.removeDisplay(displayId);
     this.registry.markRealtimeDisconnected(displayId);
   }
 
@@ -503,11 +601,83 @@ export class RealtimeGateway {
       layout: layout.config,
       configuration: entry.config.dashboard,
       widgetStates: runtime.states,
+      notifications: this.notifications.getNotificationsForDisplay(displayId),
       theme: resolveDashboardTheme(entry.config.dashboard.theme),
       locale: this.getLanguage(),
       emptyState: createEmptyStateCopy(this.translate),
       copy,
     };
+  }
+
+  private handleNotificationDismiss(
+    session: DisplayRealtimeSession,
+    notificationId: string,
+  ): void {
+    this.notifications.dismissForDisplay(session.displayId, notificationId);
+  }
+
+  private handleNotificationChange(event: NotificationChangeEvent): void {
+    for (const displayId of event.affectedDisplayIds) {
+      if (!this.sessions.hasActiveSession(displayId)) {
+        continue;
+      }
+
+      if (event.kind === 'removed' || event.kind === 'dismissed') {
+        const sent = this.sessions.sendToDisplay(displayId, {
+          type: 'notification-removed',
+          notificationId: event.notificationId,
+        });
+        if (sent) {
+          this.metrics.recordNotificationMessageSent();
+          this.notifications.recordMessageSent();
+        }
+        continue;
+      }
+
+      if (!event.notification) {
+        continue;
+      }
+
+      // Skip Displays that have locally dismissed this id (update stays hidden).
+      if (
+        this.notifications.isDismissedOnDisplay(displayId, event.notificationId)
+      ) {
+        continue;
+      }
+
+      // Skip if this Display is no longer a target (update re-route).
+      const visible = this.notifications.getNotificationsForDisplay(displayId);
+      const stillVisible = visible.some(
+        (item) => item.id === event.notificationId,
+      );
+      if (!stillVisible) {
+        const sent = this.sessions.sendToDisplay(displayId, {
+          type: 'notification-removed',
+          notificationId: event.notificationId,
+        });
+        if (sent) {
+          this.metrics.recordNotificationMessageSent();
+          this.notifications.recordMessageSent();
+        }
+        continue;
+      }
+
+      const message: ServerMessage =
+        event.kind === 'added'
+          ? { type: 'notification-added', notification: event.notification }
+          : { type: 'notification-updated', notification: event.notification };
+
+      const sent = this.sessions.sendToDisplay(displayId, message);
+      if (sent) {
+        this.metrics.recordNotificationMessageSent();
+        this.notifications.recordMessageSent();
+      }
+    }
+
+    // Aggregate Homey capabilities reflect SoT, not local dismiss.
+    if (event.kind !== 'dismissed') {
+      this.onNotificationAggregatesChanged?.(event.affectedDisplayIds);
+    }
   }
 
   private async handleSessionClosed(

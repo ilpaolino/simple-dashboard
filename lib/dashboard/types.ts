@@ -91,6 +91,24 @@ export interface DashboardUiCopy {
     readonly snapshotFailed: string;
     readonly homeyConnectionError: string;
   };
+  readonly notifications: {
+    readonly title: string;
+    readonly openCenter: string;
+    readonly close: string;
+    /** Hides the Notification Center; ribbon stays so the user can reopen. */
+    readonly hide: string;
+    /** Clears this notification on this Display only (ribbon may disappear). */
+    readonly dismiss: string;
+    readonly previous: string;
+    readonly next: string;
+    readonly noNotifications: string;
+    readonly severityCritical: string;
+    readonly severityWarning: string;
+    readonly severitySuccess: string;
+    readonly severityInfo: string;
+    /** Template with `{current}` and `{total}` placeholders. */
+    readonly position: string;
+  };
 }
 
 /**

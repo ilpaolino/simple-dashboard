@@ -17,6 +17,7 @@ import {
   type PlacementValidationError,
 } from '../widgets';
 import type { HomeyDeviceRepository } from '../homey/HomeyDeviceRepository';
+import type { NotificationDiagnosticsSnapshot } from '../notifications';
 import { DashboardAssetStore } from './DashboardAssetStore';
 import {
   renderDiagnosticsPage,
@@ -47,6 +48,7 @@ export interface DisplayRequestHandlerOptions {
   readonly assets?: DashboardAssetStore;
   readonly deviceRepository?: HomeyDeviceRepository | null;
   readonly getRealtimeDiagnostics?: () => DiagnosticsRealtimeSection | null;
+  readonly getNotificationDiagnostics?: () => NotificationDiagnosticsSnapshot | null;
 }
 
 /**
@@ -115,6 +117,7 @@ export class DisplayRequestHandler {
           registry: this.options.registry,
           recentErrors: this.options.diagnosticsLog.list(),
           realtime,
+          notifications: this.options.getNotificationDiagnostics?.() ?? null,
         }),
       );
     } catch (error) {

@@ -162,15 +162,43 @@ function isDashboardCopy(value: unknown): boolean {
   }
 
   const realtime = candidate.realtime as Record<string, unknown>;
+  if (
+    !(
+      typeof realtime.connectionLost === 'string' &&
+      typeof realtime.reconnecting === 'string' &&
+      typeof realtime.connectionRestored === 'string' &&
+      typeof realtime.realtimeUnavailable === 'string' &&
+      typeof realtime.protocolError === 'string' &&
+      typeof realtime.displaySessionInvalid === 'string' &&
+      typeof realtime.snapshotFailed === 'string' &&
+      typeof realtime.homeyConnectionError === 'string'
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    typeof candidate.notifications !== 'object' ||
+    candidate.notifications === null
+  ) {
+    return false;
+  }
+
+  const notifications = candidate.notifications as Record<string, unknown>;
   return (
-    typeof realtime.connectionLost === 'string' &&
-    typeof realtime.reconnecting === 'string' &&
-    typeof realtime.connectionRestored === 'string' &&
-    typeof realtime.realtimeUnavailable === 'string' &&
-    typeof realtime.protocolError === 'string' &&
-    typeof realtime.displaySessionInvalid === 'string' &&
-    typeof realtime.snapshotFailed === 'string' &&
-    typeof realtime.homeyConnectionError === 'string'
+    typeof notifications.title === 'string' &&
+    typeof notifications.openCenter === 'string' &&
+    typeof notifications.close === 'string' &&
+    typeof notifications.hide === 'string' &&
+    typeof notifications.dismiss === 'string' &&
+    typeof notifications.previous === 'string' &&
+    typeof notifications.next === 'string' &&
+    typeof notifications.noNotifications === 'string' &&
+    typeof notifications.severityCritical === 'string' &&
+    typeof notifications.severityWarning === 'string' &&
+    typeof notifications.severitySuccess === 'string' &&
+    typeof notifications.severityInfo === 'string' &&
+    typeof notifications.position === 'string'
   );
 }
 

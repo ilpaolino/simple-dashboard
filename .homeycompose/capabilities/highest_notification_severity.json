@@ -1,0 +1,33 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Highest notification severity",
+    "it": "Severity massima notifiche"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": null,
+  "insights": false,
+  "values": [
+    {
+      "id": "none",
+      "title": { "en": "None", "it": "Nessuna" }
+    },
+    {
+      "id": "info",
+      "title": { "en": "Info", "it": "Informazione" }
+    },
+    {
+      "id": "success",
+      "title": { "en": "Success", "it": "Successo" }
+    },
+    {
+      "id": "warning",
+      "title": { "en": "Warning", "it": "Attenzione" }
+    },
+    {
+      "id": "critical",
+      "title": { "en": "Critical", "it": "Critico" }
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import {
   getDisplayId,
   isDisplayAppHost,
 } from '../../lib/device/DisplayAppHost';
+import { ensureNotificationCapabilities } from '../../lib/device/notificationCapabilities';
 import { parseWallDisplayStore } from '../../lib/device/types';
 import { validateDeviceSettingsChange } from '../../lib/device/settingsValidation';
 import { DISPLAY_TYPE_IDS } from '../../lib/display/types';
@@ -18,6 +19,8 @@ class ShellyWallDisplayDevice extends Homey.Device {
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
+    await ensureNotificationCapabilities(this);
+
     const snapshot = buildDisplaySnapshot({
       device: this,
       typeId: DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY,
@@ -31,6 +34,7 @@ class ShellyWallDisplayDevice extends Homey.Device {
 
     if (snapshot && isDisplayAppHost(this.homey.app)) {
       this.homey.app.registerDisplay(snapshot);
+      this.homey.app.syncNotificationCapabilities?.(snapshot.displayId);
     }
   }
 

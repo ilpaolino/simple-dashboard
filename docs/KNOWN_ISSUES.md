@@ -1,5 +1,15 @@
 # Known issues
 
+## Fixed / superseded during Milestone 11B
+
+- **No Homey Flow cards yet.** Device Flow Action Cards `show_notification`, `remove_notification`, and `remove_all_notifications` are registered for Shelly + Generic Wall Displays.
+- **No notification aggregate device state.** Read-only `notification_count` and `highest_notification_severity` reflect Homey/backend SoT (not local dismiss).
+
+## Fixed / superseded during Milestone 11
+
+- **No notification system.** Global Notification Center with per-Display routing, local dismiss, severity triangle, carousel, and realtime sync is implemented.
+- **Notifications deferred in earlier milestones.** M7/M9/M10 out-of-scope notes for notifications are superseded by M11 / M11B.
+
 ## Fixed / superseded during Milestone 10
 
 - **No dim / color / color temperature.** LightWidget advanced panel supports dim, `light_temperature`, and hue/saturation color when Homey exposes them.
@@ -15,13 +25,28 @@
 - **No CoverWidget.** CoverWidget with `windowcoverings_set` (read path + shared device visuals) is implemented; M9 adds control.
 - **LightWidget without decorative icon.** Light and Cover share the device-widget visual language.
 
+## Deferred by design (Milestone 11B)
+
+- **No global “notify all Displays” Flow.** Actions are always device-scoped.
+- **Shelly Flow card IDs are prefixed** (`shelly_show_notification`, …). Homey forbids duplicate action IDs across drivers; titles stay identical for users.
+- **`[[device]]` is not used in `titleFormatted`.** Homey validate rejects that token; Compose injects the device argument on driver Flow cards.
+- **Capabilities are aggregates only.** Title/message/icon/highlight are never sent through custom capabilities.
+
+## Deferred by design (Milestone 11)
+
+- **Dismiss then Flow Show.** Flow upsert clears local dismiss so “Mostra notifica” can re-surface; HTTP update of the same id without upsert still keeps dismiss.
+- **Soft cap of 32 notifications per Display.** Excess publish is rejected (`display_limit`).
+- **Controlled icon keys only.** Arbitrary HTML/SVG from Homey payloads is rejected.
+- **Carousel does not loop** at first/last.
+- **No notification history / archive.**
+
 ## Deferred by design (Milestone 10)
 
 - **One pending command per widget.** Light toggle/dim/temperature/color share a single pending slot (no per-capability queues).
 - **Color requires hue + saturation.** Devices with only one of the two never show the color picker.
 - **No Kelvin labels.** Temperature uses normalized 0…100 (Homey higher = warmer); no physical Kelvin display.
 - **No scenes / presets / effects / light groups.**
-- **No double-click or swipe gestures.**
+- **No double-click or swipe gestures** (notification swipe is Center-only, not widget gestures).
 - **Stop only with `windowcoverings_state`.** Devices that expose only `windowcoverings_set` can set position but never show Stop.
 - **Command timeouts are per-type, not user-configurable.** Light toggle/dim/temperature/color **4000 ms**; cover `set-position` **8000 ms**; cover `stop` **4000 ms**.
 - **No movement interpolation.** Cover tile and overlay paint Homey-reported percent only.
@@ -33,7 +58,7 @@
 - **No drag & drop / advanced visual editor.** Placement is form-based with grid preview.
 - **No resize / orientation listeners.** Reload after viewport changes.
 - **Safety margin / gap constants are not Homey settings.**
-- **No Flow cards / Shelly hardware controls.**
+- **No Shelly hardware controls.**
 - **No Shelly authentication** during identity probe.
 - **No hostname pairing / LAN discovery.** IPv4 only.
 - **Generic identity is a UUID generated at pairing.** Avoid duplicate IPs in the registry.
@@ -62,4 +87,4 @@
 
 ## Tests that cannot run in CI without Homey
 
-Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime and confirmation, light/cover overlay/control panels, gestures, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONE-10.md](MILESTONE-10.md).
+Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime and confirmation, light/cover overlay/control panels, gestures, notifications (manager/controller/UI/protocol/severity/Flow keys+upsert), realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, Homey Flow editor UI, physical Shelly panels, or live Homey devices. Use the manual checklists in [MILESTONE-11.md](MILESTONE-11.md) and [MILESTONE-11B.md](MILESTONE-11B.md).
