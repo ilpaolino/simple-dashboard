@@ -110,6 +110,28 @@ describe('LightWidget runtime resolver', () => {
     assert.equal(resolveLightVisualState(off.state), 'off');
   });
 
+  it('uses optional custom title instead of Homey device name', async () => {
+    const repository = new HomeyDeviceRepository(
+      new MemoryHomeyWebApi([
+        device({ capabilityValues: { onoff: true } }),
+      ]),
+    );
+    const resolved = await resolveLightWidgetRuntime({
+      widgetId: 'w1',
+      config: { deviceId: 'light-1', title: '  Cucina  ' },
+      repository,
+    });
+    assert.equal(resolved.state.name, 'Cucina');
+
+    const fromSnapshot = resolveLightWidgetRuntimeFromSnapshot({
+      widgetId: 'w1',
+      deviceId: 'light-1',
+      device: device({ capabilityValues: { onoff: true } }),
+      title: 'Soggiorno',
+    });
+    assert.equal(fromSnapshot.state.name, 'Soggiorno');
+  });
+
   it('marks Homey-unavailable devices as unavailable without dropping the widget', async () => {
     const repository = new HomeyDeviceRepository(
       new MemoryHomeyWebApi([

@@ -11,6 +11,25 @@ import type { WidgetInteractionController } from '../realtime/WidgetInteractionC
 
 export interface WidgetInteractionsApi {
   readonly requestToggle: (widgetId: string) => boolean;
+  readonly requestLightSetDim: (
+    widgetId: string,
+    valuePercent: number,
+  ) => boolean;
+  readonly requestLightSetTemperature: (
+    widgetId: string,
+    valuePercent: number,
+  ) => boolean;
+  readonly requestLightSetColor: (
+    widgetId: string,
+    huePercent: number,
+    saturationPercent: number,
+  ) => boolean;
+  readonly openLightControl: (widgetId: string) => void;
+  readonly notifyLightRuntime: (
+    widgetId: string,
+    state: import('../../lib/widgets/light/types').LightWidgetRuntimeState,
+  ) => void;
+  readonly notifyLightWidgetDestroyed: (widgetId: string) => void;
   readonly requestCoverSetPosition: (
     widgetId: string,
     positionPercent: number,

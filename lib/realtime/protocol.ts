@@ -2,7 +2,7 @@
  * Typed WebSocket protocol (discriminated unions). No arbitrary JSON payloads.
  * Shared by Homey backend and vanilla frontend (bundled into dashboard.js).
  *
- * Clients send widget intents (`widgetId` + `action` [+ positionPercent]),
+ * Clients send widget intents (`widgetId` + `action` [+ normalized UX fields]),
  * never raw Homey `deviceId` / capability / value. The backend resolves and validates.
  */
 
@@ -18,6 +18,7 @@ import type {
 } from '../dashboard/types';
 import { REALTIME_PROTOCOL_VERSION } from './constants';
 import { isValidPositionPercent } from '../widgets/cover/normalize';
+import { isValidPercent } from '../widgets/light/normalize';
 
 export type RealtimeProtocolVersion = typeof REALTIME_PROTOCOL_VERSION;
 
@@ -32,7 +33,13 @@ export type RealtimeErrorCode =
  * Extensible widget action ids sent over the wire.
  * Local-only UI actions (e.g. open-control) are not protocol actions.
  */
-export type WidgetActionId = 'toggle' | 'set-position' | 'stop';
+export type WidgetActionId =
+  | 'toggle'
+  | 'set-dim'
+  | 'set-temperature'
+  | 'set-color'
+  | 'set-position'
+  | 'stop';
 
 export type CommandRejectReason =
   | 'display_session_invalid'
@@ -44,6 +51,7 @@ export type CommandRejectReason =
   | 'device_unavailable'
   | 'invalid_state'
   | 'invalid_position'
+  | 'invalid_value'
   | 'homey_api_error'
   | 'already_pending'
   | 'unexpected_state';
@@ -127,6 +135,28 @@ export type ClientMessage =
   | {
       readonly type: 'widget-action';
       readonly widgetId: string;
+      readonly action: 'set-dim';
+      readonly requestId: string;
+      readonly valuePercent: number;
+    }
+  | {
+      readonly type: 'widget-action';
+      readonly widgetId: string;
+      readonly action: 'set-temperature';
+      readonly requestId: string;
+      readonly valuePercent: number;
+    }
+  | {
+      readonly type: 'widget-action';
+      readonly widgetId: string;
+      readonly action: 'set-color';
+      readonly requestId: string;
+      readonly huePercent: number;
+      readonly saturationPercent: number;
+    }
+  | {
+      readonly type: 'widget-action';
+      readonly widgetId: string;
       readonly action: 'set-position';
       readonly requestId: string;
       readonly positionPercent: number;
@@ -139,7 +169,14 @@ export type ClientMessage =
     };
 
 export function isWidgetActionId(value: unknown): value is WidgetActionId {
-  return value === 'toggle' || value === 'set-position' || value === 'stop';
+  return (
+    value === 'toggle' ||
+    value === 'set-dim' ||
+    value === 'set-temperature' ||
+    value === 'set-color' ||
+    value === 'set-position' ||
+    value === 'stop'
+  );
 }
 
 export function isCommandRejectReason(
@@ -155,6 +192,7 @@ export function isCommandRejectReason(
     case 'device_unavailable':
     case 'invalid_state':
     case 'invalid_position':
+    case 'invalid_value':
     case 'homey_api_error':
     case 'already_pending':
     case 'unexpected_state':
@@ -210,6 +248,9 @@ export function isClientMessage(value: unknown): value is ClientMessage {
     readonly action?: unknown;
     readonly requestId?: unknown;
     readonly positionPercent?: unknown;
+    readonly valuePercent?: unknown;
+    readonly huePercent?: unknown;
+    readonly saturationPercent?: unknown;
     readonly at?: unknown;
   };
 
@@ -236,11 +277,39 @@ export function isClientMessage(value: unknown): value is ClientMessage {
   }
 
   if (candidate.action === 'set-position') {
-    return isValidPositionPercent(candidate.positionPercent);
+    return (
+      isValidPositionPercent(candidate.positionPercent) &&
+      candidate.valuePercent === undefined &&
+      candidate.huePercent === undefined &&
+      candidate.saturationPercent === undefined
+    );
   }
 
-  // toggle / stop must not carry a position payload
-  return candidate.positionPercent === undefined;
+  if (candidate.action === 'set-dim' || candidate.action === 'set-temperature') {
+    return (
+      isValidPercent(candidate.valuePercent) &&
+      candidate.positionPercent === undefined &&
+      candidate.huePercent === undefined &&
+      candidate.saturationPercent === undefined
+    );
+  }
+
+  if (candidate.action === 'set-color') {
+    return (
+      isValidPercent(candidate.huePercent) &&
+      isValidPercent(candidate.saturationPercent) &&
+      candidate.positionPercent === undefined &&
+      candidate.valuePercent === undefined
+    );
+  }
+
+  // toggle / stop must not carry value payloads
+  return (
+    candidate.positionPercent === undefined &&
+    candidate.valuePercent === undefined &&
+    candidate.huePercent === undefined &&
+    candidate.saturationPercent === undefined
+  );
 }
 
 export function parseClientMessage(raw: string): ClientMessage | null {

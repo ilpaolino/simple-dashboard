@@ -51,6 +51,18 @@ export interface DashboardUiCopy {
     readonly commandInProgress: string;
     readonly commandFailed: string;
     readonly commandTimeout: string;
+    readonly controls: string;
+    readonly power: string;
+    readonly brightness: string;
+    readonly colorTemperature: string;
+    readonly warm: string;
+    readonly cool: string;
+    readonly color: string;
+    readonly saturation: string;
+    readonly current: string;
+    readonly target: string;
+    readonly openControl: string;
+    readonly closeControl: string;
   };
   readonly cover: {
     readonly name: string;

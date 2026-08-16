@@ -59,6 +59,7 @@ export {
 export {
   lightWidgetDefinition,
   isLightWidgetConfig,
+  buildLightWidgetConfig,
 } from './light/definition';
 export {
   coverWidgetDefinition,
@@ -67,8 +68,31 @@ export {
 } from './cover/definition';
 export {
   isCompatibleWithLightWidget,
+  hasDimCapability,
+  hasLightColorCapabilities,
+  hasLightTemperatureCapability,
+  listPresentLightOptionalCapabilities,
+  resolveLightWidgetCapabilities,
   LIGHT_CAPABILITY_ID,
+  LIGHT_DIM_CAPABILITY_ID,
+  LIGHT_TEMPERATURE_CAPABILITY_ID,
+  LIGHT_HUE_CAPABILITY_ID,
+  LIGHT_SATURATION_CAPABILITY_ID,
+  LIGHT_MODE_CAPABILITY_ID,
+  EMPTY_LIGHT_CAPABILITIES,
 } from './light/compatibility';
+export {
+  normalizeHomeyUnitInterval,
+  denormalizePercentToHomey,
+  isValidPercent,
+  encodeLightColorExpected,
+  decodeLightColorExpected,
+} from './light/normalize';
+export {
+  evaluateLightPercentConfirmation,
+  evaluateLightColorConfirmation,
+  LIGHT_VALUE_CONFIRM_TOLERANCE_PERCENT,
+} from './light/confirmation';
 export {
   isCompatibleWithCoverWidget,
   hasWindowcoveringsStateCapability,
@@ -91,6 +115,11 @@ export {
   resolveCoverDisplayName,
   COVER_TITLE_MAX_LENGTH,
 } from './cover/types';
+export {
+  normalizeLightTitle,
+  resolveLightDisplayName,
+  LIGHT_TITLE_MAX_LENGTH,
+} from './light/types';
 export { resolveLightVisualState, lightVisualStateClass } from './light/visual';
 export {
   resolveCoverVisualState,

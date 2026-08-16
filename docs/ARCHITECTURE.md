@@ -6,6 +6,78 @@
 
 Adapters, PairingFlow, drivers, DisplayRegistry, Widget Engine, Dashboard Editor, HomeyDeviceRepository, and LightWidget contracts from earlier milestones remain in force.
 
+## Milestone 10 — Advanced LightWidget control panel
+
+```text
+LightWidget tile
+        │
+        ├─ tap ──────────────► toggle intent (unchanged M7 path)
+        │
+        └─ long press ───────► WidgetControlOverlay
+                                      │
+                                      ▼
+                               LightControlPanel
+                                      │  capability-driven controls
+                                      │  drag = preview only
+                                      │  release → one widget intent
+                                      ▼
+                               WidgetInteractionController
+                                      │  widget-action { widgetId, action, requestId, … }
+                                      ▼
+                               RealtimeGateway → WidgetCommandHandler
+                                      │  validate + resolve deviceId from dashboard
+                                      │
+                                      ├─ toggle → onoff
+                                      ├─ set-dim → dim [0,1]
+                                      ├─ set-temperature → light_mode? + light_temperature
+                                      └─ set-color → light_mode? + light_hue + light_saturation
+                                              │
+                                              ▼
+                               Homey realtime → command-succeeded + widget-state
+```
+
+### Gesture handling
+
+- Centralized `LONG_PRESS_MS = 500` and `LONG_PRESS_MOVE_TOLERANCE_PX = 12` in `lib/realtime/constants.ts`.
+- `PointerGestureRecognizer` uses Pointer Events; long press never emits tap; cancel / excess movement suppress both.
+- Minimal tile feedback via `data-long-press` scale/opacity.
+
+### Capability-driven panel
+
+Runtime flags from the backend (never raw Homey ids in the browser):
+
+```ts
+{ canToggle, canDim, canSetTemperature, canSetColor }
+```
+
+`canSetColor` requires both `light_hue` and `light_saturation`. Controls that are not supported are not rendered.
+
+### Normalized values
+
+| Intent | Client field | Homey write |
+| --- | --- | --- |
+| `set-dim` | `valuePercent` 0…100 | `dim` = percent/100 |
+| `set-temperature` | `valuePercent` 0 cool … 100 warm | `light_temperature` (Homey: higher = warmer) |
+| `set-color` | `huePercent`, `saturationPercent` | `light_hue`, `light_saturation` |
+
+Brightness stays on the dimmer; the color pad is hue × saturation only.
+
+### Pending policy
+
+One pending command per Display+widget for all light actions (toggle/dim/temperature/color). No intermediate queue. Closing the overlay does not cancel in-flight Homey writes.
+
+### Subscriptions (M10)
+
+Base LightWidget subscription remains `onoff`. The gateway probes the bound device and additionally subscribes to present optional capabilities: `dim`, `light_temperature`, `light_hue`, `light_saturation`, `light_mode`.
+
+### Live config while overlay is open
+
+Same as Cover (M9): widget removed or unsafe device rebind → overlay closes. Capability patches continue as `widget-state`.
+
+### What is intentionally not here
+
+No scenes, presets, animations, effects, double-click, swipe, or light groups.
+
 ## Milestone 9 — Interactive CoverWidget & position control
 
 ```text
@@ -72,7 +144,7 @@ On success the server emits `command-succeeded` (in addition to the existing acc
 
 | Widget | Capabilities |
 | --- | --- |
-| LightWidget | `onoff` |
+| LightWidget | `onoff` (+ `dim` / `light_temperature` / `light_hue` / `light_saturation` / `light_mode` when present — M10) |
 | CoverWidget | `windowcoverings_set` (+ `windowcoverings_state` when present) |
 
 Reference counting remains per `(deviceId, capabilityId)`.
@@ -174,7 +246,7 @@ Same trust model as HTTP: client IP → `DisplayRegistry.findByIp`. Unknown IPs 
 Server → client: `dashboard-snapshot` | `dashboard-configuration` | `widget-state` | `heartbeat` | `command-accepted` | `command-rejected` | `command-timeout` | `command-succeeded` | `error`  
 Client → server: `client-ready` | `heartbeat-ack` | `widget-action`
 
-`widget-action` actions include `toggle` (light), `set-position` (cover + `positionPercent`), and `stop` (cover, when supported).
+`widget-action` actions include `toggle`, `set-dim`, `set-temperature`, `set-color` (light), `set-position` (cover + `positionPercent`), and `stop` (cover, when supported).
 
 `REALTIME_PROTOCOL_VERSION = 1` is embedded in snapshots.
 
@@ -194,7 +266,7 @@ Offline displays receive nothing (no infinite queues). They get the latest confi
 
 ### RealtimeSubscriptionManager
 
-- Extracts referenced Homey capability subscriptions from the dashboard (`LightWidget` → `onoff`, `CoverWidget` → `windowcoverings_set`, plus `windowcoverings_state` when present for Stop).
+- Extracts referenced Homey capability subscriptions from the dashboard (`LightWidget` → `onoff` plus optional light caps when present, `CoverWidget` → `windowcoverings_set`, plus `windowcoverings_state` when present for Stop).
 - Diffs old vs new `(deviceId, capabilityId)` pairs; subscribe/unsubscribe only the delta.
 - Reference-counts shared devices/capabilities across Displays.
 - Routes capability events only to interested Display sessions.
@@ -261,10 +333,11 @@ One pending command per Display+widget. Further taps are ignored client-side and
 ### Frontend
 
 - `RealtimeClient` owns the socket and wires `WidgetInteractionController`.
-- `LightWidget` uses the full tile as the tap target (`role="button"`).
+- `LightWidget` uses the full tile as the tap target (`role="button"`); long-press opens `LightControlPanel` (M10).
 - `CoverWidget` uses the tile tap to open `WidgetControlOverlay` (M9); commands leave the panel, not the tile chrome.
-- Gesture map is extensible (`tap` today; `double-tap` / `long-press` / `swipe` reserved).
+- Gesture map: `tap` / `long-press` implemented where needed; `double-tap` / `swipe` reserved.
 
 ### What is intentionally not here
 
-No dimmer/color/temperature, no long-press/double-tap, no Flow, no notifications, no cameras, no Socket.IO, no polling of Homey state. Cover control overlays are Milestone 9 (above).
+No scenes/presets/effects for lights (M10 deferred). Cover control overlays are Milestone 9 (above). Light advanced panel is Milestone 10 (above).
+

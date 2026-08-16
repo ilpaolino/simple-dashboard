@@ -13,7 +13,8 @@ import { createWidgetId } from '../../lib/widgets/validation';
 import { isCoverWidgetConfig, buildCoverWidgetConfig } from '../../lib/widgets/cover/definition';
 import { COVER_TITLE_MAX_LENGTH } from '../../lib/widgets/cover/types';
 import { isDateTimeWidgetConfig } from '../../lib/widgets/date-time/definition';
-import { isLightWidgetConfig } from '../../lib/widgets/light/definition';
+import { isLightWidgetConfig, buildLightWidgetConfig } from '../../lib/widgets/light/definition';
+import { LIGHT_TITLE_MAX_LENGTH } from '../../lib/widgets/light/types';
 import { isTitleWidgetConfig } from '../../lib/widgets/title/definition';
 import {
   resolveDashboardTheme,
@@ -111,6 +112,7 @@ interface DraftWidget {
   chrome: WidgetChrome;
   deviceId: string;
   coverTitle: string;
+  lightTitle: string;
   isNew: boolean;
 }
 
@@ -251,6 +253,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
       chrome: 'plain',
       deviceId: '',
       coverTitle: '',
+      lightTitle: '',
       isNew: true,
     };
     state.selectedWidgetId = state.draft.id;
@@ -333,6 +336,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
     'lightDevice',
     'coverDevice',
     'coverTitle',
+    'lightTitle',
   ]) {
     document.getElementById(id)?.addEventListener('change', () => {
       readDraftForm();
@@ -524,8 +528,11 @@ function draftToWidget(draft: DraftWidget): WidgetInstance | null {
     };
   }
 
-  const config = { deviceId: draft.deviceId };
-  if (!isLightWidgetConfig(config)) {
+  const config = buildLightWidgetConfig({
+    deviceId: draft.deviceId,
+    title: draft.lightTitle,
+  });
+  if (!config || !isLightWidgetConfig(config)) {
     return null;
   }
   return {
@@ -683,6 +690,15 @@ function syncDraftForm(): void {
     coverTitle.placeholder = t('widgets.cover.customTitlePlaceholder');
   }
 
+  const lightTitle = document.getElementById(
+    'lightTitle',
+  ) as HTMLInputElement | null;
+  if (lightTitle) {
+    lightTitle.value = state.draft.lightTitle;
+    lightTitle.maxLength = LIGHT_TITLE_MAX_LENGTH;
+    lightTitle.placeholder = t('widgets.light.customTitlePlaceholder');
+  }
+
   fillLightDeviceOptions();
   fillCoverDeviceOptions();
 }
@@ -786,6 +802,12 @@ function readDraftForm(): void {
   }
   if (state.draft.type === 'cover' && coverTitle) {
     state.draft.coverTitle = coverTitle.value.slice(0, COVER_TITLE_MAX_LENGTH);
+  }
+  const lightTitle = document.getElementById(
+    'lightTitle',
+  ) as HTMLInputElement | null;
+  if (state.draft.type === 'light' && lightTitle) {
+    state.draft.lightTitle = lightTitle.value.slice(0, LIGHT_TITLE_MAX_LENGTH);
   }
 }
 
@@ -992,6 +1014,7 @@ function selectExistingWidget(widget: WidgetInstance): void {
     chrome: 'plain' as const,
     deviceId: '',
     coverTitle: '',
+    lightTitle: '',
     isNew: false,
   };
 
@@ -1022,6 +1045,7 @@ function selectExistingWidget(widget: WidgetInstance): void {
       ...base,
       type: 'light',
       deviceId: widget.config.deviceId,
+      lightTitle: widget.config.title ?? '',
     };
   }
   syncDraftForm();
@@ -1031,6 +1055,9 @@ function selectExistingWidget(widget: WidgetInstance): void {
 
 function widgetLabel(widget: WidgetInstance): string {
   if (widget.type === 'cover' && widget.config.title?.trim()) {
+    return widget.config.title.trim();
+  }
+  if (widget.type === 'light' && widget.config.title?.trim()) {
     return widget.config.title.trim();
   }
   if (widget.type === 'title' && widget.config.text.trim()) {

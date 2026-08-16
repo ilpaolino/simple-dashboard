@@ -1,5 +1,61 @@
 # Decisions
 
+Architectural choices for Milestone 10. Earlier decisions remain in force below and in prior milestone docs.
+
+## Tap vs long press
+
+**Choice:** Tap on LightWidget keeps the fast ON/OFF toggle. Long press opens `LightControlPanel`. The recognizer never emits both for the same pointer sequence.
+
+**Why:** Wall users need one-tap power and a deliberate path into advanced controls. Deterministic Pointer Events avoid ghost toggles after opening the panel.
+
+**Constants:** `LONG_PRESS_MS = 500`, `LONG_PRESS_MOVE_TOLERANCE_PX = 12` in `lib/realtime/constants.ts`.
+
+## Capability-driven LightControlPanel
+
+**Choice:** The panel renders only controls whose Homey capabilities are present: `onoff`, `dim`, `light_temperature`, and both `light_hue` + `light_saturation` for color. No editor toggles to enable dimmer/temperature/color.
+
+**Why:** Homey remains the source of capability truth. Showing disabled stubs for missing capabilities would mislead users.
+
+**Refs:** [Lights best practices](https://apps.developer.homey.app/the-basics/devices/best-practices/lights), capability JSON in `node-homey-lib`.
+
+## Normalized frontend values
+
+**Choice:** Dim and color temperature use UX integers 0…100. Temperature mapping follows Homey semantics (higher = warmer → 100 = warm, 0 = cool). Hue/saturation also use 0…100. The backend denormalizes to Homey `[0, 1]`.
+
+**Why:** The browser must not depend on Homey’s unit interval. Matches the CoverWidget percent pattern.
+
+## Send-on-release
+
+**Choice:** Dim, temperature, and color pad update local preview while dragging. One intent is sent on pointer release (or cancel without send).
+
+**Why:** Avoids flooding Homey during drag on wall displays.
+
+## Brightness separated from color
+
+**Choice:** The color pad controls hue and saturation only. Brightness remains on the dimmer slider.
+
+**Why:** Matches Homey’s separation of `dim` from `light_hue` / `light_saturation` and keeps the picker light-weight.
+
+## Reuse WidgetControlOverlay
+
+**Choice:** LightWidget hosts `LightControlPanel` inside the same global overlay shell as CoverWidget. Only one overlay is active at a time.
+
+**Why:** Avoids a second modal stack; shared Escape / backdrop / close behavior.
+
+## One pending command per light widget
+
+**Choice:** Toggle, dim, temperature, and color share a single pending slot per widget (same as M7/M9). No per-capability pending queues.
+
+**Why:** Simplest robust policy against command storms; Homey confirmation remains the source of truth.
+
+## Optional light_mode writes
+
+**Choice:** When Homey documents `light_mode`, set-temperature writes `temperature` and set-color writes `color` before the value capabilities.
+
+**Why:** Official Homey light UI uses `light_mode` to switch between temperature and color components.
+
+---
+
 Architectural choices for Milestone 9. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Cover tile opens control overlay
@@ -158,7 +214,7 @@ Architectural choices for Milestone 7. Earlier decisions remain in force below a
 
 ## Interaction architecture is extensible
 
-**Choice:** `WidgetDefinition.interactions` maps gestures (`tap` | `double-tap` | `long-press` | `swipe`) to action ids. Milestone 7 implements `tap → toggle` for LightWidget. Milestone 9 uses tile tap to open the cover overlay; panel actions map to `set-position` / `stop`.
+**Choice:** `WidgetDefinition.interactions` maps gestures (`tap` | `double-tap` | `long-press` | `swipe`) to action ids. Milestone 7 implements `tap → toggle` for LightWidget. Milestone 9 uses tile tap to open the cover overlay; panel actions map to `set-position` / `stop`. Milestone 10 implements `long-press → open-control` for LightWidget with panel intents `set-dim` / `set-temperature` / `set-color`.
 
 **Why:** Future gestures should not require rewriting the WebSocket envelope or the interaction controller.
 
@@ -166,7 +222,7 @@ Architectural choices for Milestone 7. Earlier decisions remain in force below a
 
 **Choice (M7):** `COMMAND_TIMEOUT_MS = 4000` for light toggle. Not user-configurable.
 
-**Status:** Still true for light toggle and cover stop. Milestone 9 adds per-type timeouts: cover `set-position` = **8000 ms**. See `COMMAND_TIMEOUTS` in `lib/realtime/constants.ts`.
+**Status:** Still true for light toggle / dim / temperature / color and cover stop. Milestone 9 adds cover `set-position` = **8000 ms**. See `COMMAND_TIMEOUTS` in `lib/realtime/constants.ts`.
 
 **Why:** Fast enough for wall UX, long enough for typical Homey/device round-trips. Cover set-position needs a slightly longer ack window without waiting for full travel.
 
@@ -302,7 +358,7 @@ Architectural choices for Milestone 5. Earlier decisions remain in force below a
 
 ## Read-only first
 
-**Superseded by Milestone 7:** LightWidget can toggle `onoff` via validated widget intents. Dim/color remain deferred. Cover control arrived in Milestone 9.
+**Superseded by Milestone 7 / 10:** LightWidget can toggle `onoff` and, via LightControlPanel, set dim / temperature / color through validated widget intents. Cover control arrived in Milestone 9.
 
 ## Snapshot plus realtime
 

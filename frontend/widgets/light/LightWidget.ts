@@ -14,11 +14,13 @@ import {
   type WidgetRenderContext,
   type WidgetRenderer,
 } from '../types';
+import { PointerGestureRecognizer } from './PointerGestureRecognizer';
 
 /**
- * Interactive LightWidget: entire tile is the tap target (toggle).
+ * Interactive LightWidget:
+ * - tap → toggle ON/OFF
+ * - long press → open LightControlPanel (via WidgetControlOverlay)
  * Real Homey onoff state is always shown; pending/error are overlays.
- * Decorative bulb icon is visual-only (Milestone 8 device language).
  */
 export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
   public readonly type = 'light' as const;
@@ -37,6 +39,7 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
     element.style.gridArea = placementGridArea(instance.placement);
     element.dataset.widgetId = instance.id;
     element.dataset.widgetType = instance.type;
+    element.dataset.longPress = 'false';
     element.setAttribute('role', 'button');
 
     const iconEl = createDeviceWidgetIcon({ kind: 'light' });
@@ -144,7 +147,7 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
       feedbackEl.hidden = true;
       element.setAttribute(
         'aria-label',
-        `${runtime?.name ?? ''} — ${statusEl.textContent}`,
+        `${runtime?.name ?? ''} — ${statusEl.textContent}. ${copy.openControl}`,
       );
     };
 
@@ -168,23 +171,22 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
       context.interactions?.requestToggle(instance.id);
     };
 
-    // Prefer pointerup once; ignore synthetic click after touch to avoid double fire.
-    let lastPointerUpAt = 0;
-    const onPointerUp = (event: Event): void => {
-      const pointerEvent = event as PointerEvent;
-      if (pointerEvent.button !== undefined && pointerEvent.button !== 0) {
+    const openControl = (): void => {
+      const visual = resolveLightVisualState(runtime);
+      if (visual !== 'on' && visual !== 'off') {
         return;
       }
-      lastPointerUpAt = Date.now();
-      tryToggle();
+      context.interactions?.openLightControl(instance.id);
     };
-    const onClick = (event: Event): void => {
-      if (Date.now() - lastPointerUpAt < 400) {
-        event.preventDefault();
-        return;
-      }
-      tryToggle();
-    };
+
+    const gesture = new PointerGestureRecognizer(element, {
+      onTap: tryToggle,
+      onLongPress: openControl,
+      onLongPressRecognized: () => {
+        // Minimal feedback: CSS reacts to data-long-press="true".
+      },
+    });
+
     const onKeyDown = (event: Event): void => {
       const keyEvent = event as KeyboardEvent;
       if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
@@ -193,8 +195,6 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
       }
     };
 
-    element.addEventListener('pointerup', onPointerUp);
-    element.addEventListener('click', onClick);
     element.addEventListener('keydown', onKeyDown);
 
     paint();
@@ -207,16 +207,14 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
           return;
         }
         runtime = state;
-        if (commandStatus === 'pending') {
-          context.interactions?.notifyStateConfirmed(instance.id);
-        }
         paint();
+        context.interactions?.notifyLightRuntime(instance.id, state);
       },
       destroy() {
         unsubscribe?.();
-        element.removeEventListener('pointerup', onPointerUp);
-        element.removeEventListener('click', onClick);
+        gesture.destroy();
         element.removeEventListener('keydown', onKeyDown);
+        context.interactions?.notifyLightWidgetDestroyed(instance.id);
         element.remove();
       },
     };

@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 9 makes **CoverWidget** interactive: tile tap opens a reusable **WidgetControlOverlay** with a **CoverControlPanel** (vertical send-on-release slider, Open/Close, conditional Stop).
+It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 10 extends **LightWidget** with long-press → **LightControlPanel** (capability-driven ON/OFF, dim, temperature, color) inside the reusable **WidgetControlOverlay** introduced for CoverWidget in Milestone 9.
 
 ## Current status
 
-**Milestone 9 is implemented.** Milestone 0–8 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, LightWidget commands, CoverWidget read path, WebSocket realtime, diagnostics).
+**Milestone 10 is implemented.** Milestone 0–9 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, LightWidget toggle, CoverWidget control overlay, WebSocket realtime, diagnostics).
 
 | Area | Status |
 | --- | --- |
@@ -17,20 +17,20 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 9 makes 
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M9) |
+| Diagnostics page | Done (M2–M10) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5/M8) |
 | Homey Device Repository (`homey:manager:api`) | Done (M5) |
-| LightWidget (`onoff` display + toggle) | Done (M5/M7) |
+| LightWidget (`onoff` + advanced control panel) | Done (M5/M7/M10) |
 | CoverWidget (`windowcoverings_set` + control overlay) | Done (M8/M9) |
 | Shared device-widget visual language | Done (M8) |
-| WidgetControlOverlay + CoverControlPanel | Done (M9) |
+| WidgetControlOverlay + CoverControlPanel + LightControlPanel | Done (M9/M10) |
 | WebSocket realtime (same port) | Done (M6) |
-| Selective Homey capability subscriptions | Done (M6/M8/M9 state for Stop) |
+| Selective Homey capability subscriptions | Done (M6/M8/M9/M10 light optional caps) |
 | Live dashboard configuration | Done (M6) |
-| Bidirectional widget commands | Done (M7/M9) |
-| Dim / color / color temperature | Not started |
+| Bidirectional widget commands | Done (M7/M9/M10) |
+| Dim / color / color temperature | Done (M10) |
 | Flow cards | Not started |
 
 ## How to resume after a break
@@ -72,7 +72,7 @@ homey app run --remote
 | `lib/realtime/` | WebSocket protocol, sessions, subscriptions, command handler, pending manager, gateway |
 | `lib/homey/` | Homey Web API client + HomeyDeviceRepository (backend only) |
 | `lib/widgets/` | Shared widget types, placement, validation, registry, runtime snapshot |
-| `lib/widgets/light/` | LightWidget config, compatibility, runtime resolver, interactions |
+| `lib/widgets/light/` | LightWidget config, compatibility, normalize, confirmation, runtime, interactions |
 | `lib/widgets/cover/` | CoverWidget config, compatibility, normalization, confirmation, runtime |
 | `lib/dashboard/` | Grid types, geometry math, cell ids, bootstrap DTO |
 | `lib/display/` | Registry, session, IP normalize, hardware identity, online via WS |
@@ -80,8 +80,8 @@ homey app run --remote
 | `frontend/` | Vanilla dashboard + settings editor source |
 | `frontend/realtime/` | WebSocket client, reconnect, connection overlay, WidgetInteractionController |
 | `frontend/overlays/widget-control/` | Reusable WidgetControlOverlay shell |
-| `frontend/widgets/` | Isolated widget renderers (title, date-time, light, cover + CoverControlPanel) |
-| `frontend/widgets/shared/` | Shared device-widget CSS + decorative icon helper |
+| `frontend/widgets/` | Isolated widget renderers (title, date-time, light + LightControlPanel, cover + CoverControlPanel) |
+| `frontend/widgets/shared/` | Shared device-widget CSS, control-panel CSS, decorative icon helper |
 | `assets/dashboard/` | Built `dashboard.css` / `dashboard.js` served on LAN |
 | `settings/` | Official Homey app settings + Dashboard Editor |
 | `lib/adapters/` | Shelly + Generic protocol adapters |
@@ -98,4 +98,4 @@ The Homey device identity is `data.id` (Shelly device id when detected, otherwis
 
 Widget configuration is stored per Homey Device in the Device Store key `dashboard`.
 
-LightWidget and CoverWidget persist **only** `deviceId`. Name, zone, availability, and capability values are read from Homey (snapshot + realtime). Commands are issued as widget intents (`widgetId` + `action` [+ `positionPercent`]), never as raw Homey device writes from the browser.
+LightWidget and CoverWidget persist **only** `deviceId`. Name, zone, availability, and capability values are read from Homey (snapshot + realtime). Commands are issued as widget intents (`widgetId` + `action` [+ normalized UX fields]), never as raw Homey device writes from the browser.

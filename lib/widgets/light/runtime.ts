@@ -1,7 +1,17 @@
 import type { HomeyDeviceRepository } from '../../homey/HomeyDeviceRepository';
 import type { HomeyDeviceSnapshot } from '../../homey/types';
 import type { Logger } from '../../types';
-import { LIGHT_CAPABILITY_ID, hasOnoffCapability } from './compatibility';
+import {
+  EMPTY_LIGHT_CAPABILITIES,
+  LIGHT_CAPABILITY_ID,
+  LIGHT_DIM_CAPABILITY_ID,
+  LIGHT_HUE_CAPABILITY_ID,
+  LIGHT_SATURATION_CAPABILITY_ID,
+  LIGHT_TEMPERATURE_CAPABILITY_ID,
+  hasOnoffCapability,
+  resolveLightWidgetCapabilities,
+} from './compatibility';
+import { normalizeHomeyUnitInterval } from './normalize';
 import type {
   LightBindingError,
   LightWidgetConfig,
@@ -9,6 +19,7 @@ import type {
   LightWidgetRuntimeState,
   LightRuntimeError,
 } from './types';
+import { normalizeLightTitle, resolveLightDisplayName } from './types';
 
 export interface LightRuntimeResolveResult {
   readonly state: LightWidgetRuntimeState;
@@ -24,9 +35,15 @@ export async function resolveLightWidgetRuntime(options: {
   readonly repository: HomeyDeviceRepository;
   readonly logger?: Logger;
 }): Promise<LightRuntimeResolveResult> {
+  const title = normalizeLightTitle(options.config.title);
   try {
     const device = await options.repository.getDevice(options.config.deviceId);
-    return runtimeFromDevice(options.widgetId, options.config.deviceId, device);
+    return runtimeFromDevice(
+      options.widgetId,
+      options.config.deviceId,
+      device,
+      title,
+    );
   } catch (error) {
     options.logger?.error('Failed to read Homey device for LightWidget', {
       widgetId: options.widgetId,
@@ -37,6 +54,7 @@ export async function resolveLightWidgetRuntime(options: {
       options.widgetId,
       options.config.deviceId,
       'api_error',
+      title,
     );
   }
 }
@@ -45,8 +63,14 @@ export function resolveLightWidgetRuntimeFromSnapshot(options: {
   readonly widgetId: string;
   readonly deviceId: string;
   readonly device: HomeyDeviceSnapshot | null;
+  readonly title?: string;
 }): LightRuntimeResolveResult {
-  return runtimeFromDevice(options.widgetId, options.deviceId, options.device);
+  return runtimeFromDevice(
+    options.widgetId,
+    options.deviceId,
+    options.device,
+    normalizeLightTitle(options.title),
+  );
 }
 
 export async function validateLightWidgetBinding(options: {
@@ -75,13 +99,26 @@ function runtimeFromDevice(
   widgetId: string,
   deviceId: string,
   device: HomeyDeviceSnapshot | null,
+  title: string | undefined,
 ): LightRuntimeResolveResult {
   if (!device) {
-    return runtimeFromError(widgetId, deviceId, 'missing_device');
+    return runtimeFromError(widgetId, deviceId, 'missing_device', title);
   }
 
   const hasOnoff = hasOnoffCapability(device);
   const on = parseOnoff(device.capabilityValues[LIGHT_CAPABILITY_ID]);
+  const dimPercent = normalizeHomeyUnitInterval(
+    device.capabilityValues[LIGHT_DIM_CAPABILITY_ID],
+  ).percent;
+  const temperaturePercent = normalizeHomeyUnitInterval(
+    device.capabilityValues[LIGHT_TEMPERATURE_CAPABILITY_ID],
+  ).percent;
+  const huePercent = normalizeHomeyUnitInterval(
+    device.capabilityValues[LIGHT_HUE_CAPABILITY_ID],
+  ).percent;
+  const saturationPercent = normalizeHomeyUnitInterval(
+    device.capabilityValues[LIGHT_SATURATION_CAPABILITY_ID],
+  ).percent;
 
   let error: LightRuntimeError | null = null;
   let available = device.available;
@@ -99,12 +136,21 @@ function runtimeFromDevice(
     available = false;
   }
 
+  const capabilities = resolveLightWidgetCapabilities(device, available);
+
   const state: LightWidgetRuntimeState = {
     type: 'light',
     deviceId,
-    name: device.name,
+    name: resolveLightDisplayName(title, device.name),
     available,
     on: resolvedOn,
+    dimPercent: capabilities.canDim ? dimPercent : null,
+    temperaturePercent: capabilities.canSetTemperature
+      ? temperaturePercent
+      : null,
+    huePercent: capabilities.canSetColor ? huePercent : null,
+    saturationPercent: capabilities.canSetColor ? saturationPercent : null,
+    capabilities,
     error,
   };
 
@@ -115,8 +161,15 @@ function runtimeFromDevice(
       deviceId,
       resolved: true,
       hasOnoff,
+      canDim: capabilities.canDim,
+      canSetTemperature: capabilities.canSetTemperature,
+      canSetColor: capabilities.canSetColor,
       available,
       on: resolvedOn,
+      dimPercent: state.dimPercent,
+      temperaturePercent: state.temperaturePercent,
+      huePercent: state.huePercent,
+      saturationPercent: state.saturationPercent,
       error,
     },
   };
@@ -126,13 +179,19 @@ function runtimeFromError(
   widgetId: string,
   deviceId: string,
   error: Extract<LightRuntimeError, 'missing_device' | 'api_error'>,
+  title?: string,
 ): LightRuntimeResolveResult {
   const state: LightWidgetRuntimeState = {
     type: 'light',
     deviceId,
-    name: '',
+    name: resolveLightDisplayName(title, ''),
     available: false,
     on: null,
+    dimPercent: null,
+    temperaturePercent: null,
+    huePercent: null,
+    saturationPercent: null,
+    capabilities: EMPTY_LIGHT_CAPABILITIES,
     error,
   };
 
@@ -143,8 +202,15 @@ function runtimeFromError(
       deviceId,
       resolved: false,
       hasOnoff: false,
+      canDim: false,
+      canSetTemperature: false,
+      canSetColor: false,
       available: false,
       on: null,
+      dimPercent: null,
+      temperaturePercent: null,
+      huePercent: null,
+      saturationPercent: null,
       error,
     },
   };
@@ -153,8 +219,9 @@ function runtimeFromError(
 export function createLightApiErrorRuntime(
   widgetId: string,
   deviceId: string,
+  title?: string,
 ): LightRuntimeResolveResult {
-  return runtimeFromError(widgetId, deviceId, 'api_error');
+  return runtimeFromError(widgetId, deviceId, 'api_error', title);
 }
 
 export function parseOnoff(value: unknown): boolean | null {

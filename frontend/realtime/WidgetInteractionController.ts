@@ -18,6 +18,9 @@ export interface WidgetActionDispatch {
   readonly action: WidgetActionId;
   readonly requestId: string;
   readonly positionPercent?: number;
+  readonly valuePercent?: number;
+  readonly huePercent?: number;
+  readonly saturationPercent?: number;
 }
 
 export interface WidgetCommandFeedback {
@@ -46,6 +49,8 @@ interface PendingEntry {
 /**
  * Frontend bridge between widgets and the WebSocket client.
  * Widgets never build protocol messages directly.
+ *
+ * One pending command per widget (simplest robust policy for light + cover).
  */
 export class WidgetInteractionController {
   private readonly sendAction: WidgetInteractionControllerOptions['sendAction'];
@@ -65,7 +70,7 @@ export class WidgetInteractionController {
 
   /**
    * Maps a gesture to an action for a widget. LightWidget uses tap→toggle.
-   * CoverWidget tap opens the overlay locally (not via this method).
+   * Long-press opens the overlay locally (not via this method).
    */
   public handleGesture(options: {
     readonly widgetId: string;
@@ -84,6 +89,41 @@ export class WidgetInteractionController {
     return this.dispatchAction({
       widgetId: options.widgetId,
       action: options.action,
+      allowReplacePending: false,
+    });
+  }
+
+  public requestSetDim(widgetId: string, valuePercent: number): boolean {
+    return this.dispatchAction({
+      widgetId,
+      action: 'set-dim',
+      valuePercent,
+      allowReplacePending: false,
+    });
+  }
+
+  public requestSetTemperature(
+    widgetId: string,
+    valuePercent: number,
+  ): boolean {
+    return this.dispatchAction({
+      widgetId,
+      action: 'set-temperature',
+      valuePercent,
+      allowReplacePending: false,
+    });
+  }
+
+  public requestSetColor(
+    widgetId: string,
+    huePercent: number,
+    saturationPercent: number,
+  ): boolean {
+    return this.dispatchAction({
+      widgetId,
+      action: 'set-color',
+      huePercent,
+      saturationPercent,
       allowReplacePending: false,
     });
   }
@@ -197,8 +237,7 @@ export class WidgetInteractionController {
 
   /**
    * Homey realtime confirmation path: clears pending for the widget.
-   * Cover intermediate progress updates may arrive while still pending —
-   * only call this when the backend has confirmed (or light widget-state matched).
+   * Prefer command-succeeded from the server for light advanced commands.
    */
   public handleWidgetStateConfirmed(widgetId: string): void {
     const entry = this.pendingByWidget.get(widgetId);
@@ -242,6 +281,9 @@ export class WidgetInteractionController {
     readonly widgetId: string;
     readonly action: WidgetActionId;
     readonly positionPercent?: number;
+    readonly valuePercent?: number;
+    readonly huePercent?: number;
+    readonly saturationPercent?: number;
     readonly allowReplacePending: boolean;
   }): boolean {
     const existing = this.pendingByWidget.get(options.widgetId);
@@ -258,14 +300,25 @@ export class WidgetInteractionController {
       options.action === 'set-position' &&
       typeof options.positionPercent === 'number'
         ? options.positionPercent
-        : null;
+        : options.action === 'set-dim' || options.action === 'set-temperature'
+          ? (options.valuePercent ?? null)
+          : null;
 
     const dispatched = this.sendAction({
       widgetId: options.widgetId,
       action: options.action,
       requestId,
-      ...(targetPercent !== null
-        ? { positionPercent: targetPercent }
+      ...(typeof options.positionPercent === 'number'
+        ? { positionPercent: options.positionPercent }
+        : {}),
+      ...(typeof options.valuePercent === 'number'
+        ? { valuePercent: options.valuePercent }
+        : {}),
+      ...(typeof options.huePercent === 'number'
+        ? { huePercent: options.huePercent }
+        : {}),
+      ...(typeof options.saturationPercent === 'number'
+        ? { saturationPercent: options.saturationPercent }
         : {}),
     });
 

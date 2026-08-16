@@ -1,5 +1,10 @@
 # Known issues
 
+## Fixed / superseded during Milestone 10
+
+- **No dim / color / color temperature.** LightWidget advanced panel supports dim, `light_temperature`, and hue/saturation color when Homey exposes them.
+- **No advanced gestures for Light.** Long press opens LightControlPanel; tap remains toggle. Double-tap / swipe remain deferred.
+
 ## Fixed / superseded during Milestone 9
 
 - **CoverWidget is read-only.** Cover is interactive: tile tap opens `WidgetControlOverlay` + `CoverControlPanel` with send-on-release position control, Open/Close, and conditional Stop.
@@ -10,27 +15,30 @@
 - **No CoverWidget.** CoverWidget with `windowcoverings_set` (read path + shared device visuals) is implemented; M9 adds control.
 - **LightWidget without decorative icon.** Light and Cover share the device-widget visual language.
 
-## Deferred by design (Milestone 9)
+## Deferred by design (Milestone 10)
 
-- **Stop only with `windowcoverings_state`.** Devices that expose only `windowcoverings_set` can set position but never show Stop. No invented stop path.
-- **Command timeouts are per-type, not user-configurable.** Light toggle **4000 ms**; cover `set-position` **8000 ms**; cover `stop` **4000 ms**.
-- **No movement interpolation.** Tile and overlay paint Homey-reported percent only; progress appears when Homey emits updates.
+- **One pending command per widget.** Light toggle/dim/temperature/color share a single pending slot (no per-capability queues).
+- **Color requires hue + saturation.** Devices with only one of the two never show the color picker.
+- **No Kelvin labels.** Temperature uses normalized 0…100 (Homey higher = warmer); no physical Kelvin display.
+- **No scenes / presets / effects / light groups.**
+- **No double-click or swipe gestures.**
+- **Stop only with `windowcoverings_state`.** Devices that expose only `windowcoverings_set` can set position but never show Stop.
+- **Command timeouts are per-type, not user-configurable.** Light toggle/dim/temperature/color **4000 ms**; cover `set-position` **8000 ms**; cover `stop` **4000 ms**.
+- **No movement interpolation.** Cover tile and overlay paint Homey-reported percent only.
 - **Overlay close does not cancel Homey commands.** Pending continues until confirm / reject / timeout.
-- **No Homey device icons on tiles.** `Device.icon` / `iconObj` exist in the Web API, but there is no documented auth-free URL for this app’s LAN dashboard; inline SVG fallbacks are used.
-- **No dim / color / color temperature.** Light compatibility and commands remain `onoff` only (overlay shell is reusable for a future panel).
-- **No advanced gestures.** Architecture reserves `double-tap` / `long-press` / `swipe`; LightWidget uses `tap → toggle`; CoverWidget uses `tap → open overlay`.
+- **No Homey device icons on tiles.** Inline SVG fallbacks are used.
 - **No offline command queue / auto-retry.** Disconnect clears pending; reconnect uses a full snapshot.
 - **No event replay.** Offline gaps are corrected by a full snapshot after reconnect only.
 - **No Socket.IO.** `ws` only, shared HTTP port.
 - **No drag & drop / advanced visual editor.** Placement is form-based with grid preview.
-- **No resize / orientation listeners.** Reload after viewport changes. Portrait vs landscape grid remains a Device Setting.
+- **No resize / orientation listeners.** Reload after viewport changes.
 - **Safety margin / gap constants are not Homey settings.**
 - **No Flow cards / Shelly hardware controls.**
 - **No Shelly authentication** during identity probe.
 - **No hostname pairing / LAN discovery.** IPv4 only.
 - **Generic identity is a UUID generated at pairing.** Avoid duplicate IPs in the registry.
 - **Existing M1 `wall_display` devices** are not migrated automatically.
-- **Widget CSS is still simple** (Homey-inspired tiles, shared device grammar from M8, control overlay from M9 — not a final visual system).
+- **Widget CSS is still simple** (Homey-inspired tiles, shared device grammar, control overlay — not a final visual system).
 - **Local IP trust only.** No cloud auth; clients must match a configured Display IP.
 - **No multi-cover groups, timers, or simulated motion.**
 
@@ -54,4 +62,4 @@
 
 ## Tests that cannot run in CI without Homey
 
-Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime and confirmation, overlay/control panel behavior, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONE-9.md](MILESTONE-9.md).
+Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime and confirmation, light/cover overlay/control panels, gestures, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONE-10.md](MILESTONE-10.md).

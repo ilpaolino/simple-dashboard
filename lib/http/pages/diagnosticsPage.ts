@@ -302,14 +302,20 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
             : item.on
               ? t('widgets.light.on')
               : t('widgets.light.off');
+        const dim =
+          typeof item.dimPercent === 'number' ? `${item.dimPercent}%` : none;
         return [`<tr>
         <td>${escapeHtml(entry.config.name)}</td>
         <td>${escapeHtml(item.widgetId)}</td>
         <td>${escapeHtml(item.deviceId)}</td>
         <td>${escapeHtml(item.resolved ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
         <td>${escapeHtml(item.hasOnoff ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.canDim ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.canSetTemperature ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.canSetColor ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
         <td>${escapeHtml(item.available ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
         <td>${escapeHtml(lastOnOff)}</td>
+        <td>${escapeHtml(dim)}</td>
         <td>${escapeHtml(lightErrorLabel(item.error, t))}</td>
       </tr>`];
       });
@@ -329,8 +335,12 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
           <th>${escapeHtml(t('pages.diagnostics.deviceId'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.deviceResolved'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.hasOnoff'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.canDim'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.canSetTemperature'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.canSetColor'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.availability'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.lastOnOff'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.dimPercent'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.error'))}</th>
         </tr>
       </thead>
@@ -426,6 +436,16 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.diagnostics.coverCommandsFailed'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsFailed ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.coverCommandsTimedOut'))}</dt><dd>${escapeHtml(String(metrics.coverCommandsTimedOut ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.diagnostics.coverPendingCommands'))}</dt><dd>${escapeHtml(String(metrics.coverPendingCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightCommandsReceived'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsReceived ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightToggleCommands'))}</dt><dd>${escapeHtml(String(metrics.lightToggleCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightDimCommands'))}</dt><dd>${escapeHtml(String(metrics.lightDimCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightTemperatureCommands'))}</dt><dd>${escapeHtml(String(metrics.lightTemperatureCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightColorCommands'))}</dt><dd>${escapeHtml(String(metrics.lightColorCommands ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightCommandsAccepted'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsAccepted ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightCommandsRejected'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsRejected ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightCommandsFailed'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsFailed ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightCommandsTimedOut'))}</dt><dd>${escapeHtml(String(metrics.lightCommandsTimedOut ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.lightPendingCommands'))}</dt><dd>${escapeHtml(String(metrics.lightPendingCommands ?? 0))}</dd>
     </dl>`;
 
   const recentCommands = Array.isArray(metrics?.recentCommands)

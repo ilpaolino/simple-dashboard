@@ -97,6 +97,17 @@
   color: var(--light-on-accent);
 }
 
+/* Emphasize the bulb when ON — state text remains primary; icon is supportive. */
+.widget-light--state-on .device-widget__icon {
+  opacity: 0.55;
+  color: var(--light-on-accent);
+}
+
+.widget-light--state-off .device-widget__icon {
+  opacity: 0.14;
+  color: var(--widget-fg-muted);
+}
+
 .widget-light--state-off .widget-light__status {
   color: var(--widget-fg-muted);
 }
@@ -117,6 +128,12 @@
 
 .widget-light--state-pending .widget-light__feedback {
   color: var(--light-on-accent);
+}
+
+.widget-light[data-long-press='true'] {
+  transform: scale(0.97);
+  opacity: 0.92;
+  transition: transform 80ms ease-out, opacity 80ms ease-out;
 }
 
 .widget-light--state-error .widget-light__feedback {

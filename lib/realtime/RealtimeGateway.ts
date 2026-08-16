@@ -20,12 +20,21 @@ import {
   createCoverApiErrorRuntime,
   parseOnoff,
   LIGHT_CAPABILITY_ID,
+  LIGHT_DIM_CAPABILITY_ID,
+  LIGHT_HUE_CAPABILITY_ID,
+  LIGHT_SATURATION_CAPABILITY_ID,
+  LIGHT_TEMPERATURE_CAPABILITY_ID,
+  listPresentLightOptionalCapabilities,
   COVER_CAPABILITY_ID,
   COVER_STATE_CAPABILITY_ID,
   COVER_STOP_STATE_VALUE,
   evaluateCoverPositionConfirmation,
+  evaluateLightPercentConfirmation,
+  evaluateLightColorConfirmation,
   hasWindowcoveringsStateCapability,
   normalizeWindowcoveringsSet,
+  normalizeHomeyUnitInterval,
+  decodeLightColorExpected,
 } from '../widgets';
 import { DISPLAY_TYPE_IDS } from '../display/types';
 import { REALTIME_PROTOCOL_VERSION, REALTIME_WEBSOCKET_PATH } from './constants';
@@ -101,6 +110,13 @@ export class RealtimeGateway {
           command.action === 'stop'
         ) {
           this.metrics.recordCoverCommandTimedOut();
+        } else if (
+          command.action === 'toggle' ||
+          command.action === 'set-dim' ||
+          command.action === 'set-temperature' ||
+          command.action === 'set-color'
+        ) {
+          this.metrics.recordLightCommandTimedOut();
         }
         this.syncPendingMetrics();
         this.logger.warn('Command timed out', {
@@ -316,6 +332,14 @@ export class RealtimeGateway {
         message.action === 'set-position'
           ? message.positionPercent
           : undefined,
+      valuePercent:
+        message.action === 'set-dim' || message.action === 'set-temperature'
+          ? message.valuePercent
+          : undefined,
+      huePercent:
+        message.action === 'set-color' ? message.huePercent : undefined,
+      saturationPercent:
+        message.action === 'set-color' ? message.saturationPercent : undefined,
     });
 
     this.syncPendingMetrics();
@@ -509,8 +533,47 @@ export class RealtimeGateway {
   ): Promise<void> {
     if (capabilityId === LIGHT_CAPABILITY_ID) {
       const on = parseOnoff(value);
-      this.resolvePendingForLight(deviceId, on);
-      await this.routeLightCapabilityUpdate(deviceId, on, value);
+      this.resolvePendingForLightToggle(deviceId, on);
+      await this.routeLightCapabilityUpdate(deviceId, {
+        [LIGHT_CAPABILITY_ID]: on ?? value,
+      });
+      return;
+    }
+
+    if (capabilityId === LIGHT_DIM_CAPABILITY_ID) {
+      this.resolvePendingForLightPercent(
+        deviceId,
+        LIGHT_DIM_CAPABILITY_ID,
+        'set-dim',
+        value,
+      );
+      await this.routeLightCapabilityUpdate(deviceId, {
+        [LIGHT_DIM_CAPABILITY_ID]: value,
+      });
+      return;
+    }
+
+    if (capabilityId === LIGHT_TEMPERATURE_CAPABILITY_ID) {
+      this.resolvePendingForLightPercent(
+        deviceId,
+        LIGHT_TEMPERATURE_CAPABILITY_ID,
+        'set-temperature',
+        value,
+      );
+      await this.routeLightCapabilityUpdate(deviceId, {
+        [LIGHT_TEMPERATURE_CAPABILITY_ID]: value,
+      });
+      return;
+    }
+
+    if (
+      capabilityId === LIGHT_HUE_CAPABILITY_ID ||
+      capabilityId === LIGHT_SATURATION_CAPABILITY_ID
+    ) {
+      this.resolvePendingForLightColor(deviceId);
+      await this.routeLightCapabilityUpdate(deviceId, {
+        [capabilityId]: value,
+      });
       return;
     }
 
@@ -527,8 +590,7 @@ export class RealtimeGateway {
 
   private async routeLightCapabilityUpdate(
     deviceId: string,
-    on: boolean | null,
-    value: unknown,
+    capabilityPatch: Readonly<Record<string, unknown>>,
   ): Promise<void> {
     const displayIds = this.subscriptions.getDisplayIdsForDevice(
       deviceId,
@@ -568,11 +630,16 @@ export class RealtimeGateway {
                   ...device,
                   capabilityValues: {
                     ...device.capabilityValues,
-                    [LIGHT_CAPABILITY_ID]: on ?? value,
+                    ...capabilityPatch,
                   },
                 },
+                title: widget.config.title,
               })
-            : createLightApiErrorRuntime(widget.id, deviceId);
+            : createLightApiErrorRuntime(
+                widget.id,
+                deviceId,
+                widget.config.title,
+              );
 
           this.sessions.sendToDisplay(displayId, {
             type: 'widget-state',
@@ -668,7 +735,7 @@ export class RealtimeGateway {
    * reports OFF (or the reverse), clear pending, adopt Homey's value via the
    * normal widget-state path, and count the command as failed — no auto-retry.
    */
-  private resolvePendingForLight(
+  private resolvePendingForLightToggle(
     deviceId: string,
     on: boolean | null,
   ): void {
@@ -681,6 +748,9 @@ export class RealtimeGateway {
     }
 
     for (const command of pending) {
+      if (command.action !== 'toggle') {
+        continue;
+      }
       if (command.expectedValue === on) {
         this.pendingCommands.resolveSuccess(command.requestId);
         this.metrics.recordCommandSucceeded();
@@ -697,6 +767,7 @@ export class RealtimeGateway {
       } else {
         this.pendingCommands.resolveMismatch(command.requestId);
         this.metrics.recordCommandFailed();
+        this.metrics.recordLightCommandFailed();
         this.logger.warn('Command pending cleared by mismatched Homey state', {
           displayId: command.displayId,
           widgetId: command.widgetId,
@@ -713,6 +784,141 @@ export class RealtimeGateway {
     }
 
     this.syncPendingMetrics();
+  }
+
+  private resolvePendingForLightPercent(
+    deviceId: string,
+    capabilityId: string,
+    action: 'set-dim' | 'set-temperature',
+    value: unknown,
+  ): void {
+    const reportedPercent = normalizeHomeyUnitInterval(value).percent;
+    if (reportedPercent === null) {
+      return;
+    }
+
+    const pending = this.pendingCommands.findByDeviceAndCapability(
+      deviceId,
+      capabilityId,
+    );
+    if (pending.length === 0) {
+      return;
+    }
+
+    for (const command of pending) {
+      if (
+        command.action !== action ||
+        typeof command.expectedValue !== 'number'
+      ) {
+        continue;
+      }
+
+      const result = evaluateLightPercentConfirmation({
+        targetPercent: command.expectedValue,
+        reportedPercent,
+      });
+
+      this.logger.info('Light realtime value update', {
+        displayId: command.displayId,
+        widgetId: command.widgetId,
+        requestId: command.requestId,
+        action,
+        current: reportedPercent,
+        target: command.expectedValue,
+        result,
+      });
+
+      if (result === 'confirmed') {
+        this.pendingCommands.resolveSuccess(command.requestId);
+        this.metrics.recordCommandSucceeded();
+        this.logger.info('Light command confirmation received', {
+          displayId: command.displayId,
+          widgetId: command.widgetId,
+          requestId: command.requestId,
+          action,
+          value: reportedPercent,
+        });
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-succeeded',
+          requestId: command.requestId,
+        });
+      }
+    }
+
+    this.syncPendingMetrics();
+  }
+
+  private resolvePendingForLightColor(deviceId: string): void {
+    const pending = this.pendingCommands.findByDeviceAndCapability(
+      deviceId,
+      LIGHT_HUE_CAPABILITY_ID,
+    );
+    if (pending.length === 0) {
+      return;
+    }
+
+    void this.deviceRepository
+      .getDevice(deviceId)
+      .then((device) => {
+        if (!device) {
+          return;
+        }
+        const huePercent = normalizeHomeyUnitInterval(
+          device.capabilityValues[LIGHT_HUE_CAPABILITY_ID],
+        ).percent;
+        const saturationPercent = normalizeHomeyUnitInterval(
+          device.capabilityValues[LIGHT_SATURATION_CAPABILITY_ID],
+        ).percent;
+
+        for (const command of pending) {
+          if (command.action !== 'set-color') {
+            continue;
+          }
+          const expected = decodeLightColorExpected(command.expectedValue);
+          if (!expected) {
+            continue;
+          }
+
+          const result = evaluateLightColorConfirmation({
+            targetHuePercent: expected.huePercent,
+            targetSaturationPercent: expected.saturationPercent,
+            reportedHuePercent: huePercent,
+            reportedSaturationPercent: saturationPercent,
+          });
+
+          this.logger.info('Light color realtime update', {
+            displayId: command.displayId,
+            widgetId: command.widgetId,
+            requestId: command.requestId,
+            hue: huePercent,
+            saturation: saturationPercent,
+            target: expected,
+            result,
+          });
+
+          if (result === 'confirmed') {
+            this.pendingCommands.resolveSuccess(command.requestId);
+            this.metrics.recordCommandSucceeded();
+            this.logger.info('Light color confirmation received', {
+              displayId: command.displayId,
+              widgetId: command.widgetId,
+              requestId: command.requestId,
+            });
+            this.sessions.sendToDisplay(command.displayId, {
+              type: 'command-succeeded',
+              requestId: command.requestId,
+            });
+          }
+        }
+
+        this.syncPendingMetrics();
+      })
+      .catch((error: unknown) => {
+        this.logger.warn('Failed to confirm light color command', {
+          deviceId,
+          error,
+        });
+      });
   }
 
   /**
@@ -845,11 +1051,21 @@ export class RealtimeGateway {
           entry.action === 'set-position' || entry.action === 'stop',
       ).length;
     this.metrics.setCoverPendingCommands(coverPending);
+    const lightPending = this.pendingCommands
+      .listActive()
+      .filter(
+        (entry) =>
+          entry.action === 'toggle' ||
+          entry.action === 'set-dim' ||
+          entry.action === 'set-temperature' ||
+          entry.action === 'set-color',
+      ).length;
+    this.metrics.setLightPendingCommands(lightPending);
   }
 
   /**
-   * Base refs from dashboard widgets, plus `windowcoverings_state` when Homey
-   * documents that capability on the bound cover device (for Stop confirmation).
+   * Base refs from dashboard widgets, plus optional light capabilities and
+   * `windowcoverings_state` when Homey documents them on the bound device.
    */
   private async resolveCapabilitySubscriptions(
     configuration: import('../widgets/types').DashboardConfiguration,
@@ -861,24 +1077,48 @@ export class RealtimeGateway {
     const enriched: HomeyCapabilityRef[] = [...base];
 
     for (const ref of base) {
-      if (ref.capabilityId !== COVER_CAPABILITY_ID) {
-        continue;
-      }
-      const stateKey = subscriptionKey(ref.deviceId, COVER_STATE_CAPABILITY_ID);
-      if (keys.has(stateKey)) {
-        continue;
-      }
-      try {
-        const device = await this.deviceRepository.getDevice(ref.deviceId);
-        if (device && hasWindowcoveringsStateCapability(device)) {
-          keys.add(stateKey);
-          enriched.push({
+      if (ref.capabilityId === COVER_CAPABILITY_ID) {
+        const stateKey = subscriptionKey(ref.deviceId, COVER_STATE_CAPABILITY_ID);
+        if (keys.has(stateKey)) {
+          continue;
+        }
+        try {
+          const device = await this.deviceRepository.getDevice(ref.deviceId);
+          if (device && hasWindowcoveringsStateCapability(device)) {
+            keys.add(stateKey);
+            enriched.push({
+              deviceId: ref.deviceId,
+              capabilityId: COVER_STATE_CAPABILITY_ID,
+            });
+          }
+        } catch (error) {
+          this.logger.warn('Failed to probe cover stop capability for subscription', {
             deviceId: ref.deviceId,
-            capabilityId: COVER_STATE_CAPABILITY_ID,
+            error,
           });
         }
+        continue;
+      }
+
+      if (ref.capabilityId !== LIGHT_CAPABILITY_ID) {
+        continue;
+      }
+
+      try {
+        const device = await this.deviceRepository.getDevice(ref.deviceId);
+        if (!device) {
+          continue;
+        }
+        for (const capabilityId of listPresentLightOptionalCapabilities(device)) {
+          const key = subscriptionKey(ref.deviceId, capabilityId);
+          if (keys.has(key)) {
+            continue;
+          }
+          keys.add(key);
+          enriched.push({ deviceId: ref.deviceId, capabilityId });
+        }
       } catch (error) {
-        this.logger.warn('Failed to probe cover stop capability for subscription', {
+        this.logger.warn('Failed to probe light optional capabilities for subscription', {
           deviceId: ref.deviceId,
           error,
         });
@@ -902,6 +1142,10 @@ export class RealtimeGateway {
   ): Promise<void> {
     if (
       capabilityId === LIGHT_CAPABILITY_ID ||
+      capabilityId === LIGHT_DIM_CAPABILITY_ID ||
+      capabilityId === LIGHT_TEMPERATURE_CAPABILITY_ID ||
+      capabilityId === LIGHT_HUE_CAPABILITY_ID ||
+      capabilityId === LIGHT_SATURATION_CAPABILITY_ID ||
       capabilityId === COVER_CAPABILITY_ID ||
       capabilityId === COVER_STATE_CAPABILITY_ID
     ) {
@@ -917,6 +1161,13 @@ export class RealtimeGateway {
           command.action === 'stop'
         ) {
           this.metrics.recordCoverCommandFailed();
+        } else if (
+          command.action === 'toggle' ||
+          command.action === 'set-dim' ||
+          command.action === 'set-temperature' ||
+          command.action === 'set-color'
+        ) {
+          this.metrics.recordLightCommandFailed();
         }
         this.sessions.sendToDisplay(command.displayId, {
           type: 'command-rejected',
@@ -929,7 +1180,12 @@ export class RealtimeGateway {
 
     const displayIds = this.subscriptions.getDisplayIdsForDevice(
       deviceId,
-      capabilityId,
+      capabilityId === LIGHT_DIM_CAPABILITY_ID ||
+        capabilityId === LIGHT_TEMPERATURE_CAPABILITY_ID ||
+        capabilityId === LIGHT_HUE_CAPABILITY_ID ||
+        capabilityId === LIGHT_SATURATION_CAPABILITY_ID
+        ? LIGHT_CAPABILITY_ID
+        : capabilityId,
     );
     for (const displayId of displayIds) {
       const entry = this.registry.getById(displayId);
@@ -942,7 +1198,11 @@ export class RealtimeGateway {
           if (widget.type !== 'light' || widget.config.deviceId !== deviceId) {
             continue;
           }
-          const resolved = createLightApiErrorRuntime(widget.id, deviceId);
+          const resolved = createLightApiErrorRuntime(
+            widget.id,
+            deviceId,
+            widget.config.title,
+          );
           this.sessions.sendToDisplay(displayId, {
             type: 'widget-state',
             widgetId: widget.id,

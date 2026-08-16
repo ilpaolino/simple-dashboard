@@ -31,6 +31,16 @@ export interface RealtimeMetricsSnapshot {
   readonly coverCommandsFailed: number;
   readonly coverCommandsTimedOut: number;
   readonly coverPendingCommands: number;
+  readonly lightCommandsReceived: number;
+  readonly lightToggleCommands: number;
+  readonly lightDimCommands: number;
+  readonly lightTemperatureCommands: number;
+  readonly lightColorCommands: number;
+  readonly lightCommandsAccepted: number;
+  readonly lightCommandsRejected: number;
+  readonly lightCommandsFailed: number;
+  readonly lightCommandsTimedOut: number;
+  readonly lightPendingCommands: number;
 }
 
 export class RealtimeMetrics {
@@ -61,6 +71,16 @@ export class RealtimeMetrics {
   private coverCommandsFailed = 0;
   private coverCommandsTimedOut = 0;
   private coverPendingCommands = 0;
+  private lightCommandsReceived = 0;
+  private lightToggleCommands = 0;
+  private lightDimCommands = 0;
+  private lightTemperatureCommands = 0;
+  private lightColorCommands = 0;
+  private lightCommandsAccepted = 0;
+  private lightCommandsRejected = 0;
+  private lightCommandsFailed = 0;
+  private lightCommandsTimedOut = 0;
+  private lightPendingCommands = 0;
 
   public recordConnectionOpened(): void {
     this.connectionsOpened += 1;
@@ -167,6 +187,41 @@ export class RealtimeMetrics {
     this.coverPendingCommands = Math.max(0, count);
   }
 
+  public recordLightCommandReceived(
+    action: 'toggle' | 'set-dim' | 'set-temperature' | 'set-color',
+  ): void {
+    this.lightCommandsReceived += 1;
+    if (action === 'toggle') {
+      this.lightToggleCommands += 1;
+    } else if (action === 'set-dim') {
+      this.lightDimCommands += 1;
+    } else if (action === 'set-temperature') {
+      this.lightTemperatureCommands += 1;
+    } else {
+      this.lightColorCommands += 1;
+    }
+  }
+
+  public recordLightCommandAccepted(): void {
+    this.lightCommandsAccepted += 1;
+  }
+
+  public recordLightCommandRejected(): void {
+    this.lightCommandsRejected += 1;
+  }
+
+  public recordLightCommandFailed(): void {
+    this.lightCommandsFailed += 1;
+  }
+
+  public recordLightCommandTimedOut(): void {
+    this.lightCommandsTimedOut += 1;
+  }
+
+  public setLightPendingCommands(count: number): void {
+    this.lightPendingCommands = Math.max(0, count);
+  }
+
   public snapshot(): RealtimeMetricsSnapshot {
     return {
       connectionsOpened: this.connectionsOpened,
@@ -196,6 +251,16 @@ export class RealtimeMetrics {
       coverCommandsFailed: this.coverCommandsFailed,
       coverCommandsTimedOut: this.coverCommandsTimedOut,
       coverPendingCommands: this.coverPendingCommands,
+      lightCommandsReceived: this.lightCommandsReceived,
+      lightToggleCommands: this.lightToggleCommands,
+      lightDimCommands: this.lightDimCommands,
+      lightTemperatureCommands: this.lightTemperatureCommands,
+      lightColorCommands: this.lightColorCommands,
+      lightCommandsAccepted: this.lightCommandsAccepted,
+      lightCommandsRejected: this.lightCommandsRejected,
+      lightCommandsFailed: this.lightCommandsFailed,
+      lightCommandsTimedOut: this.lightCommandsTimedOut,
+      lightPendingCommands: this.lightPendingCommands,
     };
   }
 
@@ -227,5 +292,15 @@ export class RealtimeMetrics {
     this.coverCommandsFailed = 0;
     this.coverCommandsTimedOut = 0;
     this.coverPendingCommands = 0;
+    this.lightCommandsReceived = 0;
+    this.lightToggleCommands = 0;
+    this.lightDimCommands = 0;
+    this.lightTemperatureCommands = 0;
+    this.lightColorCommands = 0;
+    this.lightCommandsAccepted = 0;
+    this.lightCommandsRejected = 0;
+    this.lightCommandsFailed = 0;
+    this.lightCommandsTimedOut = 0;
+    this.lightPendingCommands = 0;
   }
 }

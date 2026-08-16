@@ -106,6 +106,7 @@ function resolveOneLight(options: {
     return createLightApiErrorRuntime(
       options.widget.id,
       options.widget.config.deviceId,
+      options.widget.config.title,
     );
   }
 
@@ -116,6 +117,7 @@ function resolveOneLight(options: {
     widgetId: options.widget.id,
     deviceId: options.widget.config.deviceId,
     device,
+    title: options.widget.config.title,
   });
 }
 

@@ -342,6 +342,23 @@
               <select class="homey-form-select" id="lightDevice"></select>
               <p id="lightDeviceHelp" class="homey-form-help" hidden></p>
             </div>
+            <div class="homey-form-group">
+              <label class="homey-form-label" for="lightTitle" data-i18n="widgets.light.customTitle">
+                Custom title
+              </label>
+              <input
+                class="homey-form-input"
+                id="lightTitle"
+                type="text"
+                maxlength="40"
+                autocomplete="off"
+                data-i18n-placeholder="widgets.light.customTitlePlaceholder"
+                placeholder="Leave empty to use Homey name"
+              />
+              <p class="homey-form-help" data-i18n="widgets.light.customTitleHelp">
+                Optional. Shown on the tile and control panel.
+              </p>
+            </div>
           </div>
 
           <div id="coverFields" hidden>

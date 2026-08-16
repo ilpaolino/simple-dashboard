@@ -1,0 +1,191 @@
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.control-panel__feedback {
+  margin: 0;
+  min-height: 1.35em;
+  font-size: clamp(0.95rem, 2.6vw, 1.05rem);
+  line-height: 1.35;
+  color: var(--widget-fg-muted, rgba(247, 250, 251, 0.8));
+}
+
+.control-panel[data-pending='true'] .control-panel__feedback {
+  color: var(--light-accent, #f5b207);
+}
+
+.control-panel[data-unavailable='true'] {
+  opacity: 0.85;
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.control-row--inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.control-label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--widget-fg-muted, rgba(247, 250, 251, 0.75));
+}
+
+.control-value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--widget-fg, #f7fafb);
+  font-variant-numeric: tabular-nums;
+}
+
+.control-value[data-mode='target'],
+.control-value[data-mode='preview'] {
+  color: var(--light-accent, #f5b207);
+}
+
+.control-slider {
+  position: relative;
+  width: 100%;
+  height: 2.75rem;
+  border-radius: 1.25rem;
+  background: var(--cover-bar-track, rgba(255, 255, 255, 0.12));
+  touch-action: none;
+  cursor: pointer;
+  overflow: visible;
+  box-shadow: inset 0 0 0 1px var(--widget-border, rgba(255, 255, 255, 0.1));
+}
+
+.control-slider[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.control-slider__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--light-accent, #f5b207);
+  pointer-events: none;
+}
+
+.control-slider__thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: -0.75rem;
+  margin-top: -0.75rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.control-slider__caps {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--widget-fg-muted, rgba(247, 250, 251, 0.65));
+}
+
+.control-button,
+.control-toggle {
+  min-height: 2.75rem;
+  min-width: 4.5rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--widget-border, rgba(255, 255, 255, 0.16));
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--widget-fg, #f7fafb);
+  font-size: 1rem;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.control-toggle[aria-pressed='true'] {
+  background: var(--light-accent, #f5b207);
+  color: #1a1a1a;
+  border-color: transparent;
+}
+
+.control-button:disabled,
+.control-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.control-color-swatch {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--widget-border, rgba(255, 255, 255, 0.2));
+  flex-shrink: 0;
+}
+
+.control-color-pad {
+  position: relative;
+  width: 100%;
+  height: 9.5rem;
+  border-radius: 1rem;
+  touch-action: none;
+  cursor: crosshair;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--widget-border, rgba(255, 255, 255, 0.12));
+  /* Hue on X; white→transparent black overlay approximates saturation on Y. */
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0)),
+    linear-gradient(
+      to right,
+      hsl(0, 100%, 50%),
+      hsl(60, 100%, 50%),
+      hsl(120, 100%, 50%),
+      hsl(180, 100%, 50%),
+      hsl(240, 100%, 50%),
+      hsl(300, 100%, 50%),
+      hsl(360, 100%, 50%)
+    );
+}
+
+.control-color-pad[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.control-color-pad__thumb {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: -0.625rem;
+  margin-top: -0.625rem;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.control-temperature-slider {
+  background: linear-gradient(to right, #8ec8ff, #ffe4b5, #ffb347);
+}
+
+.control-temperature-slider .control-slider__fill {
+  background: transparent;
+}

@@ -1,6 +1,6 @@
 /**
  * Global widget control overlay shell — not a grid cell.
- * Hosts type-specific panels (CoverControlPanel today; dimmer/thermostat later).
+ * Hosts widget-specific panels (CoverControlPanel, LightControlPanel).
  * Only one overlay is active at a time.
  */
 

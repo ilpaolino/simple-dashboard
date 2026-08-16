@@ -1,6 +1,7 @@
 import type { DashboardRenderer } from '../layout/DashboardRenderer';
 import type { DashboardUiCopy } from '../../lib/dashboard/types';
 import type { CoverWidgetRuntimeState } from '../../lib/widgets/cover/types';
+import type { LightWidgetRuntimeState } from '../../lib/widgets/light/types';
 import {
   RECONNECT_FACTOR,
   RECONNECT_INITIAL_MS,
@@ -16,6 +17,7 @@ import {
 } from '../../lib/realtime/protocol';
 import { WidgetControlOverlay } from '../overlays/widget-control/WidgetControlOverlay';
 import { CoverControlPanel } from '../widgets/cover/CoverControlPanel';
+import { LightControlPanel } from '../widgets/light/LightControlPanel';
 import { ConnectionOverlay } from './ConnectionOverlay';
 import {
   WidgetInteractionController,
@@ -47,7 +49,9 @@ export class RealtimeClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
   private activeCoverPanel: CoverControlPanel | null = null;
+  private activeLightPanel: LightControlPanel | null = null;
   private openCoverDeviceId: string | null = null;
+  private openLightDeviceId: string | null = null;
   private displayMeta: {
     displayId: string;
     displayName: string;
@@ -112,6 +116,24 @@ export class RealtimeClient {
           action: 'toggle',
           interactive: true,
         }),
+      requestLightSetDim: (widgetId, valuePercent) =>
+        this.interactions.requestSetDim(widgetId, valuePercent),
+      requestLightSetTemperature: (widgetId, valuePercent) =>
+        this.interactions.requestSetTemperature(widgetId, valuePercent),
+      requestLightSetColor: (widgetId, huePercent, saturationPercent) =>
+        this.interactions.requestSetColor(
+          widgetId,
+          huePercent,
+          saturationPercent,
+        ),
+      openLightControl: (widgetId) => this.openLightControl(widgetId),
+      notifyLightRuntime: (widgetId, state) =>
+        this.onLightRuntime(widgetId, state),
+      notifyLightWidgetDestroyed: (widgetId) => {
+        if (this.controlOverlay.getActiveWidgetId() === widgetId) {
+          this.controlOverlay.close();
+        }
+      },
       requestCoverSetPosition: (widgetId, positionPercent) =>
         this.interactions.requestSetPosition(widgetId, positionPercent),
       requestCoverStop: (widgetId) => this.interactions.requestStop(widgetId),
@@ -133,6 +155,80 @@ export class RealtimeClient {
     this.renderer.setOnConfigurationApplied((widgetIds) => {
       this.controlOverlay.handleWidgetsChanged(widgetIds);
     });
+  }
+
+  private openLightControl(widgetId: string): void {
+    const runtime = this.renderer.getWidgetRuntime(widgetId);
+    if (!runtime || runtime.type !== 'light') {
+      return;
+    }
+
+    this.openLightDeviceId = runtime.deviceId;
+    const lightCopy = this.copy.light;
+    this.controlOverlay.open({
+      widgetId,
+      title: runtime.name || lightCopy.controls,
+      ariaLabel: `${runtime.name || lightCopy.controls}. ${lightCopy.openControl}`,
+      closeLabel: lightCopy.closeControl,
+      render: (surface) => {
+        const panel = new LightControlPanel({
+          copy: lightCopy,
+          initialRuntime: runtime,
+          actions: {
+            toggle: () =>
+              this.interactions.handleGesture({
+                widgetId,
+                gesture: 'tap',
+                action: 'toggle',
+                interactive: true,
+              }),
+            setDim: (valuePercent) =>
+              this.interactions.requestSetDim(widgetId, valuePercent),
+            setTemperature: (valuePercent) =>
+              this.interactions.requestSetTemperature(widgetId, valuePercent),
+            setColor: (huePercent, saturationPercent) =>
+              this.interactions.requestSetColor(
+                widgetId,
+                huePercent,
+                saturationPercent,
+              ),
+            isPending: () => this.interactions.isPending(widgetId),
+            onStatus: (listener) =>
+              this.interactions.onStatus(widgetId, (feedback) => {
+                listener(feedback.status);
+              }),
+          },
+        });
+        panel.mount(surface);
+        this.activeLightPanel = panel;
+        return () => {
+          panel.destroy();
+          if (this.activeLightPanel === panel) {
+            this.activeLightPanel = null;
+          }
+          this.openLightDeviceId = null;
+        };
+      },
+    });
+  }
+
+  private onLightRuntime(
+    widgetId: string,
+    state: LightWidgetRuntimeState,
+  ): void {
+    if (this.controlOverlay.getActiveWidgetId() !== widgetId) {
+      return;
+    }
+
+    if (
+      this.openLightDeviceId !== null &&
+      state.deviceId !== this.openLightDeviceId
+    ) {
+      this.controlOverlay.close();
+      return;
+    }
+
+    this.activeLightPanel?.updateRuntime(state);
   }
 
   private openCoverControl(widgetId: string): void {
@@ -207,7 +303,6 @@ export class RealtimeClient {
     this.socket = socket;
 
     socket.addEventListener('open', () => {
-      // Keep overlay until snapshot is applied.
       this.send({ type: 'client-ready' });
     });
 
@@ -267,7 +362,6 @@ export class RealtimeClient {
           this.interactions.handleCommandTimeout(message.requestId);
           break;
         case 'error':
-          // Keep overlay / session; isolated protocol errors must not crash UI.
           break;
         default:
           break;
@@ -342,6 +436,36 @@ export class RealtimeClient {
         action: 'set-position',
         requestId: message.requestId,
         positionPercent: message.positionPercent,
+      });
+    }
+
+    if (message.action === 'set-dim' || message.action === 'set-temperature') {
+      if (typeof message.valuePercent !== 'number') {
+        return false;
+      }
+      return this.send({
+        type: 'widget-action',
+        widgetId: message.widgetId,
+        action: message.action,
+        requestId: message.requestId,
+        valuePercent: message.valuePercent,
+      });
+    }
+
+    if (message.action === 'set-color') {
+      if (
+        typeof message.huePercent !== 'number' ||
+        typeof message.saturationPercent !== 'number'
+      ) {
+        return false;
+      }
+      return this.send({
+        type: 'widget-action',
+        widgetId: message.widgetId,
+        action: 'set-color',
+        requestId: message.requestId,
+        huePercent: message.huePercent,
+        saturationPercent: message.saturationPercent,
       });
     }
 

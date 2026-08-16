@@ -1,8 +1,10 @@
 @import './tokens.css';
 @import './widgets/shared/device-widget.css';
+@import './widgets/shared/control-panel.css';
 @import './widgets/title/TitleWidget.css';
 @import './widgets/date-time/DateTimeWidget.css';
 @import './widgets/light/LightWidget.css';
+@import './widgets/light/LightControlPanel.css';
 @import './widgets/cover/CoverWidget.css';
 @import './widgets/cover/CoverControlPanel.css';
 @import './realtime/ConnectionOverlay.css';

@@ -19,8 +19,15 @@ export const RECONNECT_INITIAL_MS = 1_000;
 export const RECONNECT_MAX_MS = 30_000;
 export const RECONNECT_FACTOR = 2;
 
-/** Capability used by LightWidget realtime. */
+/** Capability used by LightWidget realtime (base onoff). */
 export const REALTIME_LIGHT_CAPABILITY_ID = 'onoff';
+
+/** Optional LightWidget capabilities (subscribed when Homey exposes them). */
+export const REALTIME_LIGHT_DIM_CAPABILITY_ID = 'dim';
+export const REALTIME_LIGHT_TEMPERATURE_CAPABILITY_ID = 'light_temperature';
+export const REALTIME_LIGHT_HUE_CAPABILITY_ID = 'light_hue';
+export const REALTIME_LIGHT_SATURATION_CAPABILITY_ID = 'light_saturation';
+export const REALTIME_LIGHT_MODE_CAPABILITY_ID = 'light_mode';
 
 /** Capability used by CoverWidget realtime (official Homey windowcoverings_set). */
 export const REALTIME_COVER_CAPABILITY_ID = 'windowcoverings_set';
@@ -36,9 +43,18 @@ export const REALTIME_COVER_STATE_CAPABILITY_ID = 'windowcoverings_state';
  */
 export const COMMAND_TIMEOUTS = {
   lightToggle: 4_000,
+  lightDim: 4_000,
+  lightTemperature: 4_000,
+  lightColor: 4_000,
   coverSetPosition: 8_000,
   coverStop: 4_000,
 } as const;
+
+/** Centralized long-press threshold for LightWidget (touch-first). */
+export const LONG_PRESS_MS = 500;
+
+/** Cancel long-press when the pointer moves farther than this (px). */
+export const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
 
 /**
  * Max wait for Homey realtime confirmation after a light toggle.

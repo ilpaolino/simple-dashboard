@@ -1,10 +1,11 @@
 /**
  * Shared decorative icon helper for Homey device widgets.
- * Icons are purely visual — they never represent runtime state.
+ * Icons are non-interactive and never the sole state encoding.
+ * LightWidget may emphasize the bulb via parent CSS when ON.
  *
  * Official Homey Device.icon / iconObj exist in the Web API, but there is no
  * documented auth-free URL usable from this app’s LAN dashboard HTTP server.
- * Milestone 8 therefore uses lightweight inline SVG fallbacks only.
+ * Lightweight inline SVG fallbacks are used.
  */
 export function createDeviceWidgetIcon(options: {
   readonly kind: 'light' | 'cover';

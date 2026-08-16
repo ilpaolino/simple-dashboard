@@ -13,11 +13,28 @@ import {
   isValidPositionPercent,
   normalizeWindowcoveringsSet,
 } from '../widgets/cover/normalize';
-import { LIGHT_CAPABILITY_ID, hasOnoffCapability } from '../widgets/light/compatibility';
-import { parseOnoff } from '../widgets/light/runtime';
 import {
-  COMMAND_TIMEOUTS,
-} from './constants';
+  LIGHT_CAPABILITY_ID,
+  LIGHT_DIM_CAPABILITY_ID,
+  LIGHT_HUE_CAPABILITY_ID,
+  LIGHT_MODE_CAPABILITY_ID,
+  LIGHT_MODE_COLOR,
+  LIGHT_MODE_TEMPERATURE,
+  LIGHT_SATURATION_CAPABILITY_ID,
+  LIGHT_TEMPERATURE_CAPABILITY_ID,
+  hasDimCapability,
+  hasLightColorCapabilities,
+  hasLightModeCapability,
+  hasLightTemperatureCapability,
+  hasOnoffCapability,
+} from '../widgets/light/compatibility';
+import {
+  denormalizePercentToHomey,
+  encodeLightColorExpected,
+  isValidPercent,
+} from '../widgets/light/normalize';
+import { parseOnoff } from '../widgets/light/runtime';
+import { COMMAND_TIMEOUTS } from './constants';
 import type { CommandRejectReason, WidgetActionId } from './protocol';
 import type {
   PendingCommandManager,
@@ -32,6 +49,12 @@ export interface WidgetActionRequest {
   readonly requestId: string;
   /** Required for `set-position`; ignored for other actions. */
   readonly positionPercent?: number;
+  /** Required for `set-dim` / `set-temperature`. */
+  readonly valuePercent?: number;
+  /** Required for `set-color`. */
+  readonly huePercent?: number;
+  /** Required for `set-color`. */
+  readonly saturationPercent?: number;
 }
 
 export type WidgetCommandResult =
@@ -54,10 +77,16 @@ export interface WidgetCommandHandlerOptions {
   readonly logger: Logger;
 }
 
+interface CapabilityWrite {
+  readonly capabilityId: string;
+  readonly value: boolean | number | string;
+}
+
 interface ValidatedCommand {
   readonly deviceId: string;
+  /** Primary capability used for pending confirmation routing. */
   readonly capabilityId: string;
-  readonly homeyValue: boolean | number | string;
+  readonly writes: readonly CapabilityWrite[];
   readonly expectedValue: PendingExpectedValue;
   readonly baselineValue: number | null;
   readonly timeoutMs: number;
@@ -85,19 +114,22 @@ export class WidgetCommandHandler {
 
   public async handle(request: WidgetActionRequest): Promise<WidgetCommandResult> {
     this.metrics.recordCommandReceived();
-    this.recordCoverActionReceived(request);
+    this.recordActionReceived(request);
     this.logger.info('Command requested', {
       displayId: request.displayId,
       widgetId: request.widgetId,
       action: request.action,
       requestId: request.requestId,
       positionPercent: request.positionPercent,
+      valuePercent: request.valuePercent,
+      huePercent: request.huePercent,
+      saturationPercent: request.saturationPercent,
     });
 
     const validated = await this.validate(request);
     if (!validated.ok) {
       this.metrics.recordCommandRejected();
-      this.recordCoverActionRejected(request);
+      this.recordActionRejected(request);
       this.logger.warn('Command rejected', {
         displayId: request.displayId,
         widgetId: request.widgetId,
@@ -129,7 +161,7 @@ export class WidgetCommandHandler {
       this.pending.hasPendingForWidget(request.displayId, request.widgetId)
     ) {
       this.metrics.recordCommandRejected();
-      this.recordCoverActionRejected(request);
+      this.recordActionRejected(request);
       this.logger.warn('Command rejected', {
         displayId: request.displayId,
         widgetId: request.widgetId,
@@ -153,7 +185,7 @@ export class WidgetCommandHandler {
 
     if (!registered) {
       this.metrics.recordCommandRejected();
-      this.recordCoverActionRejected(request);
+      this.recordActionRejected(request);
       this.logger.warn('Command rejected', {
         displayId: request.displayId,
         widgetId: request.widgetId,
@@ -166,16 +198,25 @@ export class WidgetCommandHandler {
     this.metrics.setActivePendingCommands(this.pending.activeCount());
 
     try {
-      await this.deviceRepository.setCapabilityValue({
-        deviceId: validated.deviceId,
-        capabilityId: validated.capabilityId,
-        value: validated.homeyValue,
-      });
+      for (const write of validated.writes) {
+        this.logger.info('Capability validation passed', {
+          displayId: request.displayId,
+          widgetId: request.widgetId,
+          deviceId: validated.deviceId,
+          capabilityId: write.capabilityId,
+          requestId: request.requestId,
+        });
+        await this.deviceRepository.setCapabilityValue({
+          deviceId: validated.deviceId,
+          capabilityId: write.capabilityId,
+          value: write.value,
+        });
+      }
     } catch (error) {
       this.pending.resolveFailed(request.requestId);
       this.metrics.setActivePendingCommands(this.pending.activeCount());
       this.metrics.recordCommandFailed();
-      this.recordCoverActionFailed(request);
+      this.recordActionFailed(request);
       this.logger.error('Homey API error for capability command', {
         displayId: request.displayId,
         widgetId: request.widgetId,
@@ -188,7 +229,7 @@ export class WidgetCommandHandler {
     }
 
     this.metrics.recordCommandAccepted();
-    this.recordCoverActionAccepted(request);
+    this.recordActionAccepted(request);
     this.logger.info('Command accepted', {
       displayId: request.displayId,
       widgetId: request.widgetId,
@@ -225,7 +266,7 @@ export class WidgetCommandHandler {
     }
 
     if (widget.type === 'light') {
-      return this.validateLightToggle(request, widget.config.deviceId);
+      return this.validateLightAction(request, widget.config.deviceId);
     }
 
     if (widget.type === 'cover') {
@@ -235,14 +276,19 @@ export class WidgetCommandHandler {
     return { ok: false, reason: 'widget_type_unsupported' };
   }
 
-  private async validateLightToggle(
+  private async validateLightAction(
     request: WidgetActionRequest,
     rawDeviceId: string,
   ): Promise<
     | ({ readonly ok: true } & ValidatedCommand)
     | { readonly ok: false; readonly reason: CommandRejectReason }
   > {
-    if (request.action !== 'toggle') {
+    if (
+      request.action !== 'toggle' &&
+      request.action !== 'set-dim' &&
+      request.action !== 'set-temperature' &&
+      request.action !== 'set-color'
+    ) {
       return { ok: false, reason: 'action_not_allowed' };
     }
 
@@ -274,20 +320,120 @@ export class WidgetCommandHandler {
       return { ok: false, reason: 'device_unavailable' };
     }
 
-    const current = parseOnoff(device.capabilityValues[LIGHT_CAPABILITY_ID]);
-    if (current === null) {
-      return { ok: false, reason: 'invalid_state' };
+    if (request.action === 'toggle') {
+      const current = parseOnoff(device.capabilityValues[LIGHT_CAPABILITY_ID]);
+      if (current === null) {
+        return { ok: false, reason: 'invalid_state' };
+      }
+
+      const expectedValue = !current;
+      return {
+        ok: true,
+        deviceId,
+        capabilityId: LIGHT_CAPABILITY_ID,
+        writes: [{ capabilityId: LIGHT_CAPABILITY_ID, value: expectedValue }],
+        expectedValue,
+        baselineValue: null,
+        timeoutMs: COMMAND_TIMEOUTS.lightToggle,
+        allowReplacePending: false,
+      };
     }
 
-    const expectedValue = !current;
+    if (request.action === 'set-dim') {
+      if (!hasDimCapability(device)) {
+        return { ok: false, reason: 'capability_missing' };
+      }
+      if (!isValidPercent(request.valuePercent)) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+
+      return {
+        ok: true,
+        deviceId,
+        capabilityId: LIGHT_DIM_CAPABILITY_ID,
+        writes: [
+          {
+            capabilityId: LIGHT_DIM_CAPABILITY_ID,
+            value: denormalizePercentToHomey(request.valuePercent),
+          },
+        ],
+        expectedValue: request.valuePercent,
+        baselineValue: null,
+        timeoutMs: COMMAND_TIMEOUTS.lightDim,
+        allowReplacePending: false,
+      };
+    }
+
+    if (request.action === 'set-temperature') {
+      if (!hasLightTemperatureCapability(device)) {
+        return { ok: false, reason: 'capability_missing' };
+      }
+      if (!isValidPercent(request.valuePercent)) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+
+      const writes: CapabilityWrite[] = [];
+      if (hasLightModeCapability(device)) {
+        writes.push({
+          capabilityId: LIGHT_MODE_CAPABILITY_ID,
+          value: LIGHT_MODE_TEMPERATURE,
+        });
+      }
+      writes.push({
+        capabilityId: LIGHT_TEMPERATURE_CAPABILITY_ID,
+        value: denormalizePercentToHomey(request.valuePercent),
+      });
+
+      return {
+        ok: true,
+        deviceId,
+        capabilityId: LIGHT_TEMPERATURE_CAPABILITY_ID,
+        writes,
+        expectedValue: request.valuePercent,
+        baselineValue: null,
+        timeoutMs: COMMAND_TIMEOUTS.lightTemperature,
+        allowReplacePending: false,
+      };
+    }
+
+    // set-color
+    if (!hasLightColorCapabilities(device)) {
+      return { ok: false, reason: 'capability_missing' };
+    }
+    if (
+      !isValidPercent(request.huePercent) ||
+      !isValidPercent(request.saturationPercent)
+    ) {
+      return { ok: false, reason: 'invalid_value' };
+    }
+
+    const writes: CapabilityWrite[] = [];
+    if (hasLightModeCapability(device)) {
+      writes.push({
+        capabilityId: LIGHT_MODE_CAPABILITY_ID,
+        value: LIGHT_MODE_COLOR,
+      });
+    }
+    writes.push({
+      capabilityId: LIGHT_HUE_CAPABILITY_ID,
+      value: denormalizePercentToHomey(request.huePercent),
+    });
+    writes.push({
+      capabilityId: LIGHT_SATURATION_CAPABILITY_ID,
+      value: denormalizePercentToHomey(request.saturationPercent),
+    });
+
     return {
       ok: true,
       deviceId,
-      capabilityId: LIGHT_CAPABILITY_ID,
-      homeyValue: expectedValue,
-      expectedValue,
+      capabilityId: LIGHT_HUE_CAPABILITY_ID,
+      writes,
+      expectedValue: encodeLightColorExpected(
+        request.huePercent,
+        request.saturationPercent,
+      ),
       baselineValue: null,
-      timeoutMs: COMMAND_TIMEOUTS.lightToggle,
+      timeoutMs: COMMAND_TIMEOUTS.lightColor,
       allowReplacePending: false,
     };
   }
@@ -336,11 +482,15 @@ export class WidgetCommandHandler {
         ok: true,
         deviceId,
         capabilityId: COVER_STATE_CAPABILITY_ID,
-        homeyValue: COVER_STOP_STATE_VALUE,
+        writes: [
+          {
+            capabilityId: COVER_STATE_CAPABILITY_ID,
+            value: COVER_STOP_STATE_VALUE,
+          },
+        ],
         expectedValue: COVER_STOP_STATE_VALUE,
         baselineValue: null,
         timeoutMs: COMMAND_TIMEOUTS.coverStop,
-        // Stop may interrupt an in-flight set-position for the same widget.
         allowReplacePending: true,
       };
     }
@@ -361,7 +511,12 @@ export class WidgetCommandHandler {
       ok: true,
       deviceId,
       capabilityId: COVER_CAPABILITY_ID,
-      homeyValue: denormalizePositionPercent(request.positionPercent),
+      writes: [
+        {
+          capabilityId: COVER_CAPABILITY_ID,
+          value: denormalizePositionPercent(request.positionPercent),
+        },
+      ],
       expectedValue: request.positionPercent,
       baselineValue: current.positionPercent,
       timeoutMs: COMMAND_TIMEOUTS.coverSetPosition,
@@ -369,7 +524,7 @@ export class WidgetCommandHandler {
     };
   }
 
-  private recordCoverActionReceived(request: WidgetActionRequest): void {
+  private recordActionReceived(request: WidgetActionRequest): void {
     if (request.action === 'set-position') {
       this.metrics.recordCoverCommandReceived('set-position');
       if (request.positionPercent === 100) {
@@ -377,35 +532,64 @@ export class WidgetCommandHandler {
       } else if (request.positionPercent === 0) {
         this.metrics.recordCoverCloseCommand();
       }
-    } else if (request.action === 'stop') {
+      return;
+    }
+    if (request.action === 'stop') {
       this.metrics.recordCoverCommandReceived('stop');
+      return;
+    }
+    if (
+      request.action === 'set-dim' ||
+      request.action === 'set-temperature' ||
+      request.action === 'set-color' ||
+      request.action === 'toggle'
+    ) {
+      this.metrics.recordLightCommandReceived(request.action);
     }
   }
 
-  private recordCoverActionRejected(request: WidgetActionRequest): void {
-    if (
-      request.action === 'set-position' ||
-      request.action === 'stop'
-    ) {
+  private recordActionRejected(request: WidgetActionRequest): void {
+    if (request.action === 'set-position' || request.action === 'stop') {
       this.metrics.recordCoverCommandRejected();
+      return;
+    }
+    if (
+      request.action === 'set-dim' ||
+      request.action === 'set-temperature' ||
+      request.action === 'set-color' ||
+      request.action === 'toggle'
+    ) {
+      this.metrics.recordLightCommandRejected();
     }
   }
 
-  private recordCoverActionAccepted(request: WidgetActionRequest): void {
-    if (
-      request.action === 'set-position' ||
-      request.action === 'stop'
-    ) {
+  private recordActionAccepted(request: WidgetActionRequest): void {
+    if (request.action === 'set-position' || request.action === 'stop') {
       this.metrics.recordCoverCommandAccepted();
+      return;
+    }
+    if (
+      request.action === 'set-dim' ||
+      request.action === 'set-temperature' ||
+      request.action === 'set-color' ||
+      request.action === 'toggle'
+    ) {
+      this.metrics.recordLightCommandAccepted();
     }
   }
 
-  private recordCoverActionFailed(request: WidgetActionRequest): void {
-    if (
-      request.action === 'set-position' ||
-      request.action === 'stop'
-    ) {
+  private recordActionFailed(request: WidgetActionRequest): void {
+    if (request.action === 'set-position' || request.action === 'stop') {
       this.metrics.recordCoverCommandFailed();
+      return;
+    }
+    if (
+      request.action === 'set-dim' ||
+      request.action === 'set-temperature' ||
+      request.action === 'set-color' ||
+      request.action === 'toggle'
+    ) {
+      this.metrics.recordLightCommandFailed();
     }
   }
 }

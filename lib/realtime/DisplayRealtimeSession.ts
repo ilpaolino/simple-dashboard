@@ -197,6 +197,9 @@ export class DisplayRealtimeSession {
         readonly action?: unknown;
         readonly requestId?: unknown;
         readonly positionPercent?: unknown;
+        readonly valuePercent?: unknown;
+        readonly huePercent?: unknown;
+        readonly saturationPercent?: unknown;
       };
       if (
         typeof candidate.widgetId !== 'string' ||
@@ -228,6 +231,51 @@ export class DisplayRealtimeSession {
           action: 'set-position',
           requestId,
           positionPercent: candidate.positionPercent,
+        });
+        return;
+      }
+
+      if (candidate.action === 'set-dim' || candidate.action === 'set-temperature') {
+        if (
+          typeof candidate.valuePercent !== 'number' ||
+          !Number.isInteger(candidate.valuePercent) ||
+          candidate.valuePercent < 0 ||
+          candidate.valuePercent > 100
+        ) {
+          this.onProtocolError(this, 'invalid_widget_action');
+          return;
+        }
+        this.onClientMessage(this, {
+          type: 'widget-action',
+          widgetId,
+          action: candidate.action,
+          requestId,
+          valuePercent: candidate.valuePercent,
+        });
+        return;
+      }
+
+      if (candidate.action === 'set-color') {
+        if (
+          typeof candidate.huePercent !== 'number' ||
+          !Number.isInteger(candidate.huePercent) ||
+          candidate.huePercent < 0 ||
+          candidate.huePercent > 100 ||
+          typeof candidate.saturationPercent !== 'number' ||
+          !Number.isInteger(candidate.saturationPercent) ||
+          candidate.saturationPercent < 0 ||
+          candidate.saturationPercent > 100
+        ) {
+          this.onProtocolError(this, 'invalid_widget_action');
+          return;
+        }
+        this.onClientMessage(this, {
+          type: 'widget-action',
+          widgetId,
+          action: 'set-color',
+          requestId,
+          huePercent: candidate.huePercent,
+          saturationPercent: candidate.saturationPercent,
         });
         return;
       }

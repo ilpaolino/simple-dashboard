@@ -47,13 +47,13 @@
 
 ### Out of scope (explicitly deferred)
 
-- Dimmer, color, color temperature, sliders
-- Long press / double click / swipe gestures (architecture reserved only)
+- Dimmer, color, color temperature, sliders → **done in Milestone 10**
+- Long press / double click / swipe gestures → long-press done in **Milestone 10**
 - Notifications, cameras
 - Flow cards
 - Socket.IO
 
-**Note:** Cover control overlays arrived in Milestone 9 (reusable `WidgetControlOverlay`). Light dimmer/color panels remain deferred.
+**Note:** Cover control overlays arrived in Milestone 9. Light advanced panel arrived in Milestone 10.
 
 ## Milestone 8 — CoverWidget Read-Only & Device Visual Language
 
@@ -96,17 +96,37 @@
 
 ### Out of scope (explicitly deferred)
 
-- Advanced tile gestures (double-tap, long-press, swipe)
-- Light dimmer/color panels
+- Advanced tile gestures (double-tap, swipe) — long-press for Light arrived in M10
+- Light dimmer/color panels → **done in Milestone 10**
 - Multi-cover groups, timers, simulated motion, Flow/Scene
+
+## Milestone 10 — Advanced LightWidget Control Panel
+
+**Status:** Done. Details: [MILESTONE-10.md](MILESTONE-10.md).
+
+### In scope (implemented)
+
+- Tap LightWidget → toggle; long press → `LightControlPanel` (no double trigger)
+- Reuse `WidgetControlOverlay` (Cover + Light panels; one at a time)
+- Capability-driven UI: ON/OFF, dim, temperature, color (hue/sat)
+- Normalized UX percents; send-on-release for dim / temperature / color
+- Intents: `set-dim`, `set-temperature`, `set-color` (+ existing `toggle`)
+- Backend validation, Homey `[0,1]` mapping, optional `light_mode`
+- Selective subscriptions for optional light capabilities
+- Diagnostics light counters; IT/EN; automated tests; Cover regression preserved
+
+### Out of scope (explicitly deferred)
+
+- Scenes, presets, animations, effects, groups, custom transitions
+- Double-click / swipe
+- Heavy color libraries
 
 ## Later milestones (not started)
 
-- Dim / color / temperature on the same `deviceId`
 - Additional widget types (sensors, thermostats)
 - Display hardware controls beyond recognition
 - Flow cards
 
-## Manual test checklist (Milestone 9)
+## Manual test checklist (Milestone 10)
 
-See the full checklist in [MILESTONE-9.md](MILESTONE-9.md).
+See the full checklist in [MILESTONE-10.md](MILESTONE-10.md).
