@@ -1,3 +1,4 @@
+import { coverWidgetDefinition } from './cover/definition';
 import { dateTimeWidgetDefinition } from './date-time/definition';
 import { lightWidgetDefinition } from './light/definition';
 import { titleWidgetDefinition } from './title/definition';
@@ -56,7 +57,12 @@ export class WidgetRegistry {
 }
 
 export function isWidgetTypeId(value: unknown): value is WidgetTypeId {
-  return value === 'title' || value === 'date-time' || value === 'light';
+  return (
+    value === 'title' ||
+    value === 'date-time' ||
+    value === 'light' ||
+    value === 'cover'
+  );
 }
 
 export function createDefaultWidgetRegistry(): WidgetRegistry {
@@ -64,5 +70,6 @@ export function createDefaultWidgetRegistry(): WidgetRegistry {
   registry.register(titleWidgetDefinition);
   registry.register(dateTimeWidgetDefinition);
   registry.register(lightWidgetDefinition);
+  registry.register(coverWidgetDefinition);
   return registry;
 }

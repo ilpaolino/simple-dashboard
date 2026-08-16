@@ -3,6 +3,7 @@ import { isWidgetTypeId } from '../lib/widgets/registry';
 import { isTitleWidgetConfig } from '../lib/widgets/title/definition';
 import { isDateTimeWidgetConfig } from '../lib/widgets/date-time/definition';
 import { isLightWidgetConfig } from '../lib/widgets/light/definition';
+import { isCoverWidgetConfig } from '../lib/widgets/cover/definition';
 import type { WidgetInstance, WidgetPlacement } from '../lib/widgets/types';
 import { isDashboardTheme } from '../lib/widgets/types';
 import { DashboardRenderer } from './layout/DashboardRenderer';
@@ -132,6 +133,18 @@ function isDashboardCopy(value: unknown): boolean {
     return false;
   }
 
+  if (typeof candidate.cover !== 'object' || candidate.cover === null) {
+    return false;
+  }
+
+  const cover = candidate.cover as Record<string, unknown>;
+  if (
+    typeof cover.unavailable !== 'string' ||
+    typeof cover.invalidPosition !== 'string'
+  ) {
+    return false;
+  }
+
   if (typeof candidate.realtime !== 'object' || candidate.realtime === null) {
     return false;
   }
@@ -179,7 +192,11 @@ function isWidgetInstance(value: unknown): value is WidgetInstance {
     return isDateTimeWidgetConfig(candidate.config);
   }
 
-  return isLightWidgetConfig(candidate.config);
+  if (candidate.type === 'light') {
+    return isLightWidgetConfig(candidate.config);
+  }
+
+  return isCoverWidgetConfig(candidate.config);
 }
 
 function isPlacement(value: unknown): value is WidgetPlacement {

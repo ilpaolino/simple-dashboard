@@ -235,7 +235,8 @@ describe('Dashboard runtime snapshot', () => {
     assert.equal(first.states['light-1']?.type, 'light');
     assert.equal(first.states['light-1'] && first.states['light-1'].type === 'light' ? first.states['light-1'].on : null, true);
     assert.deepEqual(first.states, second.states);
-    assert.equal(first.diagnostics.length, 1);
+    assert.equal(first.lightDiagnostics.length, 1);
+    assert.equal(first.coverDiagnostics.length, 0);
   });
 
   it('isolates a Homey API failure to LightWidgets', async () => {
@@ -296,5 +297,14 @@ describe('LightWidget snapshot semantics', () => {
     );
     assert.doesNotMatch(lightRuntime, /makeCapabilityInstance/);
     assert.doesNotMatch(lightRuntime, /setCapabilityValue/);
+  });
+
+  it('includes a decorative device icon in the LightWidget markup path', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'frontend/widgets/light/LightWidget.ts'),
+      'utf8',
+    );
+    assert.match(source, /createDeviceWidgetIcon/);
+    assert.match(source, /device-widget/);
   });
 });

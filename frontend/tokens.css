@@ -28,6 +28,12 @@
   --light-tile-off: rgba(255, 255, 255, 0.07);
   --light-tile-border: rgba(255, 255, 255, 0.12);
   --light-tile-unavailable: rgba(255, 255, 255, 0.04);
+  --cover-accent: #7ec8e3;
+  --cover-tile-surface: rgba(255, 255, 255, 0.07);
+  --cover-tile-border: rgba(255, 255, 255, 0.12);
+  --cover-tile-unavailable: rgba(255, 255, 255, 0.04);
+  --cover-bar-track: rgba(255, 255, 255, 0.12);
+  --cover-bar-fill: #7ec8e3;
 }
 
 :root[data-theme="light"],
@@ -49,4 +55,10 @@
   --light-tile-off: rgba(255, 255, 255, 0.72);
   --light-tile-border: rgba(31, 42, 48, 0.12);
   --light-tile-unavailable: rgba(31, 42, 48, 0.06);
+  --cover-accent: #1f6f8b;
+  --cover-tile-surface: rgba(255, 255, 255, 0.72);
+  --cover-tile-border: rgba(31, 42, 48, 0.12);
+  --cover-tile-unavailable: rgba(31, 42, 48, 0.06);
+  --cover-bar-track: rgba(31, 42, 48, 0.12);
+  --cover-bar-fill: #1f6f8b;
 }

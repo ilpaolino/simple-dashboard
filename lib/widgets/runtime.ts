@@ -2,6 +2,12 @@ import type { HomeyDeviceRepository } from '../homey/HomeyDeviceRepository';
 import type { HomeyDeviceSnapshot } from '../homey/types';
 import type { Logger } from '../types';
 import {
+  createCoverApiErrorRuntime,
+  resolveCoverWidgetRuntimeFromSnapshot,
+  type CoverRuntimeResolveResult,
+} from './cover/runtime';
+import type { CoverWidgetDiagnostic } from './cover/types';
+import {
   createLightApiErrorRuntime,
   resolveLightWidgetRuntimeFromSnapshot,
   type LightRuntimeResolveResult,
@@ -15,9 +21,15 @@ export {
   parseOnoff,
 } from './light/runtime';
 
+export {
+  createCoverApiErrorRuntime,
+  resolveCoverWidgetRuntimeFromSnapshot,
+} from './cover/runtime';
+
 export interface DashboardRuntimeResolveResult {
   readonly states: Readonly<Record<string, WidgetRuntimeState>>;
-  readonly diagnostics: readonly LightWidgetDiagnostic[];
+  readonly lightDiagnostics: readonly LightWidgetDiagnostic[];
+  readonly coverDiagnostics: readonly CoverWidgetDiagnostic[];
 }
 
 /**
@@ -29,13 +41,14 @@ export async function resolveDashboardRuntime(options: {
   readonly repository: HomeyDeviceRepository | null;
   readonly logger?: Logger;
 }): Promise<DashboardRuntimeResolveResult> {
-  const lightWidgets = options.widgets.filter(
-    (widget): widget is WidgetInstance & { readonly type: 'light' } =>
-      widget.type === 'light',
+  const deviceWidgets = options.widgets.filter(
+    (widget): widget is WidgetInstance & {
+      readonly type: 'light' | 'cover';
+    } => widget.type === 'light' || widget.type === 'cover',
   );
 
-  if (lightWidgets.length === 0) {
-    return { states: {}, diagnostics: [] };
+  if (deviceWidgets.length === 0) {
+    return { states: {}, lightDiagnostics: [], coverDiagnostics: [] };
   }
 
   let devicesById: ReadonlyMap<string, HomeyDeviceSnapshot> | null = null;
@@ -47,26 +60,41 @@ export async function resolveDashboardRuntime(options: {
       devicesById = new Map(devices.map((device) => [device.id, device]));
     } catch (error) {
       listError = error;
-      options.logger?.error('Failed to list Homey devices for dashboard snapshot', error);
+      options.logger?.error(
+        'Failed to list Homey devices for dashboard snapshot',
+        error,
+      );
     }
   } else {
     listError = new Error('Homey device repository is not available');
   }
 
   const states: Record<string, WidgetRuntimeState> = {};
-  const diagnostics: LightWidgetDiagnostic[] = [];
+  const lightDiagnostics: LightWidgetDiagnostic[] = [];
+  const coverDiagnostics: CoverWidgetDiagnostic[] = [];
 
-  for (const widget of lightWidgets) {
-    const resolved = resolveOneLight({
+  for (const widget of deviceWidgets) {
+    if (widget.type === 'light') {
+      const resolved = resolveOneLight({
+        widget,
+        devicesById,
+        listError,
+      });
+      states[widget.id] = resolved.state;
+      lightDiagnostics.push(resolved.diagnostic);
+      continue;
+    }
+
+    const resolved = resolveOneCover({
       widget,
       devicesById,
       listError,
     });
     states[widget.id] = resolved.state;
-    diagnostics.push(resolved.diagnostic);
+    coverDiagnostics.push(resolved.diagnostic);
   }
 
-  return { states, diagnostics };
+  return { states, lightDiagnostics, coverDiagnostics };
 }
 
 function resolveOneLight(options: {
@@ -85,6 +113,28 @@ function resolveOneLight(options: {
     options.devicesById.get(options.widget.config.deviceId) ?? null;
 
   return resolveLightWidgetRuntimeFromSnapshot({
+    widgetId: options.widget.id,
+    deviceId: options.widget.config.deviceId,
+    device,
+  });
+}
+
+function resolveOneCover(options: {
+  readonly widget: WidgetInstance & { readonly type: 'cover' };
+  readonly devicesById: ReadonlyMap<string, HomeyDeviceSnapshot> | null;
+  readonly listError: unknown;
+}): CoverRuntimeResolveResult {
+  if (options.listError !== null || options.devicesById === null) {
+    return createCoverApiErrorRuntime(
+      options.widget.id,
+      options.widget.config.deviceId,
+    );
+  }
+
+  const device =
+    options.devicesById.get(options.widget.config.deviceId) ?? null;
+
+  return resolveCoverWidgetRuntimeFromSnapshot({
     widgetId: options.widget.id,
     deviceId: options.widget.config.deviceId,
     device,

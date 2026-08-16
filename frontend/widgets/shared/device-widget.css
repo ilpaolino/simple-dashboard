@@ -1,0 +1,33 @@
+/**
+ * Shared visual grammar for Homey device widgets (Light, Cover).
+ * Keep this minimal — not a full design system.
+ */
+
+.device-widget {
+  position: relative;
+  overflow: hidden;
+}
+
+.device-widget__icon {
+  position: absolute;
+  top: calc(var(--cell-size) * 0.04);
+  right: calc(var(--cell-size) * 0.02);
+  width: calc(var(--cell-size) * 0.42);
+  height: calc(var(--cell-size) * 0.42);
+  opacity: 0.16;
+  pointer-events: none;
+  color: var(--widget-fg);
+  z-index: 0;
+}
+
+.device-widget__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.device-widget__name,
+.device-widget__state {
+  position: relative;
+  z-index: 1;
+}

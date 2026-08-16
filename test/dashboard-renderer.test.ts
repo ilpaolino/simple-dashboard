@@ -307,8 +307,10 @@ describe('LightWidget renderer', () => {
     const grid = (root as unknown as FakeElement).children[0];
     const widget = grid!.children[0];
     assert.match(widget!.className, /widget-light--state-on/);
-    assert.equal(widget!.children[1]!.textContent, 'Lampada tavolo');
-    assert.equal(widget!.children[0]!.textContent, 'On');
+    assert.match(widget!.className, /device-widget/);
+    assert.match(widget!.children[0]!.className, /device-widget__icon/);
+    assert.equal(widget!.children[1]!.textContent, 'On');
+    assert.equal(widget!.children[2]!.children[1]!.textContent, 'Lampada tavolo');
     assert.equal(timers.active.size, 0);
 
     renderer.updateWidgetState('light-1', {
@@ -319,8 +321,91 @@ describe('LightWidget renderer', () => {
       on: false,
       error: null,
     });
+
     assert.match(widget!.className, /widget-light--state-off/);
-    assert.equal(widget!.children[0]!.textContent, 'Off');
+    assert.equal(widget!.children[1]!.textContent, 'Off');
+    renderer.destroy();
+  });
+
+  it('renders CoverWidget percent, bar, icon, and unavailable without rebuild', () => {
+    const timers = installDomShim();
+    const root = document.createElement('div');
+    const renderer = new DashboardRenderer(root);
+
+    renderer.applyConfiguration({
+      displayId: 'disp-1',
+      displayName: 'Kitchen',
+      typeLabel: 'Shelly Wall Display',
+      layoutId: '2x2',
+      layout: { rows: 2, columns: 2 },
+      widgets: [
+        {
+          id: 'cover-1',
+          type: 'cover',
+          placement: { row: 0, column: 0, rowSpan: 1, columnSpan: 1 },
+          config: { deviceId: 'dev-cover' },
+        },
+        {
+          id: 'title-1',
+          type: 'title',
+          placement: { row: 0, column: 1, rowSpan: 1, columnSpan: 1 },
+          config: { text: 'Stay', alignment: 'left' },
+        },
+      ],
+      widgetRuntime: {
+        'cover-1': {
+          type: 'cover',
+          deviceId: 'dev-cover',
+          name: 'Tapparella cucina',
+          available: true,
+          positionPercent: 20,
+          error: null,
+        },
+      },
+      locale: 'en',
+      emptyState,
+    });
+
+    const grid = (root as unknown as FakeElement).children[0];
+    const cover = grid!.children.find((child) =>
+      child.className.includes('widget-cover'),
+    );
+    const title = grid!.children.find((child) =>
+      child.className.includes('widget-title'),
+    );
+    assert.ok(cover);
+    assert.ok(title);
+    assert.match(cover!.className, /device-widget/);
+    assert.match(cover!.children[0]!.className, /device-widget__icon/);
+    assert.equal(cover!.children[1]!.textContent, 'Tapparella cucina');
+    const body = cover!.children[2]!;
+    assert.equal(body.children[0]!.textContent, '20%');
+    assert.equal(body.children[1]!.children[0]!.style.height, '20%');
+    assert.equal(timers.active.size, 0);
+
+    const titleBefore = title!.textContent;
+    renderer.updateWidgetState('cover-1', {
+      type: 'cover',
+      deviceId: 'dev-cover',
+      name: 'Tapparella cucina',
+      available: true,
+      positionPercent: 70,
+      error: null,
+    });
+    assert.equal(body.children[0]!.textContent, '70%');
+    assert.equal(body.children[1]!.children[0]!.style.height, '70%');
+    assert.equal(title!.textContent, titleBefore);
+
+    renderer.updateWidgetState('cover-1', {
+      type: 'cover',
+      deviceId: 'dev-cover',
+      name: 'Tapparella cucina',
+      available: false,
+      positionPercent: null,
+      error: 'missing_device',
+    });
+    assert.match(cover!.className, /widget-cover--state-unavailable/);
+    assert.equal(body.children[0]!.textContent, 'Device unavailable');
     renderer.destroy();
   });
 
@@ -432,6 +517,7 @@ class FakeElement {
 
 class FakeStyle {
   public gridArea = '';
+  public height = '';
   private readonly props = new Map<string, string>();
 
   public setProperty(name: string, value: string): void {

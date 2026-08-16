@@ -15,12 +15,13 @@ import {
 } from '../lib/widgets';
 
 describe('WidgetRegistry', () => {
-  it('registers title, date-time and light widgets', () => {
+  it('registers title, date-time, light and cover widgets', () => {
     const registry = createDefaultWidgetRegistry();
     assert.ok(registry.has('title'));
     assert.ok(registry.has('date-time'));
     assert.ok(registry.has('light'));
-    assert.equal(registry.list().length, 3);
+    assert.ok(registry.has('cover'));
+    assert.equal(registry.list().length, 4);
   });
 
   it('returns null for unknown types', () => {
@@ -40,6 +41,9 @@ describe('WidgetRegistry', () => {
       { rowSpan: 1, columnSpan: 2 },
     ]);
     assert.deepEqual(registry.allowedSpans('light'), [
+      { rowSpan: 1, columnSpan: 1 },
+    ]);
+    assert.deepEqual(registry.allowedSpans('cover'), [
       { rowSpan: 1, columnSpan: 1 },
     ]);
   });

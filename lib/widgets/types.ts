@@ -3,10 +3,15 @@
  */
 
 import type {
+  CoverWidgetConfig,
+  CoverWidgetRuntimeState,
+} from './cover/types';
+import type {
   LightWidgetConfig,
   LightWidgetRuntimeState,
 } from './light/types';
 
+export type { CoverWidgetConfig, CoverWidgetRuntimeState } from './cover/types';
 export type { LightWidgetConfig, LightWidgetRuntimeState } from './light/types';
 
 /**
@@ -25,7 +30,7 @@ export interface WidgetSpan {
   readonly columnSpan: number;
 }
 
-export type WidgetTypeId = 'title' | 'date-time' | 'light';
+export type WidgetTypeId = 'title' | 'date-time' | 'light' | 'cover';
 
 export type TextAlignment = 'left' | 'center' | 'right';
 
@@ -62,6 +67,7 @@ export type WidgetConfigMap = {
   readonly title: TitleWidgetConfig;
   readonly 'date-time': DateTimeWidgetConfig;
   readonly light: LightWidgetConfig;
+  readonly cover: CoverWidgetConfig;
 };
 
 /**
@@ -85,9 +91,17 @@ export type WidgetInstance =
       readonly type: 'light';
       readonly placement: WidgetPlacement;
       readonly config: LightWidgetConfig;
+    }
+  | {
+      readonly id: string;
+      readonly type: 'cover';
+      readonly placement: WidgetPlacement;
+      readonly config: CoverWidgetConfig;
     };
 
-export type WidgetRuntimeState = LightWidgetRuntimeState;
+export type WidgetRuntimeState =
+  | LightWidgetRuntimeState
+  | CoverWidgetRuntimeState;
 
 export type DashboardTheme = 'dark' | 'light';
 

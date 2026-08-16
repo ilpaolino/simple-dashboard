@@ -7,13 +7,17 @@ export {
   RECONNECT_MAX_MS,
   RECONNECT_FACTOR,
   REALTIME_LIGHT_CAPABILITY_ID,
+  REALTIME_COVER_CAPABILITY_ID,
   COMMAND_TIMEOUT_MS,
   COMMAND_DIAGNOSTICS_HISTORY_LIMIT,
   COMMAND_ERROR_FEEDBACK_MS,
 } from './constants';
 export {
   extractReferencedDeviceIds,
+  extractReferencedCapabilitySubscriptions,
   diffReferencedDeviceIds,
+  diffReferencedCapabilitySubscriptions,
+  type HomeyCapabilityRef,
 } from './extractReferencedDeviceIds';
 export {
   isServerMessage,

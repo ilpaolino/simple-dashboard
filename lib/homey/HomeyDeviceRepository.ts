@@ -6,6 +6,7 @@ import type {
   HomeyDeviceSnapshot,
   HomeyWebApi,
 } from './types';
+import { isCompatibleWithCoverWidget } from '../widgets/cover/compatibility';
 import { isCompatibleWithLightWidget } from '../widgets/light/compatibility';
 
 /**
@@ -41,6 +42,20 @@ export class HomeyDeviceRepository {
     const devices = await this.listDevices();
     return devices
       .filter((device) => isCompatibleWithLightWidget(device))
+      .map((device) => ({
+        id: device.id,
+        name: device.name,
+        zoneName: device.zoneName,
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  public async listCompatibleCoverDevices(): Promise<
+    readonly CompatibleDeviceOption[]
+  > {
+    const devices = await this.listDevices();
+    return devices
+      .filter((device) => isCompatibleWithCoverWidget(device))
       .map((device) => ({
         id: device.id,
         name: device.name,

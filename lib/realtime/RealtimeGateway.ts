@@ -16,12 +16,15 @@ import {
   resolveDashboardRuntime,
   resolveLightWidgetRuntimeFromSnapshot,
   createLightApiErrorRuntime,
+  resolveCoverWidgetRuntimeFromSnapshot,
+  createCoverApiErrorRuntime,
   parseOnoff,
   LIGHT_CAPABILITY_ID,
+  COVER_CAPABILITY_ID,
 } from '../widgets';
 import { DISPLAY_TYPE_IDS } from '../display/types';
 import { REALTIME_PROTOCOL_VERSION, REALTIME_WEBSOCKET_PATH } from './constants';
-import { extractReferencedDeviceIds } from './extractReferencedDeviceIds';
+import { extractReferencedCapabilitySubscriptions } from './extractReferencedDeviceIds';
 import {
   DisplayRealtimeSession,
 } from './DisplayRealtimeSession';
@@ -135,10 +138,14 @@ export class RealtimeGateway {
       metrics: this.metrics,
       logger: this.logger,
       onCapabilityValue: (event) => {
-        void this.handleCapabilityValue(event.deviceId, event.value);
+        void this.handleCapabilityValue(
+          event.deviceId,
+          event.capabilityId,
+          event.value,
+        );
       },
-      onDeviceRemoved: (deviceId) => {
-        void this.handleDeviceRemoved(deviceId);
+      onDeviceRemoved: (deviceId, capabilityId) => {
+        void this.handleDeviceRemoved(deviceId, capabilityId);
       },
     });
   }
@@ -234,11 +241,16 @@ export class RealtimeGateway {
       return;
     }
 
-    const deviceIds = extractReferencedDeviceIds(entry.config.dashboard);
+    const subscriptions = extractReferencedCapabilitySubscriptions(
+      entry.config.dashboard,
+    );
 
     if (this.sessions.hasActiveSession(displayId)) {
-      await this.subscriptions.setDisplayDevices(displayId, deviceIds);
-      this.registry.markRealtimeSubscribedDevices(displayId, deviceIds.length);
+      await this.subscriptions.setDisplaySubscriptions(displayId, subscriptions);
+      this.registry.markRealtimeSubscribedDevices(
+        displayId,
+        subscriptions.length,
+      );
 
       const runtime = await resolveDashboardRuntime({
         widgets: entry.config.dashboard.widgets,
@@ -246,7 +258,14 @@ export class RealtimeGateway {
         logger: this.logger,
       });
 
-      this.registry.markLightWidgetDiagnostics(displayId, runtime.diagnostics);
+      this.registry.markLightWidgetDiagnostics(
+        displayId,
+        runtime.lightDiagnostics,
+      );
+      this.registry.markCoverWidgetDiagnostics(
+        displayId,
+        runtime.coverDiagnostics,
+      );
 
       this.sessions.sendToDisplay(displayId, {
         type: 'dashboard-configuration',
@@ -386,11 +405,16 @@ export class RealtimeGateway {
       return;
     }
 
-    const deviceIds = extractReferencedDeviceIds(snapshot.configuration);
-    await this.subscriptions.setDisplayDevices(session.displayId, deviceIds);
+    const subscriptions = extractReferencedCapabilitySubscriptions(
+      snapshot.configuration,
+    );
+    await this.subscriptions.setDisplaySubscriptions(
+      session.displayId,
+      subscriptions,
+    );
     this.registry.markRealtimeSubscribedDevices(
       session.displayId,
-      deviceIds.length,
+      subscriptions.length,
     );
 
     const message: ServerMessage = {
@@ -419,7 +443,14 @@ export class RealtimeGateway {
       logger: this.logger,
     });
 
-    this.registry.markLightWidgetDiagnostics(displayId, runtime.diagnostics);
+    this.registry.markLightWidgetDiagnostics(
+      displayId,
+      runtime.lightDiagnostics,
+    );
+    this.registry.markCoverWidgetDiagnostics(
+      displayId,
+      runtime.coverDiagnostics,
+    );
 
     const copy = createRealtimeDashboardCopy(this.translate);
 
@@ -458,12 +489,30 @@ export class RealtimeGateway {
 
   private async handleCapabilityValue(
     deviceId: string,
+    capabilityId: string,
     value: unknown,
   ): Promise<void> {
-    const on = parseOnoff(value);
-    this.resolvePendingForCapability(deviceId, on);
+    if (capabilityId === LIGHT_CAPABILITY_ID) {
+      const on = parseOnoff(value);
+      this.resolvePendingForCapability(deviceId, on);
+      await this.routeLightCapabilityUpdate(deviceId, on, value);
+      return;
+    }
 
-    const displayIds = this.subscriptions.getDisplayIdsForDevice(deviceId);
+    if (capabilityId === COVER_CAPABILITY_ID) {
+      await this.routeCoverCapabilityUpdate(deviceId, value);
+    }
+  }
+
+  private async routeLightCapabilityUpdate(
+    deviceId: string,
+    on: boolean | null,
+    value: unknown,
+  ): Promise<void> {
+    const displayIds = this.subscriptions.getDisplayIdsForDevice(
+      deviceId,
+      LIGHT_CAPABILITY_ID,
+    );
     if (displayIds.length === 0) {
       return;
     }
@@ -511,6 +560,71 @@ export class RealtimeGateway {
           });
         } catch (error) {
           this.logger.error('Failed to route widget state update', {
+            displayId,
+            widgetId: widget.id,
+            deviceId,
+            error,
+          });
+        }
+      }
+    }
+  }
+
+  private async routeCoverCapabilityUpdate(
+    deviceId: string,
+    value: unknown,
+  ): Promise<void> {
+    const displayIds = this.subscriptions.getDisplayIdsForDevice(
+      deviceId,
+      COVER_CAPABILITY_ID,
+    );
+    if (displayIds.length === 0) {
+      return;
+    }
+
+    let device = null;
+    try {
+      device = await this.deviceRepository.getDevice(deviceId);
+    } catch (error) {
+      this.logger.error('Failed to resolve Homey device after cover change', {
+        deviceId,
+        error,
+      });
+    }
+
+    for (const displayId of displayIds) {
+      const entry = this.registry.getById(displayId);
+      if (!entry) {
+        continue;
+      }
+
+      for (const widget of entry.config.dashboard.widgets) {
+        if (widget.type !== 'cover' || widget.config.deviceId !== deviceId) {
+          continue;
+        }
+
+        try {
+          const resolved = device
+            ? resolveCoverWidgetRuntimeFromSnapshot({
+                widgetId: widget.id,
+                deviceId,
+                device: {
+                  ...device,
+                  capabilityValues: {
+                    ...device.capabilityValues,
+                    [COVER_CAPABILITY_ID]: value,
+                  },
+                },
+              })
+            : createCoverApiErrorRuntime(widget.id, deviceId);
+
+          this.sessions.sendToDisplay(displayId, {
+            type: 'widget-state',
+            widgetId: widget.id,
+            state: resolved.state,
+          });
+        } catch (error) {
+          this.logger.error('Failed to route cover widget state update', {
             displayId,
             widgetId: widget.id,
             deviceId,
@@ -569,21 +683,29 @@ export class RealtimeGateway {
     this.metrics.setRecentCommands(this.pendingCommands.listRecent());
   }
 
-  private async handleDeviceRemoved(deviceId: string): Promise<void> {
-    const pending = this.pendingCommands.findByDeviceId(deviceId);
-    for (const command of pending) {
-      this.pendingCommands.resolveFailed(command.requestId);
-      this.metrics.recordCommandFailed();
-      this.sessions.sendToDisplay(command.displayId, {
-        type: 'command-rejected',
-        requestId: command.requestId,
-        reason: 'device_missing',
-      });
+  private async handleDeviceRemoved(
+    deviceId: string,
+    capabilityId: string,
+  ): Promise<void> {
+    if (capabilityId === LIGHT_CAPABILITY_ID) {
+      const pending = this.pendingCommands.findByDeviceId(deviceId);
+      for (const command of pending) {
+        this.pendingCommands.resolveFailed(command.requestId);
+        this.metrics.recordCommandFailed();
+        this.sessions.sendToDisplay(command.displayId, {
+          type: 'command-rejected',
+          requestId: command.requestId,
+          reason: 'device_missing',
+        });
+      }
+      this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
+      this.metrics.setRecentCommands(this.pendingCommands.listRecent());
     }
-    this.metrics.setActivePendingCommands(this.pendingCommands.activeCount());
-    this.metrics.setRecentCommands(this.pendingCommands.listRecent());
 
-    const displayIds = this.subscriptions.getDisplayIdsForDevice(deviceId);
+    const displayIds = this.subscriptions.getDisplayIdsForDevice(
+      deviceId,
+      capabilityId,
+    );
     for (const displayId of displayIds) {
       const entry = this.registry.getById(displayId);
       if (!entry) {
@@ -591,16 +713,30 @@ export class RealtimeGateway {
       }
 
       for (const widget of entry.config.dashboard.widgets) {
-        if (widget.type !== 'light' || widget.config.deviceId !== deviceId) {
+        if (capabilityId === LIGHT_CAPABILITY_ID) {
+          if (widget.type !== 'light' || widget.config.deviceId !== deviceId) {
+            continue;
+          }
+          const resolved = createLightApiErrorRuntime(widget.id, deviceId);
+          this.sessions.sendToDisplay(displayId, {
+            type: 'widget-state',
+            widgetId: widget.id,
+            state: resolved.state,
+          });
           continue;
         }
 
-        const resolved = createLightApiErrorRuntime(widget.id, deviceId);
-        this.sessions.sendToDisplay(displayId, {
-          type: 'widget-state',
-          widgetId: widget.id,
-          state: resolved.state,
-        });
+        if (capabilityId === COVER_CAPABILITY_ID) {
+          if (widget.type !== 'cover' || widget.config.deviceId !== deviceId) {
+            continue;
+          }
+          const resolved = createCoverApiErrorRuntime(widget.id, deviceId);
+          this.sessions.sendToDisplay(displayId, {
+            type: 'widget-state',
+            widgetId: widget.id,
+            state: resolved.state,
+          });
+        }
       }
     }
   }

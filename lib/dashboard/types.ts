@@ -52,6 +52,10 @@ export interface DashboardUiCopy {
     readonly commandFailed: string;
     readonly commandTimeout: string;
   };
+  readonly cover: {
+    readonly unavailable: string;
+    readonly invalidPosition: string;
+  };
   readonly widgetFailed: string;
   readonly realtime: {
     readonly connectionLost: string;

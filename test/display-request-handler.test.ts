@@ -261,6 +261,7 @@ describe('DisplayRequestHandler', () => {
     assert.match(response.body, /pages\.diagnostics\.gridSize/);
     assert.match(response.body, /2x4/);
     assert.match(response.body, /pages\.diagnostics\.lightWidgets/);
+    assert.match(response.body, /pages\.diagnostics\.coverWidgets/);
   });
 
   it('serves diagnostics even when translations return undefined', async () => {

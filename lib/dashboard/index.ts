@@ -113,6 +113,10 @@ export function createDashboardUiCopy(
       commandFailed: translate('widgets.light.commandFailed'),
       commandTimeout: translate('widgets.light.commandTimeout'),
     },
+    cover: {
+      unavailable: translate('widgets.cover.unavailable'),
+      invalidPosition: translate('widgets.cover.invalidPosition'),
+    },
     widgetFailed: translate('pages.dashboard.widgetFailed'),
     realtime: {
       connectionLost: translate('pages.realtime.connectionLost'),
@@ -140,6 +144,10 @@ export function defaultDashboardUiCopy(): DashboardUiCopy {
       commandInProgress: 'Command in progress',
       commandFailed: 'Command failed',
       commandTimeout: 'Command timeout',
+    },
+    cover: {
+      unavailable: 'Device unavailable',
+      invalidPosition: 'Invalid position',
     },
     widgetFailed: 'Widget failed',
     realtime: {

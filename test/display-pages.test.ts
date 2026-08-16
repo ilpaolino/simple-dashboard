@@ -104,6 +104,10 @@ describe('display pages', () => {
             commandFailed: 'Command failed',
             commandTimeout: 'Command timeout',
           },
+          cover: {
+            unavailable: 'Device unavailable',
+            invalidPosition: 'Invalid position',
+          },
           widgetFailed: 'Widget failed',
           realtime: {
             connectionLost: 'Connection to Homey lost',

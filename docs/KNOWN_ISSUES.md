@@ -1,14 +1,17 @@
 # Known issues
 
-## Fixed / superseded during Milestone 7
+## Fixed / superseded during Milestone 8
 
-- **No ON/OFF control from the display.** LightWidget tap toggles `onoff` via validated widget intents and Homey `setCapabilityValue`.
-- **Read-only LightWidget.** Pending overlay + realtime confirmation are implemented.
+- **No CoverWidget.** Read-only CoverWidget with `windowcoverings_set` is implemented.
+- **LightWidget without decorative icon.** Light and Cover share the device-widget visual language.
 
-## Deferred by design (Milestone 7)
+## Deferred by design (Milestone 8)
 
-- **No dim / color / color temperature.** Compatibility and commands remain `onoff` only.
-- **No advanced gestures.** Architecture reserves `double-tap` / `long-press` / `swipe`; only `tap → toggle` is implemented.
+- **CoverWidget is read-only.** No open/close/stop, slider, or position commands yet.
+- **No inferred cover motion.** Bar updates only on Homey-reported values.
+- **No Homey device icons on tiles.** `Device.icon` / `iconObj` exist in the Web API, but there is no documented auth-free URL for this app’s LAN dashboard; inline SVG fallbacks are used.
+- **No dim / color / color temperature.** Light compatibility and commands remain `onoff` only.
+- **No advanced gestures.** Architecture reserves `double-tap` / `long-press` / `swipe`; only LightWidget `tap → toggle` is implemented.
 - **No offline command queue / auto-retry.** Disconnect clears pending; reconnect uses a full snapshot.
 - **No event replay.** Offline gaps are corrected by a full snapshot after reconnect only.
 - **No Socket.IO.** `ws` only, shared HTTP port.
@@ -20,7 +23,7 @@
 - **No hostname pairing / LAN discovery.** IPv4 only.
 - **Generic identity is a UUID generated at pairing.** Avoid duplicate IPs in the registry.
 - **Existing M1 `wall_display` devices** are not migrated automatically.
-- **Widget CSS is still simple** (Homey-inspired tiles, not a final visual system).
+- **Widget CSS is still simple** (Homey-inspired tiles, shared device grammar started in M8, not a final visual system).
 - **Local IP trust only.** No cloud auth; clients must match a configured Display IP.
 - **Command timeout is fixed** at 4000 ms (not user-configurable).
 
@@ -44,4 +47,4 @@
 
 ## Tests that cannot run in CI without Homey
 
-Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget runtime, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONES.md](MILESTONES.md).
+Automated tests cover registry, placement, widgets, HomeyDeviceRepository (mocked Web API), LightWidget/CoverWidget runtime, realtime gateway/subscriptions/heartbeat/commands (mocked Homey + local `ws`), geometry, identity, pairing, and HTTP handler logic. They do **not** drive the Homey mobile pairing UI, App Settings WebView, physical Shelly panels, or live Homey devices. Use the manual checklist in [MILESTONE-8.md](MILESTONE-8.md).

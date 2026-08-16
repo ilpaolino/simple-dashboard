@@ -291,7 +291,11 @@ export class DisplayRequestHandler {
 
     this.options.registry.markLightWidgetDiagnostics(
       config.displayId,
-      runtime.diagnostics,
+      runtime.lightDiagnostics,
+    );
+    this.options.registry.markCoverWidgetDiagnostics(
+      config.displayId,
+      runtime.coverDiagnostics,
     );
 
     const bootstrap = createDashboardBootstrap({

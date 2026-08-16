@@ -47,6 +47,27 @@ describe('extractReferencedDeviceIds', () => {
     assert.deepEqual(ids, ['dev-1', 'dev-2']);
   });
 
+  it('extracts cover device ids with windowcoverings_set', () => {
+    const ids = extractReferencedDeviceIds({
+      version: 1,
+      widgets: [
+        {
+          id: 'c1',
+          type: 'cover',
+          placement: { row: 0, column: 0, rowSpan: 1, columnSpan: 1 },
+          config: { deviceId: 'cover-1' },
+        },
+        {
+          id: 'l1',
+          type: 'light',
+          placement: { row: 0, column: 1, rowSpan: 1, columnSpan: 1 },
+          config: { deviceId: 'light-1' },
+        },
+      ],
+    });
+    assert.deepEqual(ids, ['cover-1', 'light-1']);
+  });
+
   it('returns empty for dashboards without devices', () => {
     assert.deepEqual(
       extractReferencedDeviceIds({ version: 1, widgets: [] }),
@@ -218,5 +239,38 @@ describe('RealtimeSubscriptionManager', () => {
 
     assert.equal(active, 0);
     assert.equal(manager.activeSubscriptionCount(), 0);
+  });
+
+  it('subscribes windowcoverings_set for cover widgets with ref-counting', async () => {
+    const subscribed: string[] = [];
+    const manager = new RealtimeSubscriptionManager({
+      logger: silentLogger(),
+      metrics: new RealtimeMetrics(),
+      onCapabilityValue() {},
+      onDeviceRemoved() {},
+      subscriber: {
+        async subscribeCapability({ deviceId, capabilityId }) {
+          subscribed.push(`${deviceId}:${capabilityId}`);
+          return {
+            destroy() {},
+          };
+        },
+      },
+    });
+
+    await manager.setDisplaySubscriptions('display-a', [
+      { deviceId: 'cover-1', capabilityId: 'windowcoverings_set' },
+    ]);
+    await manager.setDisplaySubscriptions('display-b', [
+      { deviceId: 'cover-1', capabilityId: 'windowcoverings_set' },
+    ]);
+
+    assert.deepEqual(subscribed, ['cover-1:windowcoverings_set']);
+    assert.equal(manager.getRefCount('cover-1', 'windowcoverings_set'), 2);
+
+    await manager.removeDisplay('display-a');
+    assert.equal(manager.getRefCount('cover-1', 'windowcoverings_set'), 1);
+    await manager.removeDisplay('display-b');
+    assert.equal(manager.getRefCount('cover-1', 'windowcoverings_set'), 0);
   });
 });

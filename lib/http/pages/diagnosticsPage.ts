@@ -120,6 +120,28 @@ function lightErrorLabel(
   }
 }
 
+function coverErrorLabel(
+  error: string | null,
+  translate: (key: string) => string,
+): string {
+  if (!error) {
+    return translate('pages.status.none');
+  }
+  switch (error) {
+    case 'missing_device':
+    case 'api_error':
+      return translate('widgets.cover.failedToLoadDevice');
+    case 'missing_capability':
+      return translate('widgets.cover.missingCapability');
+    case 'unavailable':
+      return translate('widgets.cover.unavailable');
+    case 'invalid_value':
+      return translate('widgets.cover.invalidPosition');
+    default:
+      return error;
+  }
+}
+
 export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
   const translate = (key: string): string => {
     try {
@@ -317,6 +339,62 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       </tbody>
     </table>`;
 
+  const coverRows = displays.flatMap((entry) => {
+    try {
+      const diagnostics = Array.isArray(entry?.runtime?.lastCoverWidgetDiagnostics)
+        ? entry.runtime.lastCoverWidgetDiagnostics
+        : [];
+      return diagnostics.flatMap((item) => {
+        if (!item || typeof item !== 'object') {
+          return [];
+        }
+        const raw =
+          item.rawValue === null || item.rawValue === undefined
+            ? none
+            : String(item.rawValue);
+        const percent =
+          item.positionPercent === null || item.positionPercent === undefined
+            ? none
+            : `${item.positionPercent}%`;
+        return [`<tr>
+        <td>${escapeHtml(entry.config.name)}</td>
+        <td>${escapeHtml(item.widgetId)}</td>
+        <td>${escapeHtml(item.deviceId)}</td>
+        <td>${escapeHtml(item.resolved ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.hasWindowcoveringsSet ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(item.available ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(raw)}</td>
+        <td>${escapeHtml(percent)}</td>
+        <td>${escapeHtml(coverErrorLabel(item.error, t))}</td>
+      </tr>`];
+      });
+    } catch {
+      return [];
+    }
+  });
+
+  const coverTable =
+    coverRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noCoverWidgets'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.recognized.name'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.widgetId'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.deviceId'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.deviceResolved'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hasWindowcoveringsSet'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.availability'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.rawValue'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.normalizedPercent'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.error'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${coverRows.join('\n')}
+      </tbody>
+    </table>`;
+
   const realtimeMetricsHtml = !metrics
     ? `<p>${escapeHtml(t('pages.diagnostics.noRealtime'))}</p>`
     : `<dl>
@@ -381,6 +459,7 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
     }
     return [`<tr>
         <td>${escapeHtml(item.deviceId)}</td>
+        <td>${escapeHtml(item.capabilityId)}</td>
         <td>${escapeHtml(String(item.refCount))}</td>
         <td>${escapeHtml(String(item.displayIds?.length ?? 0))}</td>
         <td>${escapeHtml(item.subscribed ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
@@ -395,6 +474,7 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <thead>
         <tr>
           <th>${escapeHtml(t('pages.diagnostics.deviceId'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.capabilityId'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.refCount'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.interestedDisplays'))}</th>
           <th>${escapeHtml(t('pages.diagnostics.subscriptionActive'))}</th>
@@ -460,6 +540,8 @@ ${diagnosticsStyles}
     </table>
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.lightWidgets'))}</h1>
     ${lightTable}
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.coverWidgets'))}</h1>
+    ${coverTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.realtimeMetrics'))}</h1>
     ${realtimeMetricsHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentCommands'))}</h1>

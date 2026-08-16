@@ -20,6 +20,8 @@ import {
 } from './lib/homey/HomeyDeviceRepository';
 import { createHomeyWebApi } from './lib/homey/createHomeyWebApi';
 import type { CompatibleDeviceOption } from './lib/homey/types';
+import { validateCoverWidgetBinding } from './lib/widgets/cover/runtime';
+import type { CoverBindingError } from './lib/widgets/cover/types';
 import { validateLightWidgetBinding } from './lib/widgets/light/runtime';
 import type { LightBindingError } from './lib/widgets/light/types';
 import { RealtimeGateway } from './lib/realtime';
@@ -205,7 +207,8 @@ class WelcomeWallApp extends Homey.App {
       throw new Error(this.homey.__('pages.invalidLayout.heading'));
     }
 
-    const devices = await this.loadLightDevicesForEditor();
+    const lightDevices = await this.loadLightDevicesForEditor();
+    const coverDevices = await this.loadCoverDevicesForEditor();
 
     return {
       displayId: snapshot.displayId,
@@ -220,9 +223,10 @@ class WelcomeWallApp extends Homey.App {
         defaultConfig: definition.defaultConfig,
       })),
       compatibleDevices: {
-        light: devices.devices,
+        light: lightDevices.devices,
+        cover: coverDevices.devices,
       },
-      deviceLoadError: devices.error,
+      deviceLoadError: lightDevices.error ?? coverDevices.error,
     };
   }
 
@@ -276,15 +280,26 @@ class WelcomeWallApp extends Homey.App {
       throw new Error(this.homey.__(errorKeyForValidation(validation.error)));
     }
 
-    const binding = await this.validateLightBindings(parsed.configuration);
-    if (!binding.ok) {
+    const lightBinding = await this.validateLightBindings(parsed.configuration);
+    if (!lightBinding.ok) {
       this.logger.warn('Rejected dashboard save: light device binding failed', {
         displayId,
-        error: binding.error,
-        widgetId: binding.widgetId,
-        deviceId: binding.deviceId,
+        error: lightBinding.error,
+        widgetId: lightBinding.widgetId,
+        deviceId: lightBinding.deviceId,
       });
-      throw new Error(this.homey.__(errorKeyForBinding(binding.error)));
+      throw new Error(this.homey.__(errorKeyForLightBinding(lightBinding.error)));
+    }
+
+    const coverBinding = await this.validateCoverBindings(parsed.configuration);
+    if (!coverBinding.ok) {
+      this.logger.warn('Rejected dashboard save: cover device binding failed', {
+        displayId,
+        error: coverBinding.error,
+        widgetId: coverBinding.widgetId,
+        deviceId: coverBinding.deviceId,
+      });
+      throw new Error(this.homey.__(errorKeyForCoverBinding(coverBinding.error)));
     }
 
     await device.setStoreValue(DASHBOARD_STORE_KEY, parsed.configuration);
@@ -381,6 +396,22 @@ class WelcomeWallApp extends Homey.App {
     }
   }
 
+  private async loadCoverDevicesForEditor(): Promise<{
+    readonly devices: readonly CompatibleDeviceOption[];
+    readonly error: string | null;
+  }> {
+    try {
+      const devices = await this.deviceRepository.listCompatibleCoverDevices();
+      return { devices, error: null };
+    } catch (error) {
+      this.logger.error('Failed to load cover devices for Dashboard Editor', error);
+      return {
+        devices: [],
+        error: this.homey.__('widgets.cover.failedToLoadDevice'),
+      };
+    }
+  }
+
   private async validateLightBindings(
     configuration: DashboardConfiguration,
   ): Promise<
@@ -398,6 +429,40 @@ class WelcomeWallApp extends Homey.App {
       }
 
       const result = await validateLightWidgetBinding({
+        config: widget.config,
+        repository: this.deviceRepository,
+      });
+
+      if (!result.ok) {
+        return {
+          ok: false,
+          error: result.error,
+          widgetId: widget.id,
+          deviceId: widget.config.deviceId,
+        };
+      }
+    }
+
+    return { ok: true };
+  }
+
+  private async validateCoverBindings(
+    configuration: DashboardConfiguration,
+  ): Promise<
+    | { readonly ok: true }
+    | {
+        readonly ok: false;
+        readonly error: CoverBindingError;
+        readonly widgetId: string;
+        readonly deviceId: string;
+      }
+  > {
+    for (const widget of configuration.widgets) {
+      if (widget.type !== 'cover') {
+        continue;
+      }
+
+      const result = await validateCoverWidgetBinding({
         config: widget.config,
         repository: this.deviceRepository,
       });
@@ -443,6 +508,7 @@ interface EditorDashboardPayload {
   }[];
   readonly compatibleDevices: {
     readonly light: readonly CompatibleDeviceOption[];
+    readonly cover: readonly CompatibleDeviceOption[];
   };
   readonly deviceLoadError: string | null;
 }
@@ -459,7 +525,7 @@ function resolveTypeIdForDriver(
   return null;
 }
 
-function errorKeyForBinding(error: LightBindingError): string {
+function errorKeyForLightBinding(error: LightBindingError): string {
   switch (error) {
     case 'device_missing':
       return 'widgets.light.failedToLoadDevice';
@@ -470,6 +536,20 @@ function errorKeyForBinding(error: LightBindingError): string {
     case 'device_api_error':
     default:
       return 'widgets.light.failedToLoadDevice';
+  }
+}
+
+function errorKeyForCoverBinding(error: CoverBindingError): string {
+  switch (error) {
+    case 'device_missing':
+      return 'widgets.cover.failedToLoadDevice';
+    case 'device_not_compatible':
+      return 'widgets.cover.deviceNotCompatible';
+    case 'missing_windowcoverings_set':
+      return 'widgets.cover.missingCapability';
+    case 'device_api_error':
+    default:
+      return 'widgets.cover.failedToLoadDevice';
   }
 }
 

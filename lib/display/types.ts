@@ -3,6 +3,7 @@ import { ADAPTER_IDS } from '../adapters/types';
 import type { DashboardConfiguration } from '../widgets/types';
 import { emptyDashboardConfiguration } from '../widgets/types';
 import type { LightWidgetDiagnostic } from '../widgets/light/types';
+import type { CoverWidgetDiagnostic } from '../widgets/cover/types';
 
 /**
  * Homey driver ids — also used as display type ids.
@@ -65,6 +66,8 @@ export interface DisplayRuntimeState {
   lastDashboardLoadedAt: string | null;
   /** LightWidget snapshot diagnostics from the last dashboard bootstrap. */
   lastLightWidgetDiagnostics: readonly LightWidgetDiagnostic[];
+  /** CoverWidget snapshot diagnostics from the last dashboard bootstrap. */
+  lastCoverWidgetDiagnostics: readonly CoverWidgetDiagnostic[];
   /** Active WebSocket connection id, if any (runtime only). */
   realtimeConnectionId: string | null;
   realtimeConnectedAt: Date | null;

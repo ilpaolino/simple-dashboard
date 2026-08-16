@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 7 adds **bidirectional LightWidget commands**: tap-to-toggle with pending feedback, backend widget-intent validation, official Homey `setCapabilityValue('onoff')`, and confirmation only from Homey realtime.
+It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 8 adds a read-only **CoverWidget** for window coverings (`windowcoverings_set`) with normalized 0–100% UX, a vertical position bar, and a shared decorative device-widget visual language also applied to LightWidget.
 
 ## Current status
 
-**Milestone 7 is implemented.** Milestone 0–6 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, LightWidget, WebSocket realtime, diagnostics).
+**Milestone 8 is implemented.** Milestone 0–7 behavior is preserved (HTTP server, settings, drivers, registry, recognition, grid engine, widget engine, Dashboard Editor, Homey Device Repository, LightWidget commands, WebSocket realtime, diagnostics).
 
 | Area | Status |
 | --- | --- |
@@ -17,16 +17,19 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 7 adds *
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M7) |
+| Diagnostics page | Done (M2–M8) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
-| Dashboard Editor in App Settings | Done (M4/M5) |
+| Dashboard Editor in App Settings | Done (M4/M5/M8) |
 | Homey Device Repository (`homey:manager:api`) | Done (M5) |
 | LightWidget (`onoff` display + toggle) | Done (M5/M7) |
+| CoverWidget (`windowcoverings_set` read-only) | Done (M8) |
+| Shared device-widget visual language | Done (M8) |
 | WebSocket realtime (same port) | Done (M6) |
-| Selective Homey capability subscriptions | Done (M6) |
+| Selective Homey capability subscriptions | Done (M6/M8) |
 | Live dashboard configuration | Done (M6) |
 | Bidirectional widget commands (toggle) | Done (M7) |
+| Cover open/close/stop / slider | Not started |
 | Dim / color / color temperature | Not started |
 | Flow cards | Not started |
 
@@ -70,12 +73,14 @@ homey app run --remote
 | `lib/homey/` | Homey Web API client + HomeyDeviceRepository (backend only) |
 | `lib/widgets/` | Shared widget types, placement, validation, registry, runtime snapshot |
 | `lib/widgets/light/` | LightWidget config, compatibility, runtime resolver, interactions |
+| `lib/widgets/cover/` | CoverWidget config, compatibility, normalization, runtime resolver |
 | `lib/dashboard/` | Grid types, geometry math, cell ids, bootstrap DTO |
 | `lib/display/` | Registry, session, IP normalize, hardware identity, online via WS |
 | `lib/http/` | Request handler, dashboard HTML, static assets, diagnostics |
 | `frontend/` | Vanilla dashboard + settings editor source |
 | `frontend/realtime/` | WebSocket client, reconnect, connection overlay, WidgetInteractionController |
-| `frontend/widgets/` | Isolated widget renderers (title, date-time, light) |
+| `frontend/widgets/` | Isolated widget renderers (title, date-time, light, cover) |
+| `frontend/widgets/shared/` | Shared device-widget CSS + decorative icon helper |
 | `assets/dashboard/` | Built `dashboard.css` / `dashboard.js` served on LAN |
 | `settings/` | Official Homey app settings + Dashboard Editor |
 | `lib/adapters/` | Shelly + Generic protocol adapters |
@@ -92,4 +97,4 @@ The Homey device identity is `data.id` (Shelly device id when detected, otherwis
 
 Widget configuration is stored per Homey Device in the Device Store key `dashboard`.
 
-LightWidget persists **only** `deviceId`. Name, zone, availability, and `onoff` are read from Homey (snapshot + realtime). Commands are issued as widget intents (`widgetId` + `action`), never as raw Homey device writes from the browser.
+LightWidget and CoverWidget persist **only** `deviceId`. Name, zone, availability, and capability values are read from Homey (snapshot + realtime). Commands (LightWidget only today) are issued as widget intents (`widgetId` + `action`), never as raw Homey device writes from the browser.

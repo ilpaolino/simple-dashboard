@@ -9,6 +9,7 @@ import type {
   RegisteredDisplay,
 } from './types';
 import type { LightWidgetDiagnostic } from '../widgets/light/types';
+import type { CoverWidgetDiagnostic } from '../widgets/cover/types';
 
 function emptyRuntime(): RegisteredDisplay['runtime'] {
   return {
@@ -21,6 +22,7 @@ function emptyRuntime(): RegisteredDisplay['runtime'] {
     lastDashboardErrorKey: null,
     lastDashboardLoadedAt: null,
     lastLightWidgetDiagnostics: [],
+    lastCoverWidgetDiagnostics: [],
     realtimeConnectionId: null,
     realtimeConnectedAt: null,
     realtimeRemoteAddress: null,
@@ -174,6 +176,18 @@ export class DisplayRegistry {
     }
 
     entry.runtime.lastLightWidgetDiagnostics = diagnostics;
+  }
+
+  public markCoverWidgetDiagnostics(
+    displayId: string,
+    diagnostics: readonly CoverWidgetDiagnostic[],
+  ): void {
+    const entry = this.byId.get(displayId);
+    if (!entry) {
+      return;
+    }
+
+    entry.runtime.lastCoverWidgetDiagnostics = diagnostics;
   }
 
   public markRealtimeConnected(

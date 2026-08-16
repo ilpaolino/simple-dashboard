@@ -10,6 +10,7 @@ import {
   validatePlacementAgainstWidgets,
 } from '../../lib/widgets/placement';
 import { createWidgetId } from '../../lib/widgets/validation';
+import { isCoverWidgetConfig } from '../../lib/widgets/cover/definition';
 import { isDateTimeWidgetConfig } from '../../lib/widgets/date-time/definition';
 import { isLightWidgetConfig } from '../../lib/widgets/light/definition';
 import { isTitleWidgetConfig } from '../../lib/widgets/title/definition';
@@ -80,6 +81,7 @@ interface EditorDashboardPayload {
   readonly widgetTypes: readonly WidgetTypeMeta[];
   readonly compatibleDevices: {
     readonly light: readonly CompatibleDeviceOption[];
+    readonly cover: readonly CompatibleDeviceOption[];
   };
   readonly deviceLoadError: string | null;
 }
@@ -325,6 +327,7 @@ function bindEditor(Homey: HomeySettingsApi): void {
     'dateTimeMode',
     'widgetChrome',
     'lightDevice',
+    'coverDevice',
   ]) {
     document.getElementById(id)?.addEventListener('change', () => {
       readDraftForm();
@@ -433,10 +436,7 @@ function applyDraftToWidgets(): boolean {
 
   const widget = draftToWidget(state.draft);
   if (!widget) {
-    state.errorKey =
-      state.draft.type === 'light' && state.draft.deviceId.trim() === ''
-        ? 'widgets.light.selectDevice'
-        : 'editor.errors.invalidConfig';
+    state.errorKey = missingDeviceErrorKey(state.draft);
     return false;
   }
 
@@ -500,6 +500,19 @@ function draftToWidget(draft: DraftWidget): WidgetInstance | null {
     };
   }
 
+  if (draft.type === 'cover') {
+    const config = { deviceId: draft.deviceId };
+    if (!isCoverWidgetConfig(config)) {
+      return null;
+    }
+    return {
+      id: draft.id,
+      type: 'cover',
+      placement,
+      config,
+    };
+  }
+
   const config = { deviceId: draft.deviceId };
   if (!isLightWidgetConfig(config)) {
     return null;
@@ -512,6 +525,16 @@ function draftToWidget(draft: DraftWidget): WidgetInstance | null {
   };
 }
 
+function missingDeviceErrorKey(draft: DraftWidget): string {
+  if (draft.type === 'light' && draft.deviceId.trim() === '') {
+    return 'widgets.light.selectDevice';
+  }
+  if (draft.type === 'cover' && draft.deviceId.trim() === '') {
+    return 'widgets.cover.selectDevice';
+  }
+  return 'editor.errors.invalidConfig';
+}
+
 function validateDraft(): void {
   if (!state.draft || !state.payload) {
     state.errorKey = null;
@@ -520,10 +543,7 @@ function validateDraft(): void {
 
   const widget = draftToWidget(state.draft);
   if (!widget) {
-    state.errorKey =
-      state.draft.type === 'light' && state.draft.deviceId.trim() === ''
-        ? 'widgets.light.selectDevice'
-        : 'editor.errors.invalidConfig';
+    state.errorKey = missingDeviceErrorKey(state.draft);
     return;
   }
 
@@ -535,6 +555,18 @@ function validateDraft(): void {
         devices.length === 0
           ? 'widgets.light.noCompatibleDevices'
           : 'widgets.light.deviceNotCompatible';
+      return;
+    }
+  }
+
+  if (widget.type === 'cover') {
+    const devices = state.payload.compatibleDevices?.cover ?? [];
+    const known = devices.some((device) => device.id === widget.config.deviceId);
+    if (!known && state.draft.isNew) {
+      state.errorKey =
+        devices.length === 0
+          ? 'widgets.cover.noCompatibleDevices'
+          : 'widgets.cover.deviceNotCompatible';
       return;
     }
   }
@@ -631,6 +663,7 @@ function syncDraftForm(): void {
   if (dateTimeMode) dateTimeMode.value = state.draft.dateTimeMode;
   if (widgetChrome) widgetChrome.checked = state.draft.chrome === 'card';
   fillLightDeviceOptions();
+  fillCoverDeviceOptions();
 }
 
 function readDraftForm(): void {
@@ -665,6 +698,9 @@ function readDraftForm(): void {
   const lightDevice = document.getElementById(
     'lightDevice',
   ) as HTMLSelectElement | null;
+  const coverDevice = document.getElementById(
+    'coverDevice',
+  ) as HTMLSelectElement | null;
 
   if (typeSelect && isWidgetTypeId(typeSelect.value)) {
     if (state.draft.type !== typeSelect.value) {
@@ -680,6 +716,9 @@ function readDraftForm(): void {
       fillSpanOptions(spanSelect, state.draft.type);
       if (state.draft.type === 'light') {
         fillLightDeviceOptions();
+      }
+      if (state.draft.type === 'cover') {
+        fillCoverDeviceOptions();
       }
     }
   }
@@ -713,8 +752,13 @@ function readDraftForm(): void {
   if (widgetChrome) {
     state.draft.chrome = widgetChrome.checked ? 'card' : 'plain';
   }
-  if (lightDevice) {
+  // Only read the device select that matches the current widget type.
+  // Both selects exist in the DOM (one hidden); reading the wrong one
+  // would overwrite deviceId with the empty placeholder value.
+  if (state.draft.type === 'light' && lightDevice) {
     state.draft.deviceId = lightDevice.value;
+  } else if (state.draft.type === 'cover' && coverDevice) {
+    state.draft.deviceId = coverDevice.value;
   }
 }
 
@@ -738,7 +782,7 @@ function fillLightDeviceOptions(): void {
   for (const device of devices) {
     const option = document.createElement('option');
     option.value = device.id;
-    option.textContent = deviceOptionLabel(device);
+    option.textContent = deviceOptionLabel(device, 'light');
     select.appendChild(option);
   }
 
@@ -768,10 +812,63 @@ function fillLightDeviceOptions(): void {
   }
 }
 
-function deviceOptionLabel(device: CompatibleDeviceOption): string {
-  const zone = device.zoneName?.trim()
-    ? device.zoneName
-    : t('widgets.light.noZone');
+function fillCoverDeviceOptions(): void {
+  const select = document.getElementById(
+    'coverDevice',
+  ) as HTMLSelectElement | null;
+  const help = document.getElementById('coverDeviceHelp');
+  if (!select || !state.payload || !state.draft) {
+    return;
+  }
+
+  const devices = state.payload.compatibleDevices?.cover ?? [];
+  select.replaceChildren();
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = t('widgets.cover.selectDevice');
+  select.appendChild(placeholder);
+
+  for (const device of devices) {
+    const option = document.createElement('option');
+    option.value = device.id;
+    option.textContent = deviceOptionLabel(device, 'cover');
+    select.appendChild(option);
+  }
+
+  if (
+    state.draft.deviceId &&
+    !devices.some((device) => device.id === state.draft?.deviceId)
+  ) {
+    const missing = document.createElement('option');
+    missing.value = state.draft.deviceId;
+    missing.textContent = `${state.draft.deviceId} — ${t('widgets.cover.unavailable')}`;
+    select.appendChild(missing);
+  }
+
+  select.value = state.draft.deviceId;
+
+  if (help) {
+    if (state.payload.deviceLoadError) {
+      help.hidden = false;
+      help.textContent = state.payload.deviceLoadError;
+    } else if (devices.length === 0) {
+      help.hidden = false;
+      help.textContent = t('widgets.cover.noCompatibleDevices');
+    } else {
+      help.hidden = true;
+      help.textContent = '';
+    }
+  }
+}
+
+function deviceOptionLabel(
+  device: CompatibleDeviceOption,
+  kind: 'light' | 'cover',
+): string {
+  const noZoneKey =
+    kind === 'cover' ? 'widgets.cover.noZone' : 'widgets.light.noZone';
+  const zone = device.zoneName?.trim() ? device.zoneName : t(noZoneKey);
   return `${device.name} — ${zone}`;
 }
 
@@ -884,6 +981,12 @@ function selectExistingWidget(widget: WidgetInstance): void {
       type: 'date-time',
       dateTimeMode: widget.config.mode,
       chrome: resolveWidgetChrome(widget.config),
+    };
+  } else if (widget.type === 'cover') {
+    state.draft = {
+      ...base,
+      type: 'cover',
+      deviceId: widget.config.deviceId,
     };
   } else {
     state.draft = {
@@ -1088,6 +1191,7 @@ function renderDraftPanel(): void {
   const titleFields = document.getElementById('titleFields');
   const dateTimeFields = document.getElementById('dateTimeFields');
   const lightFields = document.getElementById('lightFields');
+  const coverFields = document.getElementById('coverFields');
   const chromeFields = document.getElementById('chromeFields');
   const removeButton = document.getElementById('removeWidget');
 
@@ -1120,8 +1224,12 @@ function renderDraftPanel(): void {
   if (lightFields) {
     lightFields.hidden = state.draft.type !== 'light';
   }
+  if (coverFields) {
+    coverFields.hidden = state.draft.type !== 'cover';
+  }
   if (chromeFields) {
-    chromeFields.hidden = state.draft.type === 'light';
+    chromeFields.hidden =
+      state.draft.type === 'light' || state.draft.type === 'cover';
   }
 }
 

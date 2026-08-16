@@ -6,6 +6,7 @@ import {
   resolveLightVisualState,
 } from '../../../lib/widgets/light/visual';
 import type { CommandStatus } from '../../realtime/WidgetInteractionController';
+import { createDeviceWidgetIcon } from '../shared/deviceIcon';
 import {
   layoutVariantClass,
   placementGridArea,
@@ -17,6 +18,7 @@ import {
 /**
  * Interactive LightWidget: entire tile is the tap target (toggle).
  * Real Homey onoff state is always shown; pending/error are overlays.
+ * Decorative bulb icon is visual-only (Milestone 8 device language).
  */
 export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
   public readonly type = 'light' as const;
@@ -29,6 +31,7 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
     element.className = [
       'widget',
       'widget-light',
+      'device-widget',
       layoutVariantClass(instance.placement),
     ].join(' ');
     element.style.gridArea = placementGridArea(instance.placement);
@@ -36,24 +39,32 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
     element.dataset.widgetType = instance.type;
     element.setAttribute('role', 'button');
 
-    const statusEl = document.createElement('p');
-    statusEl.className = 'widget-light__status';
+    const iconEl = createDeviceWidgetIcon({ kind: 'light' });
 
-    const nameEl = document.createElement('p');
-    nameEl.className = 'widget-light__name';
+    const statusEl = document.createElement('p');
+    statusEl.className = 'widget-light__status device-widget__state';
+
+    const footerEl = document.createElement('div');
+    footerEl.className = 'widget-light__footer';
 
     const feedbackEl = document.createElement('p');
     feedbackEl.className = 'widget-light__feedback';
     feedbackEl.hidden = true;
+
+    const nameEl = document.createElement('p');
+    nameEl.className = 'widget-light__name device-widget__name';
 
     const pendingEl = document.createElement('span');
     pendingEl.className = 'widget-light__pending';
     pendingEl.setAttribute('aria-hidden', 'true');
     pendingEl.hidden = true;
 
+    footerEl.appendChild(feedbackEl);
+    footerEl.appendChild(nameEl);
+
+    element.appendChild(iconEl);
     element.appendChild(statusEl);
-    element.appendChild(nameEl);
-    element.appendChild(feedbackEl);
+    element.appendChild(footerEl);
     element.appendChild(pendingEl);
 
     let runtime: LightWidgetRuntimeState | undefined =
@@ -66,6 +77,7 @@ export class LightWidgetRenderer implements WidgetRenderer<LightWidgetConfig> {
       const classes = [
         'widget',
         'widget-light',
+        'device-widget',
         layoutVariantClass(instance.placement),
         lightVisualStateClass(visual),
       ];

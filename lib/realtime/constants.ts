@@ -22,6 +22,9 @@ export const RECONNECT_FACTOR = 2;
 /** Capability used by LightWidget realtime. */
 export const REALTIME_LIGHT_CAPABILITY_ID = 'onoff';
 
+/** Capability used by CoverWidget realtime (official Homey windowcoverings_set). */
+export const REALTIME_COVER_CAPABILITY_ID = 'windowcoverings_set';
+
 /**
  * Max wait for Homey realtime confirmation after a capability command.
  * Not user-configurable in this milestone.

@@ -53,36 +53,34 @@
 - Flow cards
 - Socket.IO
 
+## Milestone 8 — CoverWidget Read-Only & Device Visual Language
+
+**Status:** Done. Details: [MILESTONE-8.md](MILESTONE-8.md).
+
+### In scope (implemented)
+
+- CoverWidget read-only (`windowcoverings_set`)
+- Compatibility filter + editor device picker (name + zone)
+- Normalization 0–100% (0 closed, 100 open)
+- Vertical bar + decorative icons
+- Shared device-widget CSS for Light + Cover
+- Selective realtime via capability-keyed subscriptions
+- Diagnostics with raw + normalized values
+- Automated tests + LightWidget visual regression coverage
+
+### Out of scope (explicitly deferred)
+
+- Cover commands (open/close/stop/slider)
+- Interpolated movement / gestures / popups
+- Other device widgets
+
 ## Later milestones (not started)
 
+- CoverWidget interactive control
 - Dim / color / temperature on the same `deviceId`
-- Additional widget types (covers, sensors, thermostats)
+- Additional widget types (sensors, thermostats)
 - Display hardware controls beyond recognition
 
-## Manual test checklist (Milestone 7)
+## Manual test checklist (Milestone 8)
 
-- [ ] Build completed
-- [ ] TypeScript strict without errors
-- [ ] lint completed
-- [ ] test automatici completed
-- [ ] LightWidget entirely clickable
-- [ ] OFF → tap → pending
-- [ ] realtime ON → widget ON
-- [ ] ON → tap → pending
-- [ ] realtime OFF → widget OFF
-- [ ] real state remains visible during pending
-- [ ] second tap during pending ignored
-- [ ] Device unavailable not commandable
-- [ ] timeout shows error
-- [ ] API error shows error
-- [ ] socket loss clears pending
-- [ ] reconnect snapshot restores real state
-- [ ] Device not belonging to the widget not commandable
-- [ ] client cannot send arbitrary deviceId
-- [ ] diagnostics updated
-- [ ] command metrics correct
-- [ ] Italian UI
-- [ ] English UI
-- [ ] no polling introduced
-- [ ] no evident leaks
-- [ ] RAM/bundle delta documented
+See the full checklist in [MILESTONE-8.md](MILESTONE-8.md).

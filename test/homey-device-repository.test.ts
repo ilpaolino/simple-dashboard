@@ -191,6 +191,28 @@ describe('HomeyDeviceRepository', () => {
     });
   });
 
+  it('filters compatible cover devices by windowcoverings_set', async () => {
+    const repository = new HomeyDeviceRepository(
+      new MemoryHomeyWebApi(
+        [
+          lightDevice(),
+          lightDevice({
+            id: 'cover-1',
+            name: 'Tapparella',
+            capabilities: ['windowcoverings_set'],
+            capabilityValues: { windowcoverings_set: 0.4 },
+          }),
+        ],
+        { 'zone-living': { id: 'zone-living', name: 'Soggiorno' } },
+      ),
+    );
+
+    const options = await repository.listCompatibleCoverDevices();
+    assert.equal(options.length, 1);
+    assert.equal(options[0]?.id, 'cover-1');
+    assert.equal(options[0]?.zoneName, 'Soggiorno');
+  });
+
   it('propagates Homey API errors from listDevices', async () => {
     const repository = new HomeyDeviceRepository(
       new MemoryHomeyWebApi([], {}, true),

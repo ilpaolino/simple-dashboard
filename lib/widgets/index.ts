@@ -1,4 +1,6 @@
 export type {
+  CoverWidgetConfig,
+  CoverWidgetRuntimeState,
   DashboardConfiguration,
   DashboardTheme,
   DateTimeMode,
@@ -59,10 +61,24 @@ export {
   isLightWidgetConfig,
 } from './light/definition';
 export {
+  coverWidgetDefinition,
+  isCoverWidgetConfig,
+} from './cover/definition';
+export {
   isCompatibleWithLightWidget,
   LIGHT_CAPABILITY_ID,
 } from './light/compatibility';
+export {
+  isCompatibleWithCoverWidget,
+  COVER_CAPABILITY_ID,
+} from './cover/compatibility';
+export { normalizeWindowcoveringsSet } from './cover/normalize';
 export { resolveLightVisualState, lightVisualStateClass } from './light/visual';
+export {
+  resolveCoverVisualState,
+  coverVisualStateClass,
+  formatCoverPositionPercent,
+} from './cover/visual';
 export {
   resolveDashboardRuntime,
   type DashboardRuntimeResolveResult,
@@ -72,4 +88,8 @@ export {
   createLightApiErrorRuntime,
   parseOnoff,
 } from './light/runtime';
+export {
+  resolveCoverWidgetRuntimeFromSnapshot,
+  createCoverApiErrorRuntime,
+} from './cover/runtime';
 export type { HomeyCapabilitySubscription } from '../homey/types';

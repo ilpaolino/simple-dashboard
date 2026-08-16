@@ -6,6 +6,47 @@
 
 Adapters, PairingFlow, drivers, DisplayRegistry, Widget Engine, Dashboard Editor, HomeyDeviceRepository, and LightWidget contracts from earlier milestones remain in force.
 
+## Milestone 8 — CoverWidget read-only & device visual language
+
+```text
+Homey device capability (windowcoverings_set)
+        │  makeCapabilityInstance
+        ▼
+RealtimeSubscriptionManager  (ref-counted by deviceId + capabilityId)
+        │
+        ▼
+normalizeWindowcoveringsSet  → positionPercent 0…100
+        │
+        ▼
+CoverWidget runtime state → WebSocket widget-state → CoverWidgetRenderer
+```
+
+### CoverWidget
+
+- Persist only `{ deviceId }`.
+- Compatible when Homey device has official `windowcoverings_set`.
+- Homey raw value is a number in `[0, 1]` (0 closed, 1 open). Backend normalizes to integer percent for the frontend.
+- UI: device name, `NN%`, vertical bar (fill height = percent), decorative shutter icon.
+- Read-only in this milestone — no commands.
+
+### Shared device visual language
+
+LightWidget and CoverWidget share:
+
+- CSS classes `device-widget`, `device-widget__name`, `device-widget__state`, `device-widget__icon`
+- Inline SVG decorative icons (top-right, low opacity, non-interactive)
+
+They remain **separate** widget types — no monolithic `DeviceWidget` class.
+
+### Subscriptions
+
+`extractReferencedCapabilitySubscriptions` yields `(deviceId, capabilityId)` pairs:
+
+- LightWidget → `onoff`
+- CoverWidget → `windowcoverings_set`
+
+Reference counting is per pair so two displays showing the same cover share one Homey listener.
+
 ## Milestone 6 — WebSocket realtime & live dashboard synchronization
 
 ```text
@@ -70,9 +111,9 @@ Offline displays receive nothing (no infinite queues). They get the latest confi
 
 ### RealtimeSubscriptionManager
 
-- Extracts referenced Homey device ids from the dashboard (`LightWidget.deviceId`).
-- Diffs old vs new ids; subscribe/unsubscribe only the delta.
-- Reference-counts shared devices across Displays.
+- Extracts referenced Homey capability subscriptions from the dashboard (`LightWidget` → `onoff`, `CoverWidget` → `windowcoverings_set`).
+- Diffs old vs new `(deviceId, capabilityId)` pairs; subscribe/unsubscribe only the delta.
+- Reference-counts shared devices/capabilities across Displays.
 - Routes capability events only to interested Display sessions.
 
 ### Online / offline

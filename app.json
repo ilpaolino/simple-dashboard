@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "dev.dadda.simpledashboard",
-  "version": "0.7.0",
+  "version": "0.9.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": [
@@ -12,8 +12,8 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla widget dashboard for Homey Pro wall displays with WebSocket realtime sync for lights and configuration.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro con sync realtime WebSocket per luci e configurazione."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays with WebSocket realtime for lights, covers, and live configuration.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro con sync realtime WebSocket per luci, tapparelle e configurazione."
   },
   "category": [
     "tools"
@@ -26,6 +26,7 @@
       "wall display",
       "widgets",
       "light",
+      "cover",
       "realtime",
       "diagnostics"
     ],
@@ -36,6 +37,7 @@
       "wall display",
       "widget",
       "luce",
+      "tapparella",
       "realtime",
       "diagnostica"
     ]

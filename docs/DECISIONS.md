@@ -1,5 +1,53 @@
 # Decisions
 
+Architectural choices for Milestone 8. Earlier decisions remain in force below and in prior milestone docs.
+
+## CoverWidget read-only first
+
+**Choice:** The first CoverWidget implementation shows only state/position. No open/close/stop, slider, or gestures.
+
+**Why:** Matches the successful LightWidget pattern (read snapshot/realtime first). Control can reuse the Milestone 7 widget-intent command path later without rewriting the tile.
+
+## 0–100 normalized UX
+
+**Choice:** The frontend always receives an integer percent where `0% = closed` and `100% = open`, regardless of Homey’s internal representation.
+
+**Why:** Official Homey `windowcoverings_set` is already `0…1` with the same semantics; the backend still owns normalization so the browser never depends on Homey’s scale.
+
+**Refs:** [windowcoverings_set capability](https://github.com/athombv/node-homey-lib/blob/master/assets/capability/capabilities/windowcoverings_set.json), [Window coverings best practices](https://apps.developer.homey.app/the-basics/devices/best-practices/window-coverings).
+
+## No inferred movement
+
+**Choice:** The vertical bar paints only the latest Homey value. No interpolation, simulated travel, or estimated mid-positions.
+
+**Why:** Homey remains source of truth. Invented motion would lie when devices move slowly or report sparsely.
+
+## Device icons are decorative
+
+**Choice:** Tile icons are large, low-opacity, top-right, and never encode ON/OFF/percent.
+
+**Why:** State must stay readable as text/bar. Icons must not compete with pending spinners or tap targets.
+
+## Official Homey assets only when documented
+
+**Choice:** Milestone 8 uses lightweight inline SVG fallbacks. Homey Web API exposes `Device.icon` / `iconObj`, but there is no documented auth-free URL suitable for tiles served by this app’s LAN HTTP server.
+
+**Why:** Do not reverse-engineer Homey asset paths or scrape proprietary icons. If Homey documents a safe public icon URL later, it can replace the fallback without changing widget contracts.
+
+## Shared Device Widget visual language
+
+**Choice:** LightWidget and CoverWidget share CSS tokens/classes and the icon helper, but remain separate widget definitions/renderers.
+
+**Why:** Consistency without a mega-class that would couple every device type’s lifecycle.
+
+## Capability-keyed subscriptions
+
+**Choice:** `RealtimeSubscriptionManager` keys listeners by `(deviceId, capabilityId)` instead of device id alone.
+
+**Why:** CoverWidget needs `windowcoverings_set` while LightWidget needs `onoff`. Same manager, no duplicate infrastructure.
+
+---
+
 Architectural choices for Milestone 7. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Commands use widget intents

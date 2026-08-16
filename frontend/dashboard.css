@@ -1,7 +1,9 @@
 @import './tokens.css';
+@import './widgets/shared/device-widget.css';
 @import './widgets/title/TitleWidget.css';
 @import './widgets/date-time/DateTimeWidget.css';
 @import './widgets/light/LightWidget.css';
+@import './widgets/cover/CoverWidget.css';
 @import './realtime/ConnectionOverlay.css';
 
 :root {
