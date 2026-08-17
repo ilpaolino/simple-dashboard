@@ -149,6 +149,23 @@ export class NotificationController {
     return true;
   }
 
+  /**
+   * Open (or keep open) on a specific notification. Used when Flow Show
+   * re-presents an existing key so the Center shows that event, not another.
+   */
+  public openTo(notificationId: string): boolean {
+    const index = this.notifications.findIndex(
+      (item) => item.id === notificationId,
+    );
+    if (index < 0) {
+      return this.openCenter(true);
+    }
+    this.currentIndex = index;
+    this.centerOpen = true;
+    this.emit();
+    return true;
+  }
+
   public closeCenter(): void {
     if (!this.centerOpen) {
       return;

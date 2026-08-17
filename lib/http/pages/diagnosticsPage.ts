@@ -465,6 +465,14 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.notifications.actionTriggersSucceeded'))}</dt><dd>${escapeHtml(String(metrics.notificationActionTriggersSucceeded ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.notifications.actionTriggersFailed'))}</dt><dd>${escapeHtml(String(metrics.notificationActionTriggersFailed ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.notifications.actionValidationRejected'))}</dt><dd>${escapeHtml(String(metrics.notificationActionValidationRejected ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.mediaResolveAttempts'))}</dt><dd>${escapeHtml(String(metrics.mediaResolveAttempts ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.mediaResolveSuccess'))}</dt><dd>${escapeHtml(String(metrics.mediaResolveSuccess ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.mediaResolveFailures'))}</dt><dd>${escapeHtml(String(metrics.mediaResolveFailures ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.videoStartAttempts'))}</dt><dd>${escapeHtml(String(metrics.videoStartAttempts ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.videoStartSuccess'))}</dt><dd>${escapeHtml(String(metrics.videoStartSuccess ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.videoStartFailures'))}</dt><dd>${escapeHtml(String(metrics.videoStartFailures ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.imageFallbacks'))}</dt><dd>${escapeHtml(String(metrics.imageFallbacks ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.activeMediaSessions'))}</dt><dd>${escapeHtml(String(metrics.activeMediaSessions ?? 0))}</dd>
     </dl>`;
 
   const notificationDiagnostics = input.notifications;
@@ -477,6 +485,8 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.notifications.warningCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.warningCount))}</dd>
       <dt>${escapeHtml(t('pages.notifications.successCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.successCount))}</dd>
       <dt>${escapeHtml(t('pages.notifications.infoCount'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.infoCount))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.notificationsWithMedia'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.notificationsWithMedia ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.activeMediaSessions'))}</dt><dd>${escapeHtml(String(notificationDiagnostics.mediaSessions?.length ?? 0))}</dd>
     </dl>`;
 
   const notificationPerDisplay = Array.isArray(notificationDiagnostics?.perDisplay)
@@ -510,6 +520,37 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
           <td>${escapeHtml(String(item.warningCount))}</td>
           <td>${escapeHtml(String(item.successCount))}</td>
           <td>${escapeHtml(String(item.infoCount))}</td>
+        </tr>`,
+          )
+          .join('\n')}
+      </tbody>
+    </table>`;
+
+  const mediaSessions = Array.isArray(notificationDiagnostics?.mediaSessions)
+    ? notificationDiagnostics.mediaSessions
+    : [];
+  const mediaSessionsHtml =
+    mediaSessions.length === 0
+      ? `<p>${escapeHtml(t('pages.notifications.noActive'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.diagnostics.displayIds'))}</th>
+          <th>${escapeHtml(t('pages.notifications.notificationKey'))}</th>
+          <th>${escapeHtml(t('pages.notifications.mediaDevice'))}</th>
+          <th>${escapeHtml(t('pages.notifications.mediaPlayback'))}</th>
+          <th>${escapeHtml(t('pages.notifications.mediaState'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${mediaSessions
+          .map(
+            (item) => `<tr>
+          <td>${escapeHtml(item.displayId)}</td>
+          <td>${escapeHtml(item.notificationKey ?? none)}</td>
+          <td>${escapeHtml(item.deviceName ?? none)}</td>
+          <td>${escapeHtml(`${item.playback} / ${item.resolvedType}${item.fallbackAvailable ? ' + image' : ''}`)}</td>
+          <td>${escapeHtml(item.state)}</td>
         </tr>`,
           )
           .join('\n')}
@@ -660,6 +701,8 @@ ${diagnosticsStyles}
     ${notificationSummaryHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.notifications.perDisplay'))}</h1>
     ${notificationPerDisplayHtml}
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.notifications.mediaSessions'))}</h1>
+    ${mediaSessionsHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.recentCommands'))}</h1>
     ${recentCommandsHtml}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.subscriptions'))}</h1>

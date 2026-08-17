@@ -181,6 +181,25 @@
 - Auto-close that removes/dismisses notifications
 - Direct Display→capability commands
 
+## Milestone 13 — Camera Media inside Notifications
+
+**Status:** Done. Details: [MILESTONE-13.md](MILESTONE-13.md).
+
+### In scope (implemented)
+
+- Optional `media` on existing `DisplayNotification` (no parallel camera system)
+- Optional Flow autocomplete Camera / Media (`required: false`)
+- `NotificationMediaResolver` + scoped image HTTP on port 7999
+- Frontend `NotificationMediaController` with image placeholder, video state machine, one retry, carousel/close cleanup
+- Diagnostics counters + media session table (no credentials / full URLs)
+- Automated M13 tests; IT/EN copy
+
+### Out of scope (explicitly deferred)
+
+- ffmpeg / HLS.js / WebRTC playback of Homey camera streams
+- Arbitrary URL proxy
+- Separate Camera Overlay
+
 ## Later milestones (not started)
 
 - Additional widget types (sensors, thermostats)
@@ -192,3 +211,4 @@
 - Milestone 11: [MILESTONE-11.md](MILESTONE-11.md)
 - Milestone 11B: [MILESTONE-11B.md](MILESTONE-11B.md)
 - Milestone 12: [MILESTONE-12.md](MILESTONE-12.md)
+- Milestone 13: [MILESTONE-13.md](MILESTONE-13.md)

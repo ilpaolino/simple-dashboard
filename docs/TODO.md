@@ -1,5 +1,15 @@
 # TODO
 
+## Milestone 13 follow-up (optional, not blocking)
+
+- [ ] Homey Pro: doorbell Flow with Camera / Media + auto-close 60s + action `open-gate`
+- [ ] Confirm snapshot appears when the camera app exposes a Homey Image
+- [ ] Confirm video types (RTSP/WebRTC/…) fall back to a live snapshot (3 s refresh, no broken `<video>`)
+- [ ] Confirm remaining auto-close seconds appear in the header when auto-close is set
+- [ ] Close Center → `/diagnostics` `activeMediaSessions` = 0
+- [ ] Existing Flows without Camera / Media still run unchanged
+- [ ] Measure RSS/heap via `/diagnostics` during open → video/image → close cycles
+
 ## Milestone 12 follow-up (optional, not blocking)
 
 - [ ] Homey Pro: **Show interactive notification** with auto-open + auto-close 15s + action `open-gate`

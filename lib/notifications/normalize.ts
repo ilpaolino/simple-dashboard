@@ -14,6 +14,7 @@ import {
   NOTIFICATION_TITLE_MAX_LENGTH,
 } from './constants';
 import { isNotificationIcon } from './icons';
+import { isNotificationMedia, type NotificationMedia } from './media';
 import { isNotificationSeverity } from './severity';
 import type {
   NotificationIcon,
@@ -33,6 +34,8 @@ export interface NormalizedPublishInput {
   readonly autoOpen: boolean;
   readonly autoCloseSeconds: number | undefined;
   readonly action: NotificationAction | undefined;
+  readonly media: NotificationMedia | undefined;
+  readonly mediaDeviceId: string | undefined;
   readonly notificationKey: string | undefined;
   readonly displayIds: readonly string[];
 }
@@ -48,6 +51,8 @@ export interface NormalizedUpdateInput {
   readonly autoOpen: boolean | undefined;
   readonly autoCloseSeconds: number | null | undefined;
   readonly action: NotificationAction | null | undefined;
+  readonly media: NotificationMedia | null | undefined;
+  readonly mediaDeviceId: string | null | undefined;
   readonly notificationKey: string | null | undefined;
   readonly displayIds: readonly string[] | undefined;
 }
@@ -120,6 +125,34 @@ export function normalizeAutoCloseSeconds(
     ok: true,
     value: Math.min(rounded, NOTIFICATION_AUTO_CLOSE_MAX_SECONDS),
   };
+}
+
+function normalizeOptionalMedia(
+  media: unknown,
+): NormalizeResult<NotificationMedia | undefined> {
+  if (media === undefined || media === null) {
+    return { ok: true, value: undefined };
+  }
+  if (!isNotificationMedia(media)) {
+    return { ok: false, message: 'invalid_media' };
+  }
+  return { ok: true, value: media };
+}
+
+function normalizeOptionalMediaDeviceId(
+  value: unknown,
+): NormalizeResult<string | undefined> {
+  if (value === undefined || value === null || value === '') {
+    return { ok: true, value: undefined };
+  }
+  if (typeof value !== 'string') {
+    return { ok: false, message: 'invalid_media_device' };
+  }
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return { ok: true, value: undefined };
+  }
+  return { ok: true, value: trimmed };
 }
 
 function normalizeOptionalAction(
@@ -209,6 +242,22 @@ export function normalizePublishInput(
     return actionResult;
   }
 
+  const mediaResult =
+    input.media === null
+      ? ({ ok: true, value: undefined } as const)
+      : normalizeOptionalMedia(input.media);
+  if (!mediaResult.ok) {
+    return mediaResult;
+  }
+
+  const mediaDeviceResult =
+    input.mediaDeviceId === null
+      ? ({ ok: true, value: undefined } as const)
+      : normalizeOptionalMediaDeviceId(input.mediaDeviceId);
+  if (!mediaDeviceResult.ok) {
+    return mediaDeviceResult;
+  }
+
   let notificationKey: string | undefined;
   if (input.notificationKey !== undefined) {
     if (typeof input.notificationKey !== 'string') {
@@ -232,6 +281,8 @@ export function normalizePublishInput(
       autoOpen: input.autoOpen !== false,
       autoCloseSeconds: autoClose.value,
       action: actionResult.value,
+      media: mediaResult.value,
+      mediaDeviceId: mediaDeviceResult.value,
       notificationKey,
       displayIds: displays.value,
     },
@@ -348,6 +399,30 @@ export function normalizeUpdateInput(
     action = actionResult.value ?? null;
   }
 
+  let media: NotificationMedia | null | undefined;
+  if (input.media === null) {
+    media = null;
+  } else if (input.media !== undefined) {
+    const mediaResult = normalizeOptionalMedia(input.media);
+    if (!mediaResult.ok) {
+      return mediaResult;
+    }
+    media = mediaResult.value ?? null;
+  }
+
+  let mediaDeviceId: string | null | undefined;
+  if (input.mediaDeviceId === null) {
+    mediaDeviceId = null;
+  } else if (input.mediaDeviceId !== undefined) {
+    const mediaDeviceResult = normalizeOptionalMediaDeviceId(
+      input.mediaDeviceId,
+    );
+    if (!mediaDeviceResult.ok) {
+      return mediaDeviceResult;
+    }
+    mediaDeviceId = mediaDeviceResult.value ?? null;
+  }
+
   let notificationKey: string | null | undefined;
   if (input.notificationKey === null) {
     notificationKey = null;
@@ -372,6 +447,8 @@ export function normalizeUpdateInput(
       autoOpen,
       autoCloseSeconds,
       action,
+      media,
+      mediaDeviceId,
       notificationKey,
       displayIds,
     },

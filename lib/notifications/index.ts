@@ -9,6 +9,33 @@ export {
   NOTIFICATION_AUTO_CLOSE_MAX_SECONDS,
 } from './constants';
 export {
+  NOTIFICATION_MEDIA_IMAGE_MAX_BYTES,
+  NOTIFICATION_MEDIA_RESOLVE_TIMEOUT_MS,
+  NOTIFICATION_MEDIA_IMAGE_LOAD_TIMEOUT_MS,
+  NOTIFICATION_MEDIA_VIDEO_START_TIMEOUT_MS,
+  NOTIFICATION_MEDIA_IMAGE_FETCH_TIMEOUT_MS,
+  NOTIFICATION_MEDIA_IMAGE_REFRESH_MS,
+  NOTIFICATION_MEDIA_IMAGE_REF_CACHE_MS,
+} from './mediaConstants';
+export {
+  isNotificationMedia,
+  isNotificationMediaPlayback,
+  unavailableCameraMedia,
+  mediaFingerprint,
+  createOpaqueMediaSourceId,
+  NOTIFICATION_MEDIA_TYPE_CAMERA,
+  type NotificationMedia,
+  type NotificationMediaPlayback,
+  type NotificationMediaState,
+  type NotificationMediaBinding,
+} from './media';
+export { parseFlowMediaArgument, type FlowMediaArgument } from './parseFlowMedia';
+export { NotificationMediaSessionManager } from './NotificationMediaSessionManager';
+export type {
+  NotificationMediaSession,
+  NotificationMediaSessionStartInput,
+} from './NotificationMediaSessionManager';
+export {
   NOTIFICATION_SEVERITY_PRIORITY,
   NOTIFICATION_SEVERITIES,
   isNotificationSeverity,
@@ -66,5 +93,6 @@ export type {
   NotificationManagerResult,
   NotificationDiagnosticsSnapshot,
   NotificationDisplayDiagnostic,
+  NotificationMediaSessionDiagnostic,
 } from './types';
 

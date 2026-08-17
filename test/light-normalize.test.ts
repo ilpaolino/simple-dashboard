@@ -33,6 +33,9 @@ function device(
     available,
     capabilities,
     capabilityValues: values,
+    className: null,
+    images: [],
+    videos: [],
   };
 }
 

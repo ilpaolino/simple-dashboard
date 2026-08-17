@@ -124,4 +124,20 @@ describe('NotificationController', () => {
     );
     assert.equal(controller.getNotifications()[0]?.message, 'b2');
   });
+
+  it('openTo re-opens a closed Center on that notification', () => {
+    const controller = new NotificationController();
+    controller.applySnapshot([
+      note({ id: 'a', message: 'a', severity: 'info', publishedAt: 1 }),
+      note({ id: 'b', message: 'b', severity: 'warning', publishedAt: 2 }),
+    ]);
+    controller.openTo('a');
+    assert.equal(controller.isCenterOpen(), true);
+    assert.equal(controller.getCurrent()?.id, 'a');
+    controller.closeCenter();
+    assert.equal(controller.isCenterOpen(), false);
+    controller.openTo('a');
+    assert.equal(controller.isCenterOpen(), true);
+    assert.equal(controller.getCurrent()?.id, 'a');
+  });
 });

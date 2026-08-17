@@ -361,6 +361,50 @@ export class DisplayRealtimeSession {
       return;
     }
 
+    if (
+      type === 'notification-media-start' ||
+      type === 'notification-media-stop'
+    ) {
+      const notificationId = (parsed as { notificationId?: unknown })
+        .notificationId;
+      if (
+        typeof notificationId !== 'string' ||
+        notificationId.trim() === ''
+      ) {
+        this.onProtocolError(this, 'invalid_notification_media');
+        return;
+      }
+      this.onClientMessage(this, {
+        type,
+        notificationId: notificationId.trim(),
+      });
+      return;
+    }
+
+    if (type === 'notification-media-telemetry') {
+      const candidate = parsed as {
+        readonly notificationId?: unknown;
+        readonly event?: unknown;
+      };
+      if (
+        typeof candidate.notificationId !== 'string' ||
+        candidate.notificationId.trim() === '' ||
+        (candidate.event !== 'image-loaded' &&
+          candidate.event !== 'video-ready' &&
+          candidate.event !== 'video-failed' &&
+          candidate.event !== 'image-fallback')
+      ) {
+        this.onProtocolError(this, 'invalid_notification_media_telemetry');
+        return;
+      }
+      this.onClientMessage(this, {
+        type: 'notification-media-telemetry',
+        notificationId: candidate.notificationId.trim(),
+        event: candidate.event,
+      });
+      return;
+    }
+
     // Typed protocol messages added later must still reach the gateway.
     if (isClientMessage(parsed)) {
       this.onClientMessage(this, parsed);

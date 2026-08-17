@@ -22,6 +22,7 @@ import { LightControlPanel } from '../widgets/light/LightControlPanel';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 import { NotificationController } from '../notifications/NotificationController';
 import { NotificationIndicator } from '../notifications/NotificationIndicator';
+import { shouldAutoOpenFromPush } from '../notifications/autoOpenFromPush';
 import { ConnectionOverlay } from './ConnectionOverlay';
 import {
   WidgetInteractionController,
@@ -97,6 +98,19 @@ export class RealtimeClient {
       },
       onAutoClosed: () => {
         this.send({ type: 'notification-auto-closed' });
+      },
+      onMediaStart: (notificationId) => {
+        this.send({ type: 'notification-media-start', notificationId });
+      },
+      onMediaStop: (notificationId) => {
+        this.send({ type: 'notification-media-stop', notificationId });
+      },
+      onMediaTelemetry: (notificationId, event) => {
+        this.send({
+          type: 'notification-media-telemetry',
+          notificationId,
+          event,
+        });
       },
     });
     this.bindInteractions();
@@ -356,6 +370,7 @@ export class RealtimeClient {
       this.socket = null;
       this.interactions.handleDisconnect();
       this.failPendingNotificationAction();
+      this.notificationCenter.stopMedia();
       if (!this.destroyed) {
         this.overlay.show(this.copy.realtime);
         this.scheduleReconnect();
@@ -407,12 +422,10 @@ export class RealtimeClient {
             ...message.notification,
             autoOpen: message.notification.autoOpen !== false,
           });
-          // Auto-open on update only when the notification became newly visible
-          // (e.g. Flow upsert restored after local dismiss). Content-only updates
-          // of an already-visible notification must not reopen in a loop.
-          if (!existed) {
-            this.maybeAutoOpenFromPush(message.notification, 'restored');
-          }
+          this.maybeAutoOpenFromPush(
+            message.notification,
+            existed ? 'updated' : 'restored',
+          );
           break;
         }
         case 'notification-removed':
@@ -554,6 +567,7 @@ export class RealtimeClient {
   /**
    * Realtime push auto-open. Snapshot/reconnect never calls this.
    * Manual ribbon open never schedules auto-close.
+   * A second Flow Show of the same key must re-present (doorbell rings again).
    */
   private maybeAutoOpenFromPush(
     notification: {
@@ -562,12 +576,12 @@ export class RealtimeClient {
       readonly dismissable?: boolean;
       readonly id: string;
     },
-    _reason: 'added' | 'restored',
+    kind: 'added' | 'restored' | 'updated',
   ): void {
-    if (notification.autoOpen === false) {
+    if (!shouldAutoOpenFromPush(notification.autoOpen, kind)) {
       return;
     }
-    if (!this.notifications.openCenter(true)) {
+    if (!this.notifications.openTo(notification.id)) {
       return;
     }
     this.send({ type: 'notification-auto-opened' });

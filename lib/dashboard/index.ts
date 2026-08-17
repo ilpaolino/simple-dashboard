@@ -169,6 +169,12 @@ export function createDashboardUiCopy(
       actionSent: translate('pages.notifications.actionSent'),
       actionFailed: translate('pages.notifications.actionFailed'),
       autoCloseHint: translate('pages.notifications.autoCloseHint'),
+      autoCloseRemaining: translate('pages.notifications.autoCloseRemaining'),
+      loadingCamera: translate('pages.notifications.loadingCamera'),
+      cameraUnavailable: translate('pages.notifications.cameraUnavailable'),
+      videoUnavailable: translate('pages.notifications.videoUnavailable'),
+      imageUnavailable: translate('pages.notifications.imageUnavailable'),
+      retry: translate('pages.notifications.retry'),
     },
   };
 }
@@ -243,6 +249,12 @@ export function defaultDashboardUiCopy(): DashboardUiCopy {
       actionSent: 'Action sent',
       actionFailed: 'Could not send action',
       autoCloseHint: 'Closing automatically',
+      autoCloseRemaining: '{seconds}s',
+      loadingCamera: 'Loading camera',
+      cameraUnavailable: 'Camera unavailable',
+      videoUnavailable: 'Video unavailable',
+      imageUnavailable: 'Image unavailable',
+      retry: 'Retry',
     },
   };
 }

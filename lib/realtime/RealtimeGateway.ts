@@ -5,7 +5,7 @@ import type { DisplayRegistry } from '../display/DisplayRegistry';
 import { normalizeClientIp } from '../display/ipNormalize';
 import type { HomeyDeviceRepository } from '../homey/HomeyDeviceRepository';
 import type { HomeyCapabilitySubscription } from '../homey/types';
-import type { Logger } from '../types';
+import type { Logger, HttpResponse } from '../types';
 import {
   createDashboardUiCopy,
   createEmptyStateCopy,
@@ -62,6 +62,8 @@ import type {
 } from './protocol';
 import {
   NotificationManager,
+  NotificationMediaSessionManager,
+  NOTIFICATION_MEDIA_IMAGE_REF_CACHE_MS,
   type NotificationActionFlowTokens,
   type NotificationActionTriggerState,
   type NotificationChangeEvent,
@@ -72,6 +74,8 @@ import {
   type DisplayNotification,
   type NotificationDiagnosticsSnapshot,
 } from '../notifications';
+import type { NotificationMediaResolver } from '../homey/NotificationMediaResolver';
+import type { HomeyDeviceImageRef } from '../homey/parseHomeyMedia';
 
 export interface RealtimeGatewayOptions {
   readonly registry: DisplayRegistry;
@@ -95,6 +99,7 @@ export interface RealtimeGatewayOptions {
     readonly tokens: NotificationActionFlowTokens;
     readonly state: NotificationActionTriggerState;
   }) => Promise<void>;
+  readonly mediaResolver?: NotificationMediaResolver | null;
 }
 
 /**
@@ -118,9 +123,15 @@ export class RealtimeGateway {
         readonly state: NotificationActionTriggerState;
       }) => Promise<void>)
     | null;
+  private readonly mediaResolver: NotificationMediaResolver | null;
+  private readonly notificationImageRefCache = new Map<
+    string,
+    { readonly image: HomeyDeviceImageRef; readonly expiresAt: number }
+  >();
 
   public readonly metrics = new RealtimeMetrics();
   public readonly notifications: NotificationManager;
+  public readonly mediaSessions = new NotificationMediaSessionManager();
   private readonly sessions: RealtimeSessionManager;
   private readonly subscriptions: RealtimeSubscriptionManager;
   private readonly pendingCommands: PendingCommandManager;
@@ -144,6 +155,7 @@ export class RealtimeGateway {
       options.onNotificationAggregatesChanged ?? null;
     this.onNotificationActionPressed =
       options.onNotificationActionPressed ?? null;
+    this.mediaResolver = options.mediaResolver ?? null;
 
     this.pendingCommands = new PendingCommandManager({
       onTimeout: (command) => {
@@ -235,6 +247,21 @@ export class RealtimeGateway {
         }
         if (message.type === 'notification-action') {
           void this.handleNotificationAction(session, message);
+          return;
+        }
+        if (message.type === 'notification-media-start') {
+          void this.handleNotificationMediaStart(
+            session,
+            message.notificationId,
+          );
+          return;
+        }
+        if (message.type === 'notification-media-stop') {
+          this.handleNotificationMediaStop(session, message.notificationId);
+          return;
+        }
+        if (message.type === 'notification-media-telemetry') {
+          this.handleNotificationMediaTelemetry(session, message);
         }
       },
     });
@@ -275,6 +302,15 @@ export class RealtimeGateway {
         base.notificationMessagesSent,
         notifications.notificationMessagesSent,
       ),
+      mediaResolveAttempts:
+        this.mediaResolver?.metrics.resolveAttempts ??
+        base.mediaResolveAttempts,
+      mediaResolveSuccess:
+        this.mediaResolver?.metrics.resolveSuccess ?? base.mediaResolveSuccess,
+      mediaResolveFailures:
+        this.mediaResolver?.metrics.resolveFailures ??
+        base.mediaResolveFailures,
+      activeMediaSessions: this.mediaSessions.getActiveCount(),
     };
   }
 
@@ -343,8 +379,10 @@ export class RealtimeGateway {
   public async destroy(): Promise<void> {
     this.detach();
     await this.subscriptions.destroy();
+    this.mediaSessions.reset();
     this.notifications.reset();
     this.metrics.reset();
+    this.notificationImageRefCache.clear();
   }
 
   /**
@@ -369,7 +407,20 @@ export class RealtimeGateway {
   }
 
   public getNotificationDiagnostics(): NotificationDiagnosticsSnapshot {
-    return this.notifications.getDiagnostics();
+    const base = this.notifications.getDiagnostics();
+    return {
+      ...base,
+      mediaSessions: this.mediaSessions.list().map((session) => ({
+        displayId: session.displayId,
+        notificationId: session.notificationId,
+        notificationKey: session.notificationKey ?? null,
+        deviceName: session.deviceName,
+        playback: session.playback,
+        resolvedType: session.videoKind ?? session.playback,
+        fallbackAvailable: session.fallbackAvailable,
+        state: session.state,
+      })),
+    };
   }
 
   public upsertForDisplay(
@@ -442,6 +493,8 @@ export class RealtimeGateway {
   }
 
   public async notifyDisplayRemoved(displayId: string): Promise<void> {
+    this.mediaSessions.stopAllForDisplay(displayId);
+    this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
     this.sessions.closeDisplay(displayId, 1001, 'display_removed');
     await this.subscriptions.removeDisplay(displayId);
     this.notifications.removeDisplay(displayId);
@@ -651,7 +704,204 @@ export class RealtimeGateway {
     session: DisplayRealtimeSession,
     notificationId: string,
   ): void {
+    this.mediaSessions.stop(session.displayId, notificationId);
+    this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
     this.notifications.dismissForDisplay(session.displayId, notificationId);
+  }
+
+  private async handleNotificationMediaStart(
+    session: DisplayRealtimeSession,
+    notificationId: string,
+  ): Promise<void> {
+    if (
+      !this.notifications.notificationTargetsDisplay(
+        notificationId,
+        session.displayId,
+      )
+    ) {
+      this.logger.warn('Rejected media start for foreign notification', {
+        displayId: session.displayId,
+        notificationId,
+      });
+      return;
+    }
+
+    const notification = this.notifications.getActiveNotification(notificationId);
+    const binding = this.notifications.getMediaBinding(notificationId);
+    if (!notification?.media || !binding) {
+      this.logger.info('Media start ignored — no media binding', {
+        displayId: session.displayId,
+        notificationId,
+      });
+      return;
+    }
+
+    let deviceName: string | null = null;
+    let videoKind: string | null = null;
+    let playback = notification.media.playback;
+    if (this.mediaResolver) {
+      const resolved = await this.mediaResolver.resolve(binding.deviceId);
+      deviceName = resolved.deviceName;
+      videoKind = resolved.videoKind;
+      playback = resolved.media.playback;
+      this.logger.info('Notification media resolve', {
+        displayId: session.displayId,
+        notificationId,
+        playback,
+        strategy: resolved.reason,
+        hasImage: resolved.media.hasImage,
+        hasVideo: resolved.media.hasVideo,
+      });
+    }
+
+    this.mediaSessions.start({
+      displayId: session.displayId,
+      notificationId,
+      notificationKey: notification.notificationKey,
+      deviceName,
+      playback,
+      videoKind,
+      fallbackAvailable: notification.media.hasImage,
+    });
+    this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
+    if (playback === 'video') {
+      this.metrics.recordVideoStartAttempt();
+    }
+    this.logger.info('Notification media start', {
+      displayId: session.displayId,
+      notificationId,
+      playback,
+    });
+  }
+
+  private handleNotificationMediaStop(
+    session: DisplayRealtimeSession,
+    notificationId: string,
+  ): void {
+    const stopped = this.mediaSessions.stop(session.displayId, notificationId);
+    this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
+    if (stopped) {
+      this.logger.info('Notification media stop', {
+        displayId: session.displayId,
+        notificationId,
+      });
+    }
+  }
+
+  private handleNotificationMediaTelemetry(
+    session: DisplayRealtimeSession,
+    message: {
+      readonly notificationId: string;
+      readonly event:
+        | 'image-loaded'
+        | 'video-ready'
+        | 'video-failed'
+        | 'image-fallback';
+    },
+  ): void {
+    if (
+      !this.notifications.notificationTargetsDisplay(
+        message.notificationId,
+        session.displayId,
+      )
+    ) {
+      return;
+    }
+    switch (message.event) {
+      case 'image-loaded':
+        this.metrics.recordImageLoad();
+        this.logger.info('Notification media image loaded', {
+          displayId: session.displayId,
+          notificationId: message.notificationId,
+        });
+        break;
+      case 'video-ready':
+        this.metrics.recordVideoStartSuccess();
+        this.logger.info('Notification media video ready', {
+          displayId: session.displayId,
+          notificationId: message.notificationId,
+        });
+        break;
+      case 'video-failed':
+        this.metrics.recordVideoStartFailure();
+        this.logger.info('Notification media video failed', {
+          displayId: session.displayId,
+          notificationId: message.notificationId,
+        });
+        break;
+      case 'image-fallback':
+        this.metrics.recordImageFallback();
+        this.logger.info('Notification media fallback image', {
+          displayId: session.displayId,
+          notificationId: message.notificationId,
+        });
+        break;
+      default:
+        break;
+    }
+  }
+
+  public async serveNotificationImage(
+    displayId: string,
+    notificationId: string,
+  ): Promise<HttpResponse> {
+    const notFound: HttpResponse = {
+      statusCode: 404,
+      contentType: 'text/plain; charset=utf-8',
+      body: 'Not Found',
+    };
+
+    if (
+      !this.notifications.notificationTargetsDisplay(notificationId, displayId)
+    ) {
+      return notFound;
+    }
+
+    const binding = this.notifications.getMediaBinding(notificationId);
+    if (!binding || !this.mediaResolver) {
+      return notFound;
+    }
+
+    const cacheKey = `${notificationId}\0${binding.deviceId}`;
+    const now = Date.now();
+    const cached = this.notificationImageRefCache.get(cacheKey);
+    let imageRef = cached && cached.expiresAt > now ? cached.image : null;
+    if (!imageRef) {
+      const resolved = await this.mediaResolver.resolve(binding.deviceId);
+      if (!resolved.image) {
+        this.notificationImageRefCache.delete(cacheKey);
+        return notFound;
+      }
+      imageRef = resolved.image;
+      this.notificationImageRefCache.set(cacheKey, {
+        image: imageRef,
+        expiresAt: now + NOTIFICATION_MEDIA_IMAGE_REF_CACHE_MS,
+      });
+    }
+
+    const image = await this.mediaResolver.loadImage(imageRef);
+    if (!image) {
+      this.notificationImageRefCache.delete(cacheKey);
+      return notFound;
+    }
+
+    return {
+      statusCode: 200,
+      contentType: image.contentType,
+      body: '',
+      binaryBody: image.bytes,
+      cacheControl: 'private, no-store',
+    };
+  }
+
+  public serveNotificationVideo(): HttpResponse {
+    // Homey camera video types (RTSP/RTMP/WebRTC/HLS/DASH) are not piped.
+    // No transcoding; no arbitrary URL proxy.
+    return {
+      statusCode: 415,
+      contentType: 'text/plain; charset=utf-8',
+      body: 'Unsupported Media Type',
+    };
   }
 
   private async handleNotificationAction(
@@ -768,6 +1018,10 @@ export class RealtimeGateway {
   }
 
   private handleNotificationChange(event: NotificationChangeEvent): void {
+    if (event.kind === 'removed') {
+      this.mediaSessions.stopForNotification(event.notificationId);
+      this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
+    }
     for (const displayId of event.affectedDisplayIds) {
       if (!this.sessions.hasActiveSession(displayId)) {
         continue;
@@ -842,6 +1096,9 @@ export class RealtimeGateway {
       });
       this.syncPendingMetrics();
     }
+
+    this.mediaSessions.stopAllForDisplay(session.displayId);
+    this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
 
     await this.subscriptions.removeDisplay(session.displayId);
     this.registry.markRealtimeDisconnected(session.displayId);

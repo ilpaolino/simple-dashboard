@@ -394,12 +394,36 @@
       "actionSent": "Action sent",
       "actionFailed": "Could not send action",
       "autoCloseHint": "Closing automatically",
+      "autoCloseRemaining": "{seconds}s",
       "autoOpened": "Notifications auto-opened",
       "autoClosed": "Notifications auto-closed",
       "actionsPressed": "Notification actions pressed",
       "actionTriggersSucceeded": "Notification action triggers succeeded",
       "actionTriggersFailed": "Notification action triggers failed",
-      "actionValidationRejected": "Notification action validation rejected"
+      "actionValidationRejected": "Notification action validation rejected",
+      "loadingCamera": "Loading camera",
+      "cameraUnavailable": "Camera unavailable",
+      "videoUnavailable": "Video unavailable",
+      "imageUnavailable": "Image unavailable",
+      "retry": "Retry",
+      "camera": "Camera",
+      "media": "Media",
+      "video": "Video",
+      "image": "Image",
+      "notificationKey": "Notification key",
+      "notificationsWithMedia": "Notifications with media",
+      "mediaResolveAttempts": "Media resolve attempts",
+      "mediaResolveSuccess": "Media resolve success",
+      "mediaResolveFailures": "Media resolve failures",
+      "videoStartAttempts": "Video start attempts",
+      "videoStartSuccess": "Video start success",
+      "videoStartFailures": "Video start failures",
+      "imageFallbacks": "Image fallbacks",
+      "activeMediaSessions": "Active media sessions",
+      "mediaSessions": "Media sessions",
+      "mediaDevice": "Media device",
+      "mediaPlayback": "Playback strategy",
+      "mediaState": "Media state"
     }
   },
   "flow": {
@@ -415,7 +439,8 @@
         "invalidActionId": "Invalid action ID",
         "invalidActionLabel": "Action button label is required when action is enabled",
         "invalidActionText": "Invalid action text",
-        "invalidAutoClose": "Invalid auto-close seconds"
+        "invalidAutoClose": "Invalid auto-close seconds",
+        "invalidMediaDevice": "Invalid camera / media device"
       }
     }
   },

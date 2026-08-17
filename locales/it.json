@@ -394,12 +394,36 @@
       "actionSent": "Azione inviata",
       "actionFailed": "Impossibile inviare l'azione",
       "autoCloseHint": "Chiusura automatica",
+      "autoCloseRemaining": "{seconds}s",
       "autoOpened": "Notifiche aperte automaticamente",
       "autoClosed": "Notifiche chiuse automaticamente",
       "actionsPressed": "Azioni notifica premute",
       "actionTriggersSucceeded": "Trigger azione notifica riusciti",
       "actionTriggersFailed": "Trigger azione notifica falliti",
-      "actionValidationRejected": "Validazioni azione notifica rifiutate"
+      "actionValidationRejected": "Validazioni azione notifica rifiutate",
+      "loadingCamera": "Caricamento camera",
+      "cameraUnavailable": "Camera non disponibile",
+      "videoUnavailable": "Video non disponibile",
+      "imageUnavailable": "Immagine non disponibile",
+      "retry": "Riprova",
+      "camera": "Camera",
+      "media": "Media",
+      "video": "Video",
+      "image": "Immagine",
+      "notificationKey": "Chiave notifica",
+      "notificationsWithMedia": "Notifiche con media",
+      "mediaResolveAttempts": "Tentativi resolve media",
+      "mediaResolveSuccess": "Resolve media riusciti",
+      "mediaResolveFailures": "Resolve media falliti",
+      "videoStartAttempts": "Tentativi avvio video",
+      "videoStartSuccess": "Avvii video riusciti",
+      "videoStartFailures": "Avvii video falliti",
+      "imageFallbacks": "Fallback immagine",
+      "activeMediaSessions": "Sessioni media attive",
+      "mediaSessions": "Sessioni media",
+      "mediaDevice": "Dispositivo media",
+      "mediaPlayback": "Strategia di riproduzione",
+      "mediaState": "Stato media"
     }
   },
   "flow": {
@@ -415,7 +439,8 @@
         "invalidActionId": "ID azione non valido",
         "invalidActionLabel": "Il testo del pulsante è obbligatorio quando l'azione è abilitata",
         "invalidActionText": "Testo azione non valido",
-        "invalidAutoClose": "Secondi di chiusura automatica non validi"
+        "invalidAutoClose": "Secondi di chiusura automatica non validi",
+        "invalidMediaDevice": "Camera / media non valido"
       }
     }
   },

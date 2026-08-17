@@ -111,6 +111,13 @@ export interface DashboardUiCopy {
     readonly actionSent: string;
     readonly actionFailed: string;
     readonly autoCloseHint: string;
+    /** Template with `{seconds}` for the visible auto-close countdown. */
+    readonly autoCloseRemaining: string;
+    readonly loadingCamera: string;
+    readonly cameraUnavailable: string;
+    readonly videoUnavailable: string;
+    readonly imageUnavailable: string;
+    readonly retry: string;
   };
 }
 

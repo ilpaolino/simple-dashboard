@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added a global **Notification Center**. Milestone **11B** added native **Homey Flow Action Cards**. Milestone **12** adds configurable auto-open / auto-close and a single semantic notification action that triggers Homey Flows — without rewriting the Notification Center.
+It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added a global **Notification Center**. Milestone **11B** added native **Homey Flow Action Cards**. Milestone **12** added configurable auto-open / auto-close and a single semantic notification action. Milestone **13** adds optional Homey camera/media **inside** those notifications — without a separate camera overlay.
 
 ## Current status
 
-**Milestone 12 is implemented.** Milestone 0–11B behavior is preserved.
+**Milestone 13 is implemented.** Milestone 0–12 behavior is preserved.
 
 | Area | Status |
 | --- | --- |
@@ -17,7 +17,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M12) |
+| Diagnostics page | Done (M2–M13) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5/M8) |
@@ -29,7 +29,8 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | NotificationManager + Notification Center | Done (M11) |
 | Homey Flow notification actions + aggregate capabilities | Done (M11B) |
 | Notification auto-open / auto-close + semantic actions | Done (M12) |
-| WebSocket realtime (same port) | Done (M6/M11/M12 notifications) |
+| Optional Homey camera/media inside Notifications | Done (M13) |
+| WebSocket realtime (same port) | Done (M6/M11/M12/M13 notifications) |
 | Selective Homey capability subscriptions | Done (M6/M8/M9/M10 light optional caps) |
 | Live dashboard configuration | Done (M6) |
 | Bidirectional widget commands | Done (M7/M9/M10) |
@@ -72,10 +73,10 @@ homey app run --remote
 | --- | --- |
 | `app.ts` | Homey App lifecycle; HTTP + WebSocket gateway + DisplayRegistry + HomeyDeviceRepository + editor/notification API |
 | `api.ts` | Homey Web API for Dashboard Editor + notifications |
-| `lib/notifications/` | NotificationManager, severity, icons, keys, Flow upsert API |
+| `lib/notifications/` | NotificationManager, severity, icons, keys, Flow upsert API, media model/session |
 | `lib/flow/` | Thin Homey Flow Action registration for notifications |
 | `lib/realtime/` | WebSocket protocol, sessions, subscriptions, command handler, pending manager, gateway |
-| `lib/homey/` | Homey Web API client + HomeyDeviceRepository (backend only) |
+| `lib/homey/` | Homey Web API client + HomeyDeviceRepository + NotificationMediaResolver (backend only) |
 | `lib/widgets/` | Shared widget types, placement, validation, registry, runtime snapshot |
 | `lib/widgets/light/` | LightWidget config, compatibility, normalize, confirmation, runtime, interactions |
 | `lib/widgets/cover/` | CoverWidget config, compatibility, normalization, confirmation, runtime |
@@ -84,7 +85,7 @@ homey app run --remote
 | `lib/http/` | Request handler, dashboard HTML, static assets, diagnostics |
 | `frontend/` | Vanilla dashboard + settings editor source |
 | `frontend/realtime/` | WebSocket client, reconnect, connection overlay, WidgetInteractionController |
-| `frontend/notifications/` | NotificationController, Indicator, Center, swipe |
+| `frontend/notifications/` | NotificationController, Indicator, Center, swipe, NotificationMediaController |
 | `frontend/overlays/widget-control/` | Reusable WidgetControlOverlay shell |
 | `frontend/widgets/` | Isolated widget renderers (title, date-time, light + LightControlPanel, cover + CoverControlPanel) |
 | `frontend/widgets/shared/` | Shared device-widget CSS, control-panel CSS, decorative icon helper |

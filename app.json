@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "dev.dadda.simpledashboard",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": [
@@ -12,8 +12,8 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, auto-close, and Homey Flow notification actions.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, chiusura automatica e azioni Flow native per le notifiche."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, optional camera media, auto-close, and Homey Flow notification actions.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, media camera opzionale, chiusura automatica e azioni Flow native per le notifiche."
   },
   "category": [
     "tools"
@@ -317,8 +317,8 @@
           "it": "Mostra notifica"
         },
         "titleFormatted": {
-          "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]])",
-          "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]])"
+          "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+          "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], media [[media]])"
         },
         "hint": {
           "en": "Creates or updates a simple notification on this Wall Display (upsert by Notification Key). Opens automatically; no auto-close timer or action button.",
@@ -482,6 +482,19 @@
               "it": "Può essere nascosta"
             },
             "value": true
+          },
+          {
+            "type": "autocomplete",
+            "name": "media",
+            "title": {
+              "en": "Camera / Media",
+              "it": "Camera / Media"
+            },
+            "placeholder": {
+              "en": "Optional camera",
+              "it": "Camera opzionale"
+            },
+            "required": false
           }
         ]
       },
@@ -492,8 +505,8 @@
           "it": "Mostra notifica interattiva"
         },
         "titleFormatted": {
-          "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]])",
-          "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]])"
+          "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+          "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])"
         },
         "hint": {
           "en": "Upsert with auto-open, optional auto-close, and one optional action button. Use this card (not “Show notification”) if you want a button. Fill Action ID and button label — that is enough to show the CTA. Action ID is a name you invent (e.g. open-gate) to match the WHEN card. It is not a Homey device and is not shown on the Display.",
@@ -728,6 +741,19 @@
             "placeholder": {
               "en": "Optional sentence above the button",
               "it": "Frase opzionale sopra il pulsante"
+            },
+            "required": false
+          },
+          {
+            "type": "autocomplete",
+            "name": "media",
+            "title": {
+              "en": "Camera / Media",
+              "it": "Camera / Media"
+            },
+            "placeholder": {
+              "en": "Optional camera",
+              "it": "Camera opzionale"
             },
             "required": false
           }
@@ -788,8 +814,8 @@
           "it": "Mostra notifica"
         },
         "titleFormatted": {
-          "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]])",
-          "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]])"
+          "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+          "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], media [[media]])"
         },
         "hint": {
           "en": "Creates or updates a simple notification on this Wall Display (upsert by Notification Key). Opens automatically; no auto-close timer or action button.",
@@ -953,6 +979,19 @@
               "it": "Può essere nascosta"
             },
             "value": true
+          },
+          {
+            "type": "autocomplete",
+            "name": "media",
+            "title": {
+              "en": "Camera / Media",
+              "it": "Camera / Media"
+            },
+            "placeholder": {
+              "en": "Optional camera",
+              "it": "Camera opzionale"
+            },
+            "required": false
           }
         ]
       },
@@ -963,8 +1002,8 @@
           "it": "Mostra notifica interattiva"
         },
         "titleFormatted": {
-          "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]])",
-          "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]])"
+          "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+          "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])"
         },
         "hint": {
           "en": "Upsert with auto-open, optional auto-close, and one optional action button. Use this card (not “Show notification”) if you want a button. Fill Action ID and button label — that is enough to show the CTA. Action ID is a name you invent (e.g. open-gate) to match the WHEN card. It is not a Homey device and is not shown on the Display.",
@@ -1199,6 +1238,19 @@
             "placeholder": {
               "en": "Optional sentence above the button",
               "it": "Frase opzionale sopra il pulsante"
+            },
+            "required": false
+          },
+          {
+            "type": "autocomplete",
+            "name": "media",
+            "title": {
+              "en": "Camera / Media",
+              "it": "Camera / Media"
+            },
+            "placeholder": {
+              "en": "Optional camera",
+              "it": "Camera opzionale"
             },
             "required": false
           }

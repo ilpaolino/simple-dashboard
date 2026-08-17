@@ -1,9 +1,22 @@
 # Known issues
 
+## Fixed / superseded during Milestone 13
+
+- **No camera in notifications.** Optional Homey Device media is now a field on the existing Notification (Flow autocomplete, resolver, scoped image HTTP).
+- **Risk of treating RTSP as `<video src>`.** Browser-playable flag is false for RTSP/RTMP/WebRTC/HLS/DASH; image fallback is used when Homey exposes a snapshot.
+- **Still snapshot while Center is open.** Image-only (and video-fallback) cameras refresh the scoped Homey snapshot every 3 s (aligned with typical camera `Image.update()`); refresh stops when the Center closes.
+
+## Deferred by design (Milestone 13)
+
+- **Homey camera video is not live-played on the Wall Display.** Homey brokers WebRTC/RTSP/HLS/DASH/RTMP to *its* frontends and does not transcode. This app does not add ffmpeg, HLS.js, or a WebRTC client. `/video` returns 415.
+- **No Camera Overlay / Event Overlay.** Media lives in the existing Notification Center.
+- **Autocomplete, not Device-card filter.** A second `type: "device"` argument would only list devices paired in this app.
+- **Simple Show still clears interactive extras on the same key** (action + media when the argument is omitted), consistent with M12 action clearing.
+
 ## Fixed / superseded during Milestone 12
 
 - **Notification CTA stayed pending forever and Homey WHEN never ran.** `DisplayRealtimeSession` only parsed M11 client types, so `notification-action` was logged as `unknown_client_message` and never reached the Flow trigger. The session now forwards action / auto-open / auto-close messages; the client also times out the CTA after 8s.
-- **Always auto-open on every realtime push.** Auto-open is now per-notification (`autoOpen`) with safe defaults; updates of already-visible notifications no longer reopen loops; snapshots never storm auto-open.
+- **Always auto-open on every realtime push.** Auto-open is per-notification (`autoOpen`). Snapshot/reconnect never storms. A second Flow Show of the same key **does** re-open the Center (doorbell rings again after auto-close).
 - **Non-dismissable still closed via Hide / X / backdrop.** `dismissable: false` now blocks those closes and skips auto-close.
 - **No notification actions / Flow triggers.** Device trigger + semantic `actionId` path is implemented.
 - **No auto-close presentation.** Optional `autoCloseSeconds` closes the Center only (not SoT).

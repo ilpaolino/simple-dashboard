@@ -19,6 +19,8 @@ import {
   UnavailableHomeyWebApi,
 } from './lib/homey/HomeyDeviceRepository';
 import { createHomeyWebApi } from './lib/homey/createHomeyWebApi';
+import { NotificationMediaResolver } from './lib/homey/NotificationMediaResolver';
+import type { HomeyImageBytes } from './lib/homey/NotificationMediaResolver';
 import type { CompatibleDeviceOption } from './lib/homey/types';
 import { validateCoverWidgetBinding } from './lib/widgets/cover/runtime';
 import type { CoverBindingError } from './lib/widgets/cover/types';
@@ -36,6 +38,7 @@ import {
   type NotificationAction,
   type NotificationActionFlowTokens,
   type NotificationActionTriggerState,
+  type NotificationMedia,
 } from './lib/notifications';
 import type {
   DisplayNotification,
@@ -69,6 +72,9 @@ class WelcomeWallApp extends Homey.App {
   public readonly displayRegistry = new DisplayRegistry();
   public readonly diagnosticsLog = new DiagnosticsLog();
   private deviceRepository!: HomeyDeviceRepository;
+  private mediaResolver!: NotificationMediaResolver;
+  private imageFetcher: ((url: string) => Promise<HomeyImageBytes | null>) | null =
+    null;
   private realtimeGateway!: RealtimeGateway;
   private notificationActionTriggers = new Map<
     string,
@@ -85,6 +91,12 @@ class WelcomeWallApp extends Homey.App {
     this.logger = new AppLogger(this);
     this.settingsManager = new SettingsManager(this.homey.settings, this.logger);
     this.deviceRepository = await this.initDeviceRepository();
+    this.mediaResolver = new NotificationMediaResolver({
+      getDevice: (id) => this.deviceRepository.getDevice(id),
+      fetchImage: this.imageFetcher
+        ? (url) => this.imageFetcher!(url)
+        : undefined,
+    });
 
     this.realtimeGateway = new RealtimeGateway({
       registry: this.displayRegistry,
@@ -96,6 +108,7 @@ class WelcomeWallApp extends Homey.App {
       logger: this.logger,
       translate: (key: string) => this.homey.__(key),
       getLanguage: () => this.homey.i18n.getLanguage(),
+      mediaResolver: this.mediaResolver,
       onNotificationAggregatesChanged: (displayIds) => {
         for (const displayId of displayIds) {
           this.syncNotificationCapabilities(displayId);
@@ -134,6 +147,15 @@ class WelcomeWallApp extends Homey.App {
       }),
       getNotificationDiagnostics: () =>
         this.realtimeGateway.getNotificationDiagnostics(),
+      serveNotificationMedia: async (input) => {
+        if (input.kind === 'video') {
+          return this.realtimeGateway.serveNotificationVideo();
+        }
+        return this.realtimeGateway.serveNotificationImage(
+          input.displayId,
+          input.notificationId,
+        );
+      },
     });
 
     this.httpServer = new HttpServer({
@@ -238,6 +260,8 @@ class WelcomeWallApp extends Homey.App {
     readonly autoOpen?: boolean;
     readonly autoCloseSeconds?: number;
     readonly action?: NotificationAction | null;
+    readonly media?: NotificationMedia | null;
+    readonly mediaDeviceId?: string | null;
   }): {
     readonly ok: true;
     readonly created: boolean;
@@ -262,6 +286,8 @@ class WelcomeWallApp extends Homey.App {
       autoOpen: input.autoOpen,
       autoCloseSeconds: input.autoCloseSeconds,
       action: input.action,
+      media: input.media,
+      mediaDeviceId: input.mediaDeviceId,
     });
 
     if (!result.ok) {
@@ -332,6 +358,24 @@ class WelcomeWallApp extends Homey.App {
 
   public recordFlowNotificationError(): void {
     this.realtimeGateway.metrics.recordFlowNotificationError();
+  }
+
+  public async listNotificationMediaDevices(query: string): Promise<
+    readonly CompatibleDeviceOption[]
+  > {
+    try {
+      return await this.deviceRepository.listMediaCompatibleDevices(query);
+    } catch (error) {
+      this.logger.error('Failed to list notification media devices', error);
+      return [];
+    }
+  }
+
+  public async resolveNotificationMedia(
+    deviceId: string,
+  ): Promise<NotificationMedia> {
+    const resolved = await this.mediaResolver.resolve(deviceId);
+    return resolved.media;
   }
 
   public async listDisplaysForEditor(): Promise<readonly EditorDisplaySummary[]> {
@@ -599,12 +643,14 @@ class WelcomeWallApp extends Homey.App {
   private async initDeviceRepository(): Promise<HomeyDeviceRepository> {
     try {
       const api = await createHomeyWebApi(this.homey);
+      this.imageFetcher = (url) => api.fetchImage(url);
       this.logger.info('Homey Web API client initialized', {
         permission: 'homey:manager:api',
       });
       return new HomeyDeviceRepository(api);
     } catch (error) {
       this.logger.error('Failed to initialize Homey Web API', error);
+      this.imageFetcher = null;
       return new HomeyDeviceRepository(new UnavailableHomeyWebApi());
     }
   }

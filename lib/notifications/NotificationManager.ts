@@ -11,6 +11,7 @@ import {
   normalizeNotificationKey,
   notificationKeyIndexId,
 } from './keys';
+import type { NotificationMediaBinding } from './media';
 import { normalizePublishInput, normalizeUpdateInput } from './normalize';
 import { maxNotificationSeverity } from './severity';
 import { sortDisplayNotifications } from './sort';
@@ -26,6 +27,7 @@ import type {
 interface StoredNotification {
   readonly notification: DisplayNotification;
   readonly displayIds: ReadonlySet<string>;
+  readonly mediaBinding: NotificationMediaBinding | undefined;
 }
 
 export type NotificationChangeKind =
@@ -113,6 +115,8 @@ export class NotificationManager {
         autoOpen: normalized.value.autoOpen,
         autoCloseSeconds: normalized.value.autoCloseSeconds ?? null,
         action: normalized.value.action ?? null,
+        media: normalized.value.media ?? null,
+        mediaDeviceId: normalized.value.mediaDeviceId ?? null,
         notificationKey: normalized.value.notificationKey ?? null,
         displayIds: normalized.value.displayIds,
       });
@@ -147,13 +151,20 @@ export class NotificationManager {
       ...(normalized.value.action !== undefined
         ? { action: normalized.value.action }
         : {}),
+      ...(normalized.value.media !== undefined
+        ? { media: normalized.value.media }
+        : {}),
       ...(normalized.value.notificationKey !== undefined
         ? { notificationKey: normalized.value.notificationKey }
         : {}),
       publishedAt: this.now(),
     };
 
-    this.notifications.set(id, { notification, displayIds });
+    const mediaBinding = normalized.value.mediaDeviceId
+      ? { deviceId: normalized.value.mediaDeviceId }
+      : undefined;
+
+    this.notifications.set(id, { notification, displayIds, mediaBinding });
     this.notificationsPublished += 1;
 
     this.emit({
@@ -217,6 +228,18 @@ export class NotificationManager {
         : normalized.value.action !== undefined
           ? normalized.value.action
           : prev.action;
+    const nextMedia =
+      normalized.value.media === null
+        ? undefined
+        : normalized.value.media !== undefined
+          ? normalized.value.media
+          : prev.media;
+    const nextMediaBinding =
+      normalized.value.mediaDeviceId === null
+        ? undefined
+        : normalized.value.mediaDeviceId !== undefined
+          ? { deviceId: normalized.value.mediaDeviceId }
+          : stored.mediaBinding;
     const nextKey =
       normalized.value.notificationKey === null
         ? undefined
@@ -245,6 +268,7 @@ export class NotificationManager {
       autoOpen: normalized.value.autoOpen ?? prev.autoOpen,
       ...(nextAutoClose !== undefined ? { autoCloseSeconds: nextAutoClose } : {}),
       ...(nextAction !== undefined ? { action: nextAction } : {}),
+      ...(nextMedia !== undefined ? { media: nextMedia } : {}),
       ...(nextKey !== undefined ? { notificationKey: nextKey } : {}),
       publishedAt: prev.publishedAt,
     };
@@ -253,6 +277,7 @@ export class NotificationManager {
     this.notifications.set(prev.id, {
       notification: nextNotification,
       displayIds: nextDisplayIds,
+      mediaBinding: nextMediaBinding,
     });
     this.notificationsUpdated += 1;
 
@@ -344,6 +369,10 @@ export class NotificationManager {
         autoOpen: input.autoOpen,
         autoCloseSeconds: input.autoCloseSeconds ?? null,
         ...(input.action !== undefined ? { action: input.action } : {}),
+        ...(input.media !== undefined ? { media: input.media } : {}),
+        ...(input.mediaDeviceId !== undefined
+          ? { mediaDeviceId: input.mediaDeviceId }
+          : {}),
         notificationKey,
         displayIds: [displayId],
       });
@@ -364,6 +393,12 @@ export class NotificationManager {
       autoCloseSeconds: input.autoCloseSeconds,
       ...(input.action !== undefined && input.action !== null
         ? { action: input.action }
+        : {}),
+      ...(input.media !== undefined && input.media !== null
+        ? { media: input.media }
+        : {}),
+      ...(input.mediaDeviceId !== undefined && input.mediaDeviceId !== null
+        ? { mediaDeviceId: input.mediaDeviceId }
         : {}),
       notificationKey,
       displayIds: [displayId],
@@ -413,6 +448,7 @@ export class NotificationManager {
       this.notifications.set(notificationId, {
         notification: stored.notification,
         displayIds: next,
+        mediaBinding: stored.mediaBinding,
       });
       this.dismissedByDisplay.get(displayId.trim())?.delete(notificationId);
       this.notificationsRemoved += 1;
@@ -469,6 +505,7 @@ export class NotificationManager {
         this.notifications.set(notificationId, {
           notification: stored.notification,
           displayIds: next,
+          mediaBinding: stored.mediaBinding,
         });
         this.dismissedByDisplay.get(id)?.delete(notificationId);
         this.notificationsRemoved += 1;
@@ -605,6 +642,22 @@ export class NotificationManager {
     return this.notifications.get(notificationId)?.notification ?? null;
   }
 
+  public getMediaBinding(
+    notificationId: string,
+  ): NotificationMediaBinding | null {
+    return this.notifications.get(notificationId)?.mediaBinding ?? null;
+  }
+
+  public notificationTargetsDisplay(
+    notificationId: string,
+    displayId: string,
+  ): boolean {
+    return (
+      this.notifications.get(notificationId)?.displayIds.has(displayId) ===
+      true
+    );
+  }
+
   /**
    * Resolve authoritative notification for a Display-scoped action press.
    * Returns null when missing, not targeted, without action, or actionId mismatch.
@@ -701,6 +754,7 @@ export class NotificationManager {
         this.notifications.set(id, {
           notification: stored.notification,
           displayIds: next,
+          mediaBinding: stored.mediaBinding,
         });
       }
     }
@@ -735,7 +789,11 @@ export class NotificationManager {
     let successCount = 0;
     let infoCount = 0;
 
+    let notificationsWithMedia = 0;
     for (const stored of this.notifications.values()) {
+      if (stored.mediaBinding || stored.notification.media) {
+        notificationsWithMedia += 1;
+      }
       switch (stored.notification.severity) {
         case 'critical':
           criticalCount += 1;
@@ -785,6 +843,8 @@ export class NotificationManager {
       successCount,
       infoCount,
       dismissedRuntimeCount,
+      notificationsWithMedia,
+      mediaSessions: [],
       perDisplay,
     };
   }

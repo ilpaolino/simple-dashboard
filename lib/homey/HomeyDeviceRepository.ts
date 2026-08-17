@@ -64,6 +64,32 @@ export class HomeyDeviceRepository {
       .sort((left, right) => left.name.localeCompare(right.name));
   }
 
+  /**
+   * Devices that Homey exposes as camera-class and/or with images/videos.
+   * Used by Flow autocomplete — not a brand filter.
+   */
+  public async listMediaCompatibleDevices(
+    query = '',
+  ): Promise<readonly CompatibleDeviceOption[]> {
+    const devices = await this.listDevices();
+    const needle = query.trim().toLowerCase();
+    return devices
+      .filter((device) => isMediaCompatibleDevice(device))
+      .filter((device) => {
+        if (needle === '') {
+          return true;
+        }
+        const haystack = `${device.name} ${device.zoneName ?? ''}`.toLowerCase();
+        return haystack.includes(needle);
+      })
+      .map((device) => ({
+        id: device.id,
+        name: device.name,
+        zoneName: device.zoneName,
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
   public async subscribeCapability(options: {
     readonly deviceId: string;
     readonly capabilityId: string;
@@ -109,8 +135,24 @@ export class HomeyDeviceRepository {
       available: device.available,
       capabilities: device.capabilities,
       capabilityValues: device.capabilityValues,
+      className: device.className ?? null,
+      images: device.images ?? [],
+      videos: device.videos ?? [],
     };
   }
+}
+
+export function isMediaCompatibleDevice(device: HomeyDeviceSnapshot): boolean {
+  if (device.className === 'camera') {
+    return true;
+  }
+  if ((device.images?.length ?? 0) > 0) {
+    return true;
+  }
+  if ((device.videos?.length ?? 0) > 0) {
+    return true;
+  }
+  return false;
 }
 
 /**

@@ -3,6 +3,11 @@
  * Homey remains the source of truth; these are snapshots, not copies to persist.
  */
 
+import type {
+  HomeyDeviceImageRef,
+  HomeyDeviceVideoRef,
+} from './parseHomeyMedia';
+
 export interface HomeyApiDeviceDto {
   readonly id: string;
   readonly name: string;
@@ -10,6 +15,9 @@ export interface HomeyApiDeviceDto {
   readonly available: boolean;
   readonly capabilities: readonly string[];
   readonly capabilityValues: Readonly<Record<string, unknown>>;
+  readonly className?: string | null;
+  readonly images?: readonly HomeyDeviceImageRef[];
+  readonly videos?: readonly HomeyDeviceVideoRef[];
 }
 
 export interface HomeyApiZoneDto {
@@ -25,6 +33,9 @@ export interface HomeyDeviceSnapshot {
   readonly available: boolean;
   readonly capabilities: readonly string[];
   readonly capabilityValues: Readonly<Record<string, unknown>>;
+  readonly className: string | null;
+  readonly images: readonly HomeyDeviceImageRef[];
+  readonly videos: readonly HomeyDeviceVideoRef[];
 }
 
 /**

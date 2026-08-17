@@ -3,6 +3,7 @@
  */
 
 import type { NotificationAction } from './action';
+import type { NotificationMedia } from './media';
 
 export type NotificationSeverity =
   | 'critical'
@@ -52,6 +53,11 @@ export interface DisplayNotification {
   /** At most one semantic CTA per notification (M12). */
   readonly action?: NotificationAction;
   /**
+   * Optional Homey camera/media descriptor (M13). Never contains Device ids,
+   * tokens, credentials, or raw stream URLs.
+   */
+  readonly media?: NotificationMedia;
+  /**
    * Flow logical key when published via upsert. Absent for keyless HTTP publishes.
    */
   readonly notificationKey?: string;
@@ -68,6 +74,8 @@ export interface PublishNotificationInput {
   readonly autoOpen?: boolean;
   readonly autoCloseSeconds?: number;
   readonly action?: NotificationAction | null;
+  readonly media?: NotificationMedia | null;
+  readonly mediaDeviceId?: string | null;
   readonly notificationKey?: string;
   /** One or more Display ids. Never broadcast to all Displays by default. */
   readonly displayIds: readonly string[];
@@ -88,6 +96,8 @@ export interface UpdateNotificationInput {
    * Omit to keep the existing action.
    */
   readonly action?: NotificationAction | null;
+  readonly media?: NotificationMedia | null;
+  readonly mediaDeviceId?: string | null;
   readonly notificationKey?: string | null;
   /**
    * Optional display re-routing. When set, replaces the notification’s targets.
@@ -118,7 +128,20 @@ export interface NotificationDiagnosticsSnapshot {
   readonly successCount: number;
   readonly infoCount: number;
   readonly dismissedRuntimeCount: number;
+  readonly notificationsWithMedia: number;
+  readonly mediaSessions: readonly NotificationMediaSessionDiagnostic[];
   readonly perDisplay: readonly NotificationDisplayDiagnostic[];
+}
+
+export interface NotificationMediaSessionDiagnostic {
+  readonly displayId: string;
+  readonly notificationId: string;
+  readonly notificationKey: string | null;
+  readonly deviceName: string | null;
+  readonly playback: 'video' | 'image' | 'unavailable';
+  readonly resolvedType: string;
+  readonly fallbackAvailable: boolean;
+  readonly state: 'active';
 }
 
 export interface NotificationDisplayDiagnostic {

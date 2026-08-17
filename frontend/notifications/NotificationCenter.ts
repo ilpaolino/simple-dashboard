@@ -10,6 +10,10 @@ import type { DisplayNotification } from '../../lib/notifications/types';
 import type { NotificationController } from './NotificationController';
 import { createNotificationIconElement } from './notificationIcons';
 import { SwipeGestureRecognizer } from './SwipeGestureRecognizer';
+import {
+  NotificationMediaController,
+  type NotificationMediaCopy,
+} from './NotificationMediaController';
 
 export interface NotificationCenterCopy {
   readonly title: string;
@@ -27,6 +31,12 @@ export interface NotificationCenterCopy {
   readonly actionSent: string;
   readonly actionFailed: string;
   readonly autoCloseHint: string;
+  readonly autoCloseRemaining: string;
+  readonly loadingCamera: string;
+  readonly cameraUnavailable: string;
+  readonly videoUnavailable: string;
+  readonly imageUnavailable: string;
+  readonly retry: string;
 }
 
 export interface NotificationCenterOptions {
@@ -40,6 +50,12 @@ export interface NotificationCenterOptions {
   }) => void;
   readonly onOpened?: () => void;
   readonly onAutoClosed?: () => void;
+  readonly onMediaStart?: (notificationId: string) => void;
+  readonly onMediaStop?: (notificationId: string) => void;
+  readonly onMediaTelemetry?: (
+    notificationId: string,
+    event: 'image-loaded' | 'video-ready' | 'video-failed' | 'image-fallback',
+  ) => void;
   readonly parent?: HTMLElement;
 }
 
@@ -48,10 +64,14 @@ export class NotificationCenter {
   private readonly backdrop: HTMLElement;
   private readonly dialog: HTMLElement;
   private readonly header: HTMLElement;
+  private readonly headerText: HTMLElement;
   private readonly titleEl: HTMLElement;
   private readonly closeButton: HTMLButtonElement;
+  private readonly countdownEl: HTMLElement;
   private readonly autoCloseTrack: HTMLElement;
   private readonly autoCloseBar: HTMLElement;
+  private readonly content: HTMLElement;
+  private readonly mediaHost: HTMLElement;
   private readonly body: HTMLElement;
   private readonly severityEl: HTMLElement;
   private readonly iconSlot: HTMLElement;
@@ -73,6 +93,7 @@ export class NotificationCenter {
   private readonly onAction: NotificationCenterOptions['onAction'];
   private readonly onOpened: (() => void) | null;
   private readonly onAutoClosed: (() => void) | null;
+  private readonly media: NotificationMediaController;
   private readonly unsubscribe: () => void;
   private readonly onKeyDown: (event: KeyboardEvent) => void;
   private swipe: SwipeGestureRecognizer | null = null;
@@ -80,6 +101,8 @@ export class NotificationCenter {
   private wasOpen = false;
   private renderedNotificationId: string | null = null;
   private autoCloseTimer: ReturnType<typeof setTimeout> | null = null;
+  private autoCloseTickTimer: ReturnType<typeof setInterval> | null = null;
+  private autoCloseEndsAt: number | null = null;
   private autoCloseActive = false;
   private actionPending = false;
   private actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
@@ -109,9 +132,16 @@ export class NotificationCenter {
     this.header = document.createElement('div');
     this.header.className = 'notification-center__header';
 
+    this.headerText = document.createElement('div');
+    this.headerText.className = 'notification-center__header-text';
+
     this.titleEl = document.createElement('h2');
     this.titleEl.className = 'notification-center__heading';
     this.titleEl.id = 'notification-center-title';
+
+    this.countdownEl = document.createElement('p');
+    this.countdownEl.className = 'notification-center__countdown';
+    this.countdownEl.hidden = true;
 
     this.closeButton = document.createElement('button');
     this.closeButton.type = 'button';
@@ -125,6 +155,12 @@ export class NotificationCenter {
     this.autoCloseBar = document.createElement('div');
     this.autoCloseBar.className = 'notification-center__auto-close-bar';
     this.autoCloseTrack.appendChild(this.autoCloseBar);
+
+    this.mediaHost = document.createElement('div');
+    this.mediaHost.className = 'notification-center__media';
+
+    this.content = document.createElement('div');
+    this.content.className = 'notification-center__content';
 
     this.body = document.createElement('div');
     this.body.className = 'notification-center__body';
@@ -142,6 +178,17 @@ export class NotificationCenter {
 
     this.messageEl = document.createElement('div');
     this.messageEl.className = 'notification-center__message';
+
+    this.media = new NotificationMediaController({
+      host: this.mediaHost,
+      copy: this.mediaCopyFrom(this.copy),
+      onUserInteraction: () => {
+        this.cancelAutoClose('user-interaction');
+      },
+      onStart: options.onMediaStart,
+      onStop: options.onMediaStop,
+      onTelemetry: options.onMediaTelemetry,
+    });
 
     this.actionTextEl = document.createElement('p');
     this.actionTextEl.className = 'notification-center__action-text';
@@ -180,12 +227,15 @@ export class NotificationCenter {
     this.dismissButton.type = 'button';
     this.dismissButton.className = 'notification-center__dismiss';
 
+    this.headerText.appendChild(this.severityEl);
+    this.headerText.appendChild(this.notificationTitle);
+
     this.header.appendChild(this.titleEl);
+    this.header.appendChild(this.iconSlot);
+    this.header.appendChild(this.headerText);
+    this.header.appendChild(this.countdownEl);
     this.header.appendChild(this.closeButton);
 
-    this.body.appendChild(this.severityEl);
-    this.body.appendChild(this.iconSlot);
-    this.body.appendChild(this.notificationTitle);
     this.body.appendChild(this.messageEl);
     this.body.appendChild(this.actionTextEl);
     this.body.appendChild(this.actionFeedbackEl);
@@ -197,10 +247,13 @@ export class NotificationCenter {
     this.footer.appendChild(this.hideButton);
     this.footer.appendChild(this.dismissButton);
 
+    this.content.appendChild(this.mediaHost);
+    this.content.appendChild(this.body);
+    this.content.appendChild(this.footer);
+
     this.dialog.appendChild(this.autoCloseTrack);
     this.dialog.appendChild(this.header);
-    this.dialog.appendChild(this.body);
-    this.dialog.appendChild(this.footer);
+    this.dialog.appendChild(this.content);
     this.dialog.setAttribute('aria-labelledby', 'notification-center-title');
 
     this.root.appendChild(this.backdrop);
@@ -243,7 +296,7 @@ export class NotificationCenter {
     this.actionButton.addEventListener('click', () => {
       this.handleActionPress();
     });
-    this.body.addEventListener(
+    this.content.addEventListener(
       'scroll',
       () => {
         if (this.autoCloseActive) {
@@ -253,7 +306,7 @@ export class NotificationCenter {
       { passive: true },
     );
 
-    this.swipe = new SwipeGestureRecognizer(this.body, {
+    this.swipe = new SwipeGestureRecognizer(this.content, {
       onSwipeLeft: () => {
         this.cancelAutoClose('user-interaction');
         this.controller.goNext();
@@ -272,6 +325,7 @@ export class NotificationCenter {
 
   public setCopy(copy: NotificationCenterCopy): void {
     this.copy = copy;
+    this.media.setCopy(this.mediaCopyFrom(copy));
     this.sync();
   }
 
@@ -290,6 +344,7 @@ export class NotificationCenter {
     }
 
     this.autoCloseActive = true;
+    this.autoCloseEndsAt = Date.now() + seconds * 1000;
     this.autoCloseTrack.hidden = false;
     this.autoCloseTrack.setAttribute('aria-label', this.copy.autoCloseHint);
     this.autoCloseBar.style.animationDuration = `${seconds}s`;
@@ -301,6 +356,10 @@ export class NotificationCenter {
     this.autoCloseBar.classList.add(
       'notification-center__auto-close-bar--running',
     );
+    this.updateAutoCloseCountdown();
+    this.autoCloseTickTimer = setInterval(() => {
+      this.updateAutoCloseCountdown();
+    }, 250);
 
     this.autoCloseTimer = setTimeout(() => {
       this.autoCloseTimer = null;
@@ -324,6 +383,10 @@ export class NotificationCenter {
 
   public hasActiveAutoCloseTimer(): boolean {
     return this.autoCloseTimer !== null;
+  }
+
+  public stopMedia(): void {
+    this.media.stop();
   }
 
   public setActionPending(pending: boolean): void {
@@ -354,6 +417,7 @@ export class NotificationCenter {
       clearTimeout(this.actionFeedbackTimer);
       this.actionFeedbackTimer = null;
     }
+    this.media.destroy();
     this.unsubscribe();
     this.swipe?.destroy();
     this.swipe = null;
@@ -405,6 +469,7 @@ export class NotificationCenter {
       this.renderedNotificationId = null;
       this.cancelAutoClose('closed');
       this.setActionPending(false);
+      this.media.stop();
       this.root.hidden = true;
       this.root.setAttribute('aria-hidden', 'true');
       this.clearHighlight();
@@ -435,6 +500,7 @@ export class NotificationCenter {
     }
 
     this.renderNotification(current);
+    this.media.sync(current, true);
     if (justOpened) {
       this.focusInitialControl();
     }
@@ -509,6 +575,7 @@ export class NotificationCenter {
     this.footer.dataset.multi = multi ? 'true' : 'false';
     this.footer.dataset.dismissable = notification.dismissable ? 'true' : 'false';
     this.footer.dataset.hasAction = notification.action ? 'true' : 'false';
+    this.dialog.dataset.hasMedia = notification.media ? 'true' : 'false';
 
     const viewportHeight =
       typeof globalThis.window !== 'undefined'
@@ -518,16 +585,57 @@ export class NotificationCenter {
       typeof globalThis.window !== 'undefined'
         ? globalThis.window.innerWidth
         : 480;
+    const maxWidth = notification.media ? 720 : 440;
     this.dialog.style.maxHeight = `${Math.round(Math.min(viewportHeight * 0.9, 640))}px`;
-    this.dialog.style.width = `${Math.round(Math.min(viewportWidth * 0.92, 440))}px`;
+    this.dialog.style.width = `${Math.round(Math.min(viewportWidth * 0.92, maxWidth))}px`;
+  }
+
+  private mediaCopyFrom(copy: NotificationCenterCopy): NotificationMediaCopy {
+    return {
+      loadingCamera: copy.loadingCamera,
+      cameraUnavailable: copy.cameraUnavailable,
+      videoUnavailable: copy.videoUnavailable,
+      imageUnavailable: copy.imageUnavailable,
+      retry: copy.retry,
+    };
   }
 
   private clearAutoCloseVisual(): void {
+    if (this.autoCloseTickTimer !== null) {
+      clearInterval(this.autoCloseTickTimer);
+      this.autoCloseTickTimer = null;
+    }
+    this.autoCloseEndsAt = null;
     this.autoCloseTrack.hidden = true;
     this.autoCloseBar.classList.remove(
       'notification-center__auto-close-bar--running',
     );
     this.autoCloseBar.style.animationDuration = '';
+    this.countdownEl.hidden = true;
+    this.countdownEl.textContent = '';
+    this.countdownEl.removeAttribute('aria-label');
+  }
+
+  private updateAutoCloseCountdown(): void {
+    if (this.autoCloseEndsAt === null) {
+      this.countdownEl.hidden = true;
+      this.countdownEl.textContent = '';
+      return;
+    }
+    const remainingSeconds = Math.max(
+      0,
+      Math.ceil((this.autoCloseEndsAt - Date.now()) / 1000),
+    );
+    const label = this.copy.autoCloseRemaining.replace(
+      '{seconds}',
+      String(remainingSeconds),
+    );
+    this.countdownEl.hidden = false;
+    this.countdownEl.textContent = label;
+    this.countdownEl.setAttribute(
+      'aria-label',
+      `${this.copy.autoCloseHint}: ${label}`,
+    );
   }
 
   /**

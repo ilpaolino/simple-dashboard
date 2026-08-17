@@ -1,5 +1,63 @@
 # Decisions
 
+Architectural choices for Milestone 13. Earlier decisions remain in force below and in prior milestone docs.
+
+## Camera media extends Notifications
+
+**Choice:** Optional camera/media is a field on the existing `DisplayNotification`. There is no Camera Overlay, Event Overlay, or second Notification Center / NotificationManager.
+
+**Why:** One attention surface. A parallel camera system would duplicate lifecycle, RAM, and UX.
+
+## Camera selected through Homey Flow
+
+**Choice:** The Show cards gain an optional autocomplete **Camera / Media**. The user picks a Homey Device. The app never asks for IP, RTSP URL, username, or password.
+
+**Why:** Official Flow arguments. A second `type: "device"` on a Device card only lists devices paired in *this* app; cameras belong to other apps, so autocomplete is the documented way to pick any Homey Device. `required: false` keeps pre-M13 Flows valid (`args.media` may be `undefined`).
+
+## Video preferred with image fallback
+
+**Choice:** If Homey exposes both a **browser-playable** video and an image, video is the main view and image is placeholder/fallback. RTSP/RTMP/WebRTC/HLS/DASH are **not** treated as playable on the Wall Display `<video>` element.
+
+**Why:** Homey brokers those types to its own frontends (WebRTC proxy as of 12.12) and does not transcode. Sending RTSP to `<video>` would show a broken player.
+
+## Media lives only while visible
+
+**Choice:** Live media starts only when the Notification Center is open **and** the current carousel item has media. Close, auto-close, hide, dismiss, swipe, disconnect, destroy, and camera upsert all stop and clean up immediately. At most one live session per Display.
+
+**Why:** RAM/CPU/network. Preloading neighbour cards would keep extra streams.
+
+## No transcoding on Homey
+
+**Choice:** No ffmpeg, no persistent restream, no in-process media server. `/notification-media/:id/video` returns 415.
+
+**Why:** Homey Pro must not become a transcoding appliance. Snapshot fallback is the stable path for real cameras today.
+
+## Backend owns media resolution
+
+**Choice:** `NotificationMediaResolver` inspects Homey `Device.images` / `Device.videos` (defensively parsed) and emits a frontend-safe `NotificationMedia`. The browser never sees Device ids, tokens, or stream URLs.
+
+**Why:** Capability detection belongs on Homey; the Wall Display must not hold camera credentials.
+
+## No arbitrary URL proxy
+
+**Choice:** Image bytes are fetched by the backend from the Homey-local image URL (same host as Homey’s local API only) and served at `GET /notification-media/:id/image` on port **7999**, scoped to Display IP + notification + media binding.
+
+**Why:** An open `/proxy?url=` would be SSRF. The client cannot choose a camera id or URL.
+
+## Live snapshot refresh when video is not playable
+
+**Choice:** While the Notification Center shows an image (or a video fallback image), the frontend refetches the scoped snapshot every **3 s** (one in flight; next fetch starts when the previous completes). Cache-busting query; `Cache-Control: private, no-store`; Homey image GET is also `no-store`. Stop immediately on close / swipe / auto-close. The backend reuses the resolved Homey image URL for a few seconds so refresh does not re-list devices on every tick.
+
+**Why:** Typical Homey cameras expose RTSP / WebRTC / HLS, which the Wall Display `<video>` cannot play without transcoding. Homey camera apps call `Image.update()` about every 3s; polling faster only re-downloaded the same JPEG and wasted RAM/bandwidth on Homey Pro and the Wall Display.
+
+## Visible auto-close remaining time
+
+**Choice:** When presentation auto-close is scheduled, the header shows remaining seconds (in addition to the progress bar). Manual ribbon open still does not start auto-close.
+
+**Why:** A doorbell that closes in 60s should make that deadline obvious, not only via a thin bar.
+
+---
+
 Architectural choices for Milestone 12. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Notifications remain the single attention system
@@ -56,9 +114,9 @@ See [MILESTONE-12.md](MILESTONE-12.md#what-action-id-is-for).
 
 ## Upsert auto-open decision
 
-**Choice:** Auto-open on `notification-added`, and on `notification-updated` only when the id was not already visible (restore-after-dismiss). Content updates of a visible notification do not reopen.
+**Choice:** Auto-open on `notification-added` and on `notification-updated` when `autoOpen` is not false — including when that id is already in the visible list (second Flow Show of the same key after auto-close). Snapshot/reconnect never auto-opens.
 
-**Why:** Least surprising; avoids reopen loops while preserving Flow “Show” re-surface.
+**Why:** Auto-close only hides the Center; the notification stays on the ribbon. A doorbell that rings again is still an upsert of `doorbell`, so skipping auto-open on update made the second ring invisible. Re-presenting is what Flow “Show” means. Snapshot/reconnect stays quiet so reconnect does not storm the wall.
 
 ---
 

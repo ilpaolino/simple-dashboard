@@ -19,6 +19,7 @@ import type {
 import type { DisplayNotification } from '../notifications/types';
 import { isNotificationAction } from '../notifications/action';
 import { isNotificationIcon } from '../notifications/icons';
+import { isNotificationMedia } from '../notifications/media';
 import { isNotificationSeverity } from '../notifications/severity';
 import { REALTIME_PROTOCOL_VERSION } from './constants';
 import { isValidPositionPercent } from '../widgets/cover/normalize';
@@ -231,6 +232,23 @@ export type ClientMessage =
       readonly notificationKey: string;
       readonly actionId: string;
       readonly requestId: string;
+    }
+  | {
+      readonly type: 'notification-media-start';
+      readonly notificationId: string;
+    }
+  | {
+      readonly type: 'notification-media-stop';
+      readonly notificationId: string;
+    }
+  | {
+      readonly type: 'notification-media-telemetry';
+      readonly notificationId: string;
+      readonly event:
+        | 'image-loaded'
+        | 'video-ready'
+        | 'video-failed'
+        | 'image-fallback';
     };
 
 export function isWidgetActionId(value: unknown): value is WidgetActionId {
@@ -305,6 +323,7 @@ export function isDisplayNotification(
     readonly autoCloseSeconds?: unknown;
     readonly action?: unknown;
     readonly notificationKey?: unknown;
+    readonly media?: unknown;
   };
 
   if (typeof candidate.id !== 'string' || candidate.id.trim() === '') {
@@ -358,6 +377,9 @@ export function isDisplayNotification(
     candidate.notificationKey !== undefined &&
     typeof candidate.notificationKey !== 'string'
   ) {
+    return false;
+  }
+  if (candidate.media !== undefined && !isNotificationMedia(candidate.media)) {
     return false;
   }
   return true;
@@ -505,6 +527,30 @@ export function isClientMessage(value: unknown): value is ClientMessage {
       message.actionId.trim() !== '' &&
       typeof message.requestId === 'string' &&
       message.requestId.trim() !== ''
+    );
+  }
+
+  if (
+    candidate.type === 'notification-media-start' ||
+    candidate.type === 'notification-media-stop'
+  ) {
+    const notificationId = (value as { readonly notificationId?: unknown })
+      .notificationId;
+    return typeof notificationId === 'string' && notificationId.trim() !== '';
+  }
+
+  if (candidate.type === 'notification-media-telemetry') {
+    const message = value as {
+      readonly notificationId?: unknown;
+      readonly event?: unknown;
+    };
+    return (
+      typeof message.notificationId === 'string' &&
+      message.notificationId.trim() !== '' &&
+      (message.event === 'image-loaded' ||
+        message.event === 'video-ready' ||
+        message.event === 'video-failed' ||
+        message.event === 'image-fallback')
     );
   }
 

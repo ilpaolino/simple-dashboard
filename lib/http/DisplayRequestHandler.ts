@@ -49,6 +49,11 @@ export interface DisplayRequestHandlerOptions {
   readonly deviceRepository?: HomeyDeviceRepository | null;
   readonly getRealtimeDiagnostics?: () => DiagnosticsRealtimeSection | null;
   readonly getNotificationDiagnostics?: () => NotificationDiagnosticsSnapshot | null;
+  readonly serveNotificationMedia?: (input: {
+    readonly displayId: string;
+    readonly notificationId: string;
+    readonly kind: 'image' | 'video';
+  }) => Promise<HttpResponse>;
 }
 
 /**
@@ -78,6 +83,11 @@ export class DisplayRequestHandler {
 
     if (path === '/diagnostics') {
       return this.handleDiagnostics();
+    }
+
+    const media = parseNotificationMediaPath(path);
+    if (media) {
+      return this.handleNotificationMedia(info, media);
     }
 
     if (path === '/' || path === '') {
@@ -126,6 +136,32 @@ export class DisplayRequestHandler {
         error instanceof Error ? error.message : 'unknown_error';
       return textResponse(500, `Diagnostics render failed: ${detail}`);
     }
+  }
+
+  private async handleNotificationMedia(
+    info: RequestInfo,
+    media: { readonly notificationId: string; readonly kind: 'image' | 'video' },
+  ): Promise<HttpResponse> {
+    const clientIp = normalizeClientIp(info.clientIp);
+    const entry = this.options.registry.findByIp(clientIp);
+    if (!entry) {
+      return textResponse(404, 'Not Found');
+    }
+    if (!this.options.serveNotificationMedia) {
+      return textResponse(404, 'Not Found');
+    }
+    if (media.kind === 'video') {
+      return this.options.serveNotificationMedia({
+        displayId: entry.config.displayId,
+        notificationId: media.notificationId,
+        kind: 'video',
+      });
+    }
+    return this.options.serveNotificationMedia({
+      displayId: entry.config.displayId,
+      notificationId: media.notificationId,
+      kind: 'image',
+    });
   }
 
   private async handleRoot(info: RequestInfo): Promise<HttpResponse> {
@@ -351,6 +387,27 @@ function typeLabelForDisplay(
 function pathOnly(url: string): string {
   const noQuery = url.split('?', 1)[0] ?? '/';
   return noQuery === '' ? '/' : noQuery;
+}
+
+const NOTIFICATION_MEDIA_PATH =
+  /^\/notification-media\/([A-Za-z0-9._-]+)\/(image|video)$/;
+
+export function parseNotificationMediaPath(
+  path: string,
+): { readonly notificationId: string; readonly kind: 'image' | 'video' } | null {
+  const match = NOTIFICATION_MEDIA_PATH.exec(path);
+  if (!match) {
+    return null;
+  }
+  const notificationId = match[1];
+  const kind = match[2];
+  if (
+    notificationId === undefined ||
+    (kind !== 'image' && kind !== 'video')
+  ) {
+    return null;
+  }
+  return { notificationId, kind };
 }
 
 function htmlResponse(statusCode: number, body: string): HttpResponse {

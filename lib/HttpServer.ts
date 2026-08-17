@@ -236,9 +236,9 @@ export class HttpServer {
       const result = await this.requestHandler(info);
       response.writeHead(result.statusCode, {
         'Content-Type': result.contentType,
-        'Cache-Control': 'no-store',
+        'Cache-Control': result.cacheControl ?? 'no-store',
       });
-      response.end(result.body);
+      response.end(result.binaryBody ?? result.body);
     } catch (error) {
       this.logger.error('HTTP request handler failed', error);
       response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });

@@ -3,6 +3,7 @@
  */
 
 import type { NotificationAction } from './action';
+import type { NotificationMedia } from './media';
 import type { NotificationIcon, NotificationSeverity } from './types';
 
 export interface UpsertDisplayNotificationInput {
@@ -21,6 +22,15 @@ export interface UpsertDisplayNotificationInput {
    * Omit to leave action unchanged on update; on create, means no action.
    */
   readonly action?: NotificationAction | null;
+  /**
+   * Public media descriptor. `null` clears media on upsert.
+   */
+  readonly media?: NotificationMedia | null;
+  /**
+   * Homey Device id for media resolution. Backend-only; never sent to the browser.
+   * `null` clears the binding.
+   */
+  readonly mediaDeviceId?: string | null;
 }
 
 export type AggregateNotificationSeverity =

@@ -16,6 +16,7 @@ class FakeElement {
   public style: Record<string, string> = {};
   public dataset: Record<string, string> = {};
   public disabled = false;
+  public offsetWidth = 1;
   private attrs = new Map<string, string>();
   private listeners = new Map<string, Set<(event: unknown) => void>>();
   private captured: number | null = null;
@@ -65,8 +66,12 @@ class FakeElement {
   }
 
   public dispatch(type: string, event: unknown): void {
+    const payload =
+      event && typeof event === 'object'
+        ? { target: this, ...(event as Record<string, unknown>) }
+        : { target: this };
     for (const listener of this.listeners.get(type) ?? []) {
-      listener(event);
+      listener(payload);
     }
   }
 
@@ -273,6 +278,65 @@ describe('Notification UI', () => {
       dismiss?.click();
       assert.equal(dismissed, 'html');
 
+      center.destroy();
+    } finally {
+      restore();
+    }
+  });
+
+  it('places icon, severity, and title in the header', () => {
+    const body = new FakeElement();
+    const restore = installDomStub(body);
+    try {
+      const controller = new NotificationController();
+      const center = new NotificationCenter({
+        controller,
+        copy: defaultDashboardUiCopy().notifications,
+        parent: body as unknown as HTMLElement,
+        onDismiss: () => undefined,
+        onAction: () => undefined,
+      });
+      controller.applySnapshot([
+        note({
+          id: 'door',
+          title: 'Front door',
+          message: 'Someone is here',
+          severity: 'warning',
+          icon: 'bell',
+        }),
+      ]);
+      controller.openCenter();
+      const root = body.children[0] as FakeElement;
+      const header = root.querySelector('.notification-center__header');
+      assert.ok(header);
+      assert.equal(
+        header!.querySelector('.notification-center__severity')?.textContent,
+        'Warning',
+      );
+      assert.equal(
+        header!.querySelector('.notification-center__title')?.textContent,
+        'Front door',
+      );
+      assert.equal(
+        header!.querySelector('.notification-center__icon')?.hidden,
+        false,
+      );
+      const panel = root.querySelector('.notification-center__body');
+      assert.equal(panel?.querySelector('.notification-center__title'), null);
+      assert.equal(
+        panel?.querySelector('.notification-center__message')?.textContent,
+        'Someone is here',
+      );
+      const content = root.querySelector('.notification-center__content');
+      assert.ok(content);
+      assert.ok(content!.querySelector('.notification-center__footer'));
+      assert.ok(content!.querySelector('.notification-center__media'));
+      assert.equal(
+        root.querySelector('.notification-center__header')?.querySelector(
+          '.notification-center__footer',
+        ),
+        null,
+      );
       center.destroy();
     } finally {
       restore();
@@ -639,6 +703,44 @@ describe('M12 Notification Center action + auto-close', () => {
       assert.equal(controller.isCenterOpen(), false);
       assert.equal(autoClosed, 1);
       assert.equal(center.hasActiveAutoCloseTimer(), false);
+      center.destroy();
+    } finally {
+      restore();
+    }
+  });
+
+  it('shows remaining auto-close time and hides it when cancelled', () => {
+    const body = new FakeElement();
+    const restore = installDomStub(body);
+    try {
+      const controller = new NotificationController();
+      const center = new NotificationCenter({
+        controller,
+        copy: defaultDashboardUiCopy().notifications,
+        parent: body as unknown as HTMLElement,
+        onDismiss: () => undefined,
+        onAction: () => undefined,
+      });
+      controller.applySnapshot([
+        note({
+          id: 'timed',
+          message: 'Auto',
+          severity: 'info',
+          autoCloseSeconds: 60,
+        }),
+      ]);
+      controller.openCenter();
+      const root = body.children[0] as FakeElement;
+      const countdown = root.querySelector('.notification-center__countdown');
+      assert.equal(countdown?.hidden, true);
+
+      center.scheduleAutoClose(60);
+      assert.equal(countdown?.hidden, false);
+      assert.equal(countdown?.textContent, '60s');
+
+      center.cancelAutoClose('user-interaction');
+      assert.equal(countdown?.hidden, true);
+      assert.equal(countdown?.textContent, '');
       center.destroy();
     } finally {
       restore();

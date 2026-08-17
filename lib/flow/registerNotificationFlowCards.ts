@@ -19,9 +19,11 @@ import { getDisplayId } from '../device/DisplayAppHost';
 import {
   normalizeAutoCloseSeconds,
   normalizeNotificationAction,
+  parseFlowMediaArgument,
   type NotificationAction,
   type NotificationActionFlowTokens,
   type NotificationActionTriggerState,
+  type NotificationMedia,
 } from '../notifications';
 import { isNotificationIcon } from '../notifications/icons';
 import { isNotificationSeverity } from '../notifications/severity';
@@ -40,6 +42,8 @@ export interface NotificationFlowApp {
     readonly autoOpen?: boolean;
     readonly autoCloseSeconds?: number;
     readonly action?: NotificationAction | null;
+    readonly media?: NotificationMedia | null;
+    readonly mediaDeviceId?: string | null;
   }): {
     readonly ok: true;
     readonly created: boolean;
@@ -59,15 +63,36 @@ export interface NotificationFlowApp {
     readonly tokens: NotificationActionFlowTokens;
     readonly state: NotificationActionTriggerState;
   }): Promise<void>;
+  listNotificationMediaDevices?(query: string): Promise<
+    readonly {
+      readonly id: string;
+      readonly name: string;
+      readonly zoneName: string | null;
+    }[]
+  >;
+  resolveNotificationMedia?(deviceId: string): Promise<NotificationMedia>;
 }
 
 type HomeyDeviceLike = {
   getData(): unknown;
 };
 
+type FlowAutocompleteResult = {
+  readonly id: string;
+  readonly name: string;
+  readonly description?: string;
+};
+
 type FlowActionCard = {
   registerRunListener(
     listener: (args: Record<string, unknown>) => Promise<void>,
+  ): FlowActionCard;
+  registerArgumentAutocompleteListener?(
+    name: string,
+    listener: (
+      query: string,
+      args: Record<string, unknown>,
+    ) => Promise<FlowAutocompleteResult[]>,
   ): FlowActionCard;
 };
 
@@ -154,6 +179,8 @@ function mapManagerError(
       return translate('flow.notifications.errors.invalidActionText');
     case 'invalid_auto_close':
       return translate('flow.notifications.errors.invalidAutoClose');
+    case 'invalid_media_device':
+      return translate('flow.notifications.errors.invalidMediaDevice');
     default:
       return translate('flow.notifications.errors.managerFailed');
   }
@@ -282,6 +309,41 @@ export function parseShowAction(
   return { ok: true, action: normalized.value };
 }
 
+export async function resolveShowMedia(
+  args: Record<string, unknown>,
+  app: NotificationFlowApp,
+  translate: (key: string) => string,
+): Promise<
+  | {
+      readonly ok: true;
+      readonly media: NotificationMedia | null;
+      readonly mediaDeviceId: string | null;
+    }
+  | { readonly ok: false; readonly message: string }
+> {
+  const parsed = parseFlowMediaArgument(args.media);
+  if (!parsed.ok) {
+    return { ok: false, message: mapManagerError(parsed.message, translate) };
+  }
+  if (!parsed.value) {
+    return { ok: true, media: null, mediaDeviceId: null };
+  }
+  const media = app.resolveNotificationMedia
+    ? await app.resolveNotificationMedia(parsed.value.deviceId)
+    : {
+        type: 'camera' as const,
+        hasImage: false,
+        hasVideo: false,
+        videoPlayable: false,
+        playback: 'unavailable' as const,
+      };
+  return {
+    ok: true,
+    media,
+    mediaDeviceId: parsed.value.deviceId,
+  };
+}
+
 export function registerNotificationFlowCards(options: {
   readonly homey: HomeyFlowHost;
   readonly app: NotificationFlowApp;
@@ -306,6 +368,12 @@ export function registerNotificationFlowCards(options: {
       throw new Error(parsed.message);
     }
 
+    const mediaParsed = await resolveShowMedia(args, app, translate);
+    if (!mediaParsed.ok) {
+      app.recordFlowNotificationError();
+      throw new Error(mediaParsed.message);
+    }
+
     try {
       const result = app.upsertDisplayNotification({
         displayId: parsed.displayId,
@@ -319,6 +387,8 @@ export function registerNotificationFlowCards(options: {
         autoOpen: true,
         autoCloseSeconds: 0,
         action: null,
+        media: mediaParsed.media,
+        mediaDeviceId: mediaParsed.mediaDeviceId,
       });
 
       logger.info('Flow show notification (simple)', {
@@ -361,6 +431,12 @@ export function registerNotificationFlowCards(options: {
       throw new Error(actionParsed.message);
     }
 
+    const mediaParsed = await resolveShowMedia(args, app, translate);
+    if (!mediaParsed.ok) {
+      app.recordFlowNotificationError();
+      throw new Error(mediaParsed.message);
+    }
+
     try {
       const result = app.upsertDisplayNotification({
         displayId: parsed.displayId,
@@ -374,6 +450,8 @@ export function registerNotificationFlowCards(options: {
         autoOpen,
         autoCloseSeconds: autoCloseResult.value ?? 0,
         action: actionParsed.action,
+        media: mediaParsed.media,
+        mediaDeviceId: mediaParsed.mediaDeviceId,
       });
 
       logger.info('Flow show interactive notification', {
@@ -385,6 +463,7 @@ export function registerNotificationFlowCards(options: {
         autoOpen,
         autoCloseSeconds: autoCloseResult.value ?? 0,
         hasAction: actionParsed.action !== null,
+        hasMedia: mediaParsed.media !== null,
       });
     } catch (error) {
       app.recordFlowNotificationError();
@@ -467,13 +546,17 @@ export function registerNotificationFlowCards(options: {
   };
 
   for (const id of [...GENERIC_SHOW_SIMPLE_IDS, ...SHELLY_SHOW_SIMPLE_IDS]) {
-    homey.flow.getActionCard(id).registerRunListener(showSimpleListener);
+    const card = homey.flow.getActionCard(id);
+    card.registerRunListener(showSimpleListener);
+    registerMediaAutocomplete(card, app);
   }
   for (const id of [
     ...GENERIC_SHOW_INTERACTIVE_IDS,
     ...SHELLY_SHOW_INTERACTIVE_IDS,
   ]) {
-    homey.flow.getActionCard(id).registerRunListener(showInteractiveListener);
+    const card = homey.flow.getActionCard(id);
+    card.registerRunListener(showInteractiveListener);
+    registerMediaAutocomplete(card, app);
   }
   for (const id of [...GENERIC_REMOVE_IDS, ...SHELLY_REMOVE_IDS]) {
     homey.flow.getActionCard(id).registerRunListener(removeListener);
@@ -488,6 +571,32 @@ export function registerNotificationFlowCards(options: {
   }
 
   return { triggerCards };
+}
+
+function registerMediaAutocomplete(
+  card: FlowActionCard,
+  app: NotificationFlowApp,
+): void {
+  if (!card.registerArgumentAutocompleteListener) {
+    return;
+  }
+  if (!app.listNotificationMediaDevices) {
+    return;
+  }
+  card.registerArgumentAutocompleteListener('media', async (query) => {
+    const needle = typeof query === 'string' ? query : '';
+    // Call through `app` so class methods keep `this` (Homey invokes this
+    // listener as a plain function; extracting the method would throw
+    // "Cannot read properties of undefined (reading 'logger')").
+    const devices = await app.listNotificationMediaDevices!(needle);
+    return devices.map((device) => ({
+      id: device.id,
+      name: device.name,
+      ...(device.zoneName
+        ? { description: device.zoneName }
+        : {}),
+    }));
+  });
 }
 
 export function resolveNotificationActionTriggerCardId(

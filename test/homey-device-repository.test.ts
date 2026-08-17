@@ -77,6 +77,9 @@ describe('Homey API DTO parsing', () => {
       available: true,
       capabilities: ['onoff', 'dim'],
       capabilityValues: { onoff: false, dim: 0.4 },
+      className: null,
+      images: [],
+      videos: [],
     });
 
     const collection = parseHomeyApiDeviceCollection({

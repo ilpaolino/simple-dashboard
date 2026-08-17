@@ -201,7 +201,13 @@ function isDashboardCopy(value: unknown): boolean {
     typeof notifications.position === 'string' &&
     typeof notifications.actionSent === 'string' &&
     typeof notifications.actionFailed === 'string' &&
-    typeof notifications.autoCloseHint === 'string'
+    typeof notifications.autoCloseHint === 'string' &&
+    typeof notifications.autoCloseRemaining === 'string' &&
+    typeof notifications.loadingCamera === 'string' &&
+    typeof notifications.cameraUnavailable === 'string' &&
+    typeof notifications.videoUnavailable === 'string' &&
+    typeof notifications.imageUnavailable === 'string' &&
+    typeof notifications.retry === 'string'
   );
 }
 

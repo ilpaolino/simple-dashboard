@@ -1,6 +1,6 @@
 {
   "id": "dev.dadda.simpledashboard",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -9,8 +9,8 @@
     "it": "Simple Dashboard"
   },
   "description": {
-    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, auto-close, and Homey Flow notification actions.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, chiusura automatica e azioni Flow native per le notifiche."
+    "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, optional camera media, auto-close, and Homey Flow notification actions.",
+    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, media camera opzionale, chiusura automatica e azioni Flow native per le notifiche."
   },
   "category": ["tools"],
   "tags": {

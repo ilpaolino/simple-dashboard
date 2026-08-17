@@ -1,4 +1,9 @@
 import type { HomeyApiDeviceDto, HomeyApiZoneDto } from './types';
+import {
+  parseDeviceClassName,
+  parseDeviceImages,
+  parseDeviceVideos,
+} from './parseHomeyMedia';
 
 export function parseHomeyApiDevice(value: unknown): HomeyApiDeviceDto | null {
   if (typeof value !== 'object' || value === null) {
@@ -27,6 +32,9 @@ export function parseHomeyApiDevice(value: unknown): HomeyApiDeviceDto | null {
     available: candidate.available !== false,
     capabilities,
     capabilityValues: parseCapabilityValues(candidate.capabilitiesObj),
+    className: parseDeviceClassName(candidate.class),
+    images: parseDeviceImages(candidate.images),
+    videos: parseDeviceVideos(candidate.videos),
   };
 }
 

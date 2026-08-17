@@ -15,6 +15,7 @@ Homey Flow / Web API
 NotificationManager
         │  active notifications + key index (displayId + key)
         │  autoOpen / autoCloseSeconds / optional action (M12)
+        │  optional media descriptor (M13; no Device ids / URLs on the wire)
         │  Map<displayId, Set<notificationId>> dismissed (runtime)
         │
         ▼
@@ -49,6 +50,7 @@ NotificationManager.upsertForDisplay
         ▼
 Realtime push (if online)
         │  autoOpen? → open Center; autoCloseSeconds? → one timer + CSS progress
+        │  media? → start only while Center shows that notification (M13)
         │
 User presses CTA
         │
@@ -62,6 +64,27 @@ tokens: notificationKey, actionId, actionLabel, actionText, notificationTitle, n
 ```
 
 Action ID is a routing key you invent (`open-gate`): same string on SHOW and on WHEN, so Homey can tell taps apart. It is not a Homey device. See [MILESTONE-12.md](MILESTONE-12.md#what-action-id-is-for).
+
+### Milestone 13 — Camera media (incremental)
+
+```text
+Show notification (+ optional Camera / Media autocomplete)
+        │
+        ▼
+NotificationMediaResolver
+  Device.images / Device.videos (defensive parse)
+        │  public NotificationMedia (hasImage / hasVideo / videoPlayable / playback)
+        │  backend mediaBinding.deviceId (never on the wire)
+        ▼
+Notification Center
+        │  visible + open → NotificationMediaController start
+        │  closed / swipe / auto-close → stop + cleanup
+        ▼
+GET /notification-media/:id/image  (port 7999, Display IP scoped)
+GET /notification-media/:id/video  (415 — no transcoding)
+```
+
+Homey camera video types (RTSP / WebRTC / HLS / DASH / RTMP) are **detected** but not piped to `<video>`. When Homey also exposes an image, that snapshot is shown and refreshed every 3 s while the Center is open. See [MILESTONE-13.md](MILESTONE-13.md).
 
 ### Milestone 11B — Homey Flow (incremental)
 
@@ -330,6 +353,8 @@ Default port `7999` (configurable in App Settings).
 | `GET /` | Recognize client; serve dashboard HTML bootstrap |
 | `GET /dashboard.css` / `GET /dashboard.js` | Built vanilla assets |
 | `GET /diagnostics` | Runtime diagnostics if enabled; otherwise **403** |
+| `GET /notification-media/:id/image` | Display-scoped snapshot bytes for the current notification binding |
+| `GET /notification-media/:id/video` | **415** (no transcoding / RTSP proxy) |
 | `WS /realtime` | Display-bound WebSocket (upgrade on the same server) |
 | other | 404 / upgrade rejected |
 
@@ -342,7 +367,7 @@ Same trust model as HTTP: client IP → `DisplayRegistry.findByIp`. Unknown IPs 
 ### Protocol (discriminated unions)
 
 Server → client: `dashboard-snapshot` | `dashboard-configuration` | `widget-state` | `notification-snapshot` | `notification-added` | `notification-updated` | `notification-removed` | `heartbeat` | `command-accepted` | `command-rejected` | `command-timeout` | `command-succeeded` | `error`  
-Client → server: `client-ready` | `heartbeat-ack` | `widget-action` | `notification-dismiss` | `notification-center-opened`
+Client → server: `client-ready` | `heartbeat-ack` | `widget-action` | `notification-dismiss` | `notification-center-opened` | `notification-auto-opened` | `notification-auto-closed` | `notification-action` | `notification-media-start` | `notification-media-stop` | `notification-media-telemetry`
 
 `widget-action` actions include `toggle`, `set-dim`, `set-temperature`, `set-color` (light), `set-position` (cover + `positionPercent`), and `stop` (cover, when supported).
 

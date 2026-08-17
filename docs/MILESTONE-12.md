@@ -44,8 +44,8 @@ User Homey automation
 | Event | Behavior |
 | --- | --- |
 | `notification-added` + `autoOpen=true` | Open Center; may start auto-close |
-| `notification-updated` of already-visible id | Update content only (no reopen loop) |
-| `notification-updated` when id was not visible (restore after dismiss) | Treat like new visibility → honor `autoOpen` |
+| `notification-updated` + `autoOpen=true` | Re-present Center (same key after auto-close, restore after dismiss, or Center already open → focus that item and restart auto-close) |
+| `notification-updated` + `autoOpen=false` | Update content only |
 | Snapshot / reconnect | Apply list; **never** auto-open storm |
 | Manual ribbon open | Open Center; **no** auto-close countdown |
 

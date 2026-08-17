@@ -22,6 +22,7 @@ import {
 } from '../lib/realtime/protocol';
 import { parseShowAction } from '../lib/flow/registerNotificationFlowCards';
 import { NotificationController } from '../frontend/notifications/NotificationController';
+import { shouldAutoOpenFromPush } from '../frontend/notifications/autoOpenFromPush';
 import type { DisplayNotification } from '../lib/notifications/types';
 
 function baseNotification(
@@ -344,6 +345,17 @@ describe('M12 frontend auto-open controller semantics', () => {
     );
     assert.equal(controller.isCenterOpen(), true);
     assert.equal(controller.getCurrent()?.message, 'two');
+  });
+});
+
+describe('M12 auto-open from Flow Show upsert', () => {
+  it('re-presents after auto-close of the same already-visible notification', () => {
+    assert.equal(shouldAutoOpenFromPush(true, 'added'), true);
+    assert.equal(shouldAutoOpenFromPush(true, 'updated'), true);
+    assert.equal(shouldAutoOpenFromPush(true, 'restored'), true);
+    assert.equal(shouldAutoOpenFromPush(undefined, 'updated'), true);
+    assert.equal(shouldAutoOpenFromPush(false, 'updated'), false);
+    assert.equal(shouldAutoOpenFromPush(true, 'snapshot'), false);
   });
 });
 

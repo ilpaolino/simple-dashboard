@@ -58,6 +58,15 @@ export interface RealtimeMetricsSnapshot {
   readonly notificationActionTriggersSucceeded: number;
   readonly notificationActionTriggersFailed: number;
   readonly notificationActionValidationRejected: number;
+  readonly mediaResolveAttempts: number;
+  readonly mediaResolveSuccess: number;
+  readonly mediaResolveFailures: number;
+  readonly videoStartAttempts: number;
+  readonly videoStartSuccess: number;
+  readonly videoStartFailures: number;
+  readonly imageFallbacks: number;
+  readonly imageLoads: number;
+  readonly activeMediaSessions: number;
 }
 
 export class RealtimeMetrics {
@@ -115,6 +124,15 @@ export class RealtimeMetrics {
   private notificationActionTriggersSucceeded = 0;
   private notificationActionTriggersFailed = 0;
   private notificationActionValidationRejected = 0;
+  private mediaResolveAttempts = 0;
+  private mediaResolveSuccess = 0;
+  private mediaResolveFailures = 0;
+  private videoStartAttempts = 0;
+  private videoStartSuccess = 0;
+  private videoStartFailures = 0;
+  private imageFallbacks = 0;
+  private imageLoads = 0;
+  private activeMediaSessions = 0;
 
   public recordConnectionOpened(): void {
     this.connectionsOpened += 1;
@@ -324,6 +342,42 @@ export class RealtimeMetrics {
     this.notificationActionValidationRejected += 1;
   }
 
+  public recordMediaResolveAttempt(): void {
+    this.mediaResolveAttempts += 1;
+  }
+
+  public recordMediaResolveSuccess(): void {
+    this.mediaResolveSuccess += 1;
+  }
+
+  public recordMediaResolveFailure(): void {
+    this.mediaResolveFailures += 1;
+  }
+
+  public recordVideoStartAttempt(): void {
+    this.videoStartAttempts += 1;
+  }
+
+  public recordVideoStartSuccess(): void {
+    this.videoStartSuccess += 1;
+  }
+
+  public recordVideoStartFailure(): void {
+    this.videoStartFailures += 1;
+  }
+
+  public recordImageFallback(): void {
+    this.imageFallbacks += 1;
+  }
+
+  public recordImageLoad(): void {
+    this.imageLoads += 1;
+  }
+
+  public setActiveMediaSessions(count: number): void {
+    this.activeMediaSessions = Math.max(0, count);
+  }
+
   public snapshot(): RealtimeMetricsSnapshot {
     return {
       connectionsOpened: this.connectionsOpened,
@@ -382,6 +436,15 @@ export class RealtimeMetrics {
       notificationActionTriggersFailed: this.notificationActionTriggersFailed,
       notificationActionValidationRejected:
         this.notificationActionValidationRejected,
+      mediaResolveAttempts: this.mediaResolveAttempts,
+      mediaResolveSuccess: this.mediaResolveSuccess,
+      mediaResolveFailures: this.mediaResolveFailures,
+      videoStartAttempts: this.videoStartAttempts,
+      videoStartSuccess: this.videoStartSuccess,
+      videoStartFailures: this.videoStartFailures,
+      imageFallbacks: this.imageFallbacks,
+      imageLoads: this.imageLoads,
+      activeMediaSessions: this.activeMediaSessions,
     };
   }
 
@@ -440,5 +503,14 @@ export class RealtimeMetrics {
     this.notificationActionTriggersSucceeded = 0;
     this.notificationActionTriggersFailed = 0;
     this.notificationActionValidationRejected = 0;
+    this.mediaResolveAttempts = 0;
+    this.mediaResolveSuccess = 0;
+    this.mediaResolveFailures = 0;
+    this.videoStartAttempts = 0;
+    this.videoStartSuccess = 0;
+    this.videoStartFailures = 0;
+    this.imageFallbacks = 0;
+    this.imageLoads = 0;
+    this.activeMediaSessions = 0;
   }
 }

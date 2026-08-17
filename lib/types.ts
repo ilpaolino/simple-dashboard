@@ -48,6 +48,9 @@ export interface HttpResponse {
   readonly statusCode: number;
   readonly contentType: string;
   readonly body: string;
+  /** Optional binary payload (notification images). Prefer over encoding bytes as a string. */
+  readonly binaryBody?: Buffer;
+  readonly cacheControl?: string;
 }
 
 export type RequestHandler = (
