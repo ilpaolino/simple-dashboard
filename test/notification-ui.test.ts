@@ -169,6 +169,7 @@ function note(
     dismissable: true,
     highlight: false,
     publishedAt: 1,
+    autoOpen: true,
     ...partial,
   };
 }
@@ -233,6 +234,7 @@ describe('Notification UI', () => {
           dismissed = id;
           controller.dismissLocal(id);
         },
+        onAction: () => undefined,
       });
 
       controller.applySnapshot([
@@ -292,6 +294,7 @@ describe('Notification UI', () => {
         copy: defaultDashboardUiCopy().notifications,
         parent: body as unknown as HTMLElement,
         onDismiss: () => undefined,
+        onAction: () => undefined,
       });
 
       controller.applySnapshot([
@@ -328,6 +331,7 @@ describe('Notification UI', () => {
         copy: defaultDashboardUiCopy().notifications,
         parent: body as unknown as HTMLElement,
         onDismiss: () => undefined,
+        onAction: () => undefined,
       });
       controller.applySnapshot([
         note({ id: 'solo', message: 'only one', severity: 'info' }),
@@ -360,6 +364,7 @@ describe('Notification UI', () => {
         copy: defaultDashboardUiCopy().notifications,
         parent: body as unknown as HTMLElement,
         onDismiss: () => undefined,
+        onAction: () => undefined,
       });
       controller.applySnapshot([
         note({
@@ -372,9 +377,50 @@ describe('Notification UI', () => {
       controller.openCenter();
       const root = body.children[0] as FakeElement;
       const hide = root.querySelector('.notification-center__hide');
-      assert.equal(hide?.hidden, false);
+      const close = root.querySelector('.notification-center__close');
       const dismiss = root.querySelector('.notification-center__dismiss');
+      const backdrop = root.querySelector('.notification-center__backdrop');
+      assert.equal(hide?.hidden, true);
+      assert.equal(close?.hidden, true);
       assert.equal(dismiss?.hidden, true);
+
+      hide?.click();
+      close?.click();
+      backdrop?.dispatch('pointerdown', { target: backdrop });
+      assert.equal(controller.isCenterOpen(), true);
+      assert.equal(controller.getVisibleCount(), 1);
+
+      center.destroy();
+    } finally {
+      restore();
+    }
+  });
+
+  it('does not auto-close a non-dismissable notification', async () => {
+    const body = new FakeElement();
+    const restore = installDomStub(body);
+    try {
+      const controller = new NotificationController();
+      const center = new NotificationCenter({
+        controller,
+        copy: defaultDashboardUiCopy().notifications,
+        parent: body as unknown as HTMLElement,
+        onDismiss: () => undefined,
+        onAction: () => undefined,
+      });
+      controller.applySnapshot([
+        note({
+          id: 'alarm',
+          message: 'Stay open',
+          severity: 'critical',
+          dismissable: false,
+          autoCloseSeconds: 1,
+        }),
+      ]);
+      controller.openCenter();
+      center.scheduleAutoClose(1);
+      assert.equal(center.hasActiveAutoCloseTimer(), false);
+      assert.equal(controller.isCenterOpen(), true);
       center.destroy();
     } finally {
       restore();
@@ -471,5 +517,131 @@ describe('Notification UI', () => {
     assert.equal(left, 1);
 
     swipe.destroy();
+  });
+});
+
+describe('M12 Notification Center action + auto-close', () => {
+  it('renders action text and CTA only when action is present', () => {
+    const body = new FakeElement();
+    const restore = installDomStub(body);
+    try {
+      const controller = new NotificationController();
+      const actions: string[] = [];
+      const center = new NotificationCenter({
+        controller,
+        copy: defaultDashboardUiCopy().notifications,
+        parent: body as unknown as HTMLElement,
+        onDismiss: () => undefined,
+        onAction: (input) => {
+          actions.push(input.actionId);
+        },
+      });
+
+      controller.applySnapshot([
+        note({
+          id: 'with-action',
+          message: 'Ring',
+          severity: 'warning',
+          action: {
+            actionId: 'open-gate',
+            label: 'Open gate',
+            text: 'Press to open the pedestrian gate',
+          },
+        }),
+      ]);
+      controller.openCenter();
+
+      const root = body.children[0] as FakeElement;
+      const actionText = root.querySelector('.notification-center__action-text');
+      const actionBtn = root.querySelector('.notification-center__action');
+      assert.equal(actionText?.hidden, false);
+      assert.equal(
+        actionText?.textContent,
+        'Press to open the pedestrian gate',
+      );
+      assert.equal(actionBtn?.hidden, false);
+      assert.equal(actionBtn?.textContent, 'Open gate');
+
+      actionBtn?.click();
+      assert.deepEqual(actions, ['open-gate']);
+      assert.equal(actionBtn?.disabled, true);
+
+      center.destroy();
+    } finally {
+      restore();
+    }
+  });
+
+  it('hides action UI when notification has no action', () => {
+    const body = new FakeElement();
+    const restore = installDomStub(body);
+    try {
+      const controller = new NotificationController();
+      const center = new NotificationCenter({
+        controller,
+        copy: defaultDashboardUiCopy().notifications,
+        parent: body as unknown as HTMLElement,
+        onDismiss: () => undefined,
+        onAction: () => undefined,
+      });
+      controller.applySnapshot([
+        note({ id: 'plain', message: 'No CTA', severity: 'info' }),
+      ]);
+      controller.openCenter();
+      const root = body.children[0] as FakeElement;
+      assert.equal(
+        root.querySelector('.notification-center__action')?.hidden,
+        true,
+      );
+      assert.equal(
+        root.querySelector('.notification-center__action-text')?.hidden,
+        true,
+      );
+      center.destroy();
+    } finally {
+      restore();
+    }
+  });
+
+  it('schedules and cancels auto-close timer without orphan timers', async () => {
+    const body = new FakeElement();
+    const restore = installDomStub(body);
+    try {
+      const controller = new NotificationController();
+      let autoClosed = 0;
+      const center = new NotificationCenter({
+        controller,
+        copy: defaultDashboardUiCopy().notifications,
+        parent: body as unknown as HTMLElement,
+        onDismiss: () => undefined,
+        onAction: () => undefined,
+        onAutoClosed: () => {
+          autoClosed += 1;
+        },
+      });
+      controller.applySnapshot([
+        note({
+          id: 'timed',
+          message: 'Auto',
+          severity: 'info',
+          autoCloseSeconds: 1,
+        }),
+      ]);
+      controller.openCenter();
+      center.scheduleAutoClose(1);
+      assert.equal(center.hasActiveAutoCloseTimer(), true);
+      center.cancelAutoClose('user-interaction');
+      assert.equal(center.hasActiveAutoCloseTimer(), false);
+      assert.equal(controller.isCenterOpen(), true);
+
+      center.scheduleAutoClose(0.05);
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      assert.equal(controller.isCenterOpen(), false);
+      assert.equal(autoClosed, 1);
+      assert.equal(center.hasActiveAutoCloseTimer(), false);
+      center.destroy();
+    } finally {
+      restore();
+    }
   });
 });

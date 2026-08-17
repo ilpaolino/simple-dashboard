@@ -3,6 +3,7 @@ import type { DashboardUiCopy } from '../../lib/dashboard/types';
 import type { CoverWidgetRuntimeState } from '../../lib/widgets/cover/types';
 import type { LightWidgetRuntimeState } from '../../lib/widgets/light/types';
 import {
+  NOTIFICATION_ACTION_TIMEOUT_MS,
   RECONNECT_FACTOR,
   RECONNECT_INITIAL_MS,
   RECONNECT_MAX_MS,
@@ -59,6 +60,8 @@ export class RealtimeClient {
   private activeLightPanel: LightControlPanel | null = null;
   private openCoverDeviceId: string | null = null;
   private openLightDeviceId: string | null = null;
+  private pendingNotificationActionRequestId: string | null = null;
+  private notificationActionTimer: ReturnType<typeof setTimeout> | null = null;
   private displayMeta: {
     displayId: string;
     displayName: string;
@@ -88,8 +91,12 @@ export class RealtimeClient {
       controller: this.notifications,
       copy: this.copy.notifications,
       onDismiss: (notificationId) => this.dismissNotification(notificationId),
+      onAction: (input) => this.sendNotificationAction(input),
       onOpened: () => {
         this.send({ type: 'notification-center-opened' });
+      },
+      onAutoClosed: () => {
+        this.send({ type: 'notification-auto-closed' });
       },
     });
     this.bindInteractions();
@@ -114,6 +121,7 @@ export class RealtimeClient {
   public destroy(): void {
     this.destroyed = true;
     this.clearReconnectTimer();
+    this.clearNotificationActionPending();
     this.interactions.destroy();
     this.controlOverlay.destroy();
     this.notificationCenter.destroy();
@@ -347,6 +355,7 @@ export class RealtimeClient {
     socket.addEventListener('close', () => {
       this.socket = null;
       this.interactions.handleDisconnect();
+      this.failPendingNotificationAction();
       if (!this.destroyed) {
         this.overlay.show(this.copy.realtime);
         this.scheduleReconnect();
@@ -374,18 +383,53 @@ export class RealtimeClient {
           this.renderer.updateWidgetState(message.widgetId, message.state);
           break;
         case 'notification-snapshot':
-          this.notifications.applySnapshot(message.notifications);
+          // Snapshot / reconnect must not storm auto-open for historical items.
+          this.notificationCenter.cancelAutoClose('snapshot');
+          this.notifications.applySnapshot(
+            message.notifications.map((item) => ({
+              ...item,
+              autoOpen: item.autoOpen !== false,
+            })),
+          );
           break;
         case 'notification-added':
-          this.notifications.addNotification(message.notification);
-          this.openNotificationCenterFromPush();
+          this.notifications.addNotification({
+            ...message.notification,
+            autoOpen: message.notification.autoOpen !== false,
+          });
+          this.maybeAutoOpenFromPush(message.notification, 'added');
           break;
-        case 'notification-updated':
-          this.notifications.updateNotification(message.notification);
-          this.openNotificationCenterFromPush();
+        case 'notification-updated': {
+          const existed = this.notifications
+            .getNotifications()
+            .some((item) => item.id === message.notification.id);
+          this.notifications.updateNotification({
+            ...message.notification,
+            autoOpen: message.notification.autoOpen !== false,
+          });
+          // Auto-open on update only when the notification became newly visible
+          // (e.g. Flow upsert restored after local dismiss). Content-only updates
+          // of an already-visible notification must not reopen in a loop.
+          if (!existed) {
+            this.maybeAutoOpenFromPush(message.notification, 'restored');
+          }
           break;
+        }
         case 'notification-removed':
           this.notifications.removeNotification(message.notificationId);
+          break;
+        case 'notification-action-accepted':
+          break;
+        case 'notification-action-succeeded':
+          if (message.requestId === this.pendingNotificationActionRequestId) {
+            this.clearNotificationActionPending();
+            this.notificationCenter.showActionFeedback('sent');
+          }
+          break;
+        case 'notification-action-rejected':
+          if (message.requestId === this.pendingNotificationActionRequestId) {
+            this.failPendingNotificationAction();
+          }
           break;
         case 'command-accepted':
           this.interactions.handleCommandAccepted(message.requestId);
@@ -403,6 +447,7 @@ export class RealtimeClient {
           this.interactions.handleCommandTimeout(message.requestId);
           break;
         case 'error':
+          this.failPendingNotificationAction();
           break;
         default:
           break;
@@ -440,13 +485,19 @@ export class RealtimeClient {
       copy: snapshot.copy,
     });
 
-    this.notifications.applySnapshot(snapshot.notifications ?? []);
+    this.notifications.applySnapshot(
+      (snapshot.notifications ?? []).map((item) => ({
+        ...item,
+        autoOpen: item.autoOpen !== false,
+      })),
+    );
 
     this.reconnectAttempt = 0;
     this.overlay.hide();
   }
 
   private dismissNotification(notificationId: string): void {
+    this.notificationCenter.cancelAutoClose('dismiss');
     const dismissed = this.notifications.dismissLocal(notificationId);
     if (!dismissed) {
       return;
@@ -457,15 +508,74 @@ export class RealtimeClient {
     });
   }
 
+  private sendNotificationAction(input: {
+    readonly notificationId: string;
+    readonly notificationKey: string;
+    readonly actionId: string;
+  }): void {
+    if (this.pendingNotificationActionRequestId !== null) {
+      return;
+    }
+    const requestId = `na-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    this.pendingNotificationActionRequestId = requestId;
+    const sent = this.send({
+      type: 'notification-action',
+      notificationId: input.notificationId,
+      notificationKey: input.notificationKey,
+      actionId: input.actionId,
+      requestId,
+    });
+    if (!sent) {
+      this.failPendingNotificationAction();
+      return;
+    }
+    this.notificationActionTimer = setTimeout(() => {
+      this.failPendingNotificationAction();
+    }, NOTIFICATION_ACTION_TIMEOUT_MS);
+  }
+
+  private failPendingNotificationAction(): void {
+    if (this.pendingNotificationActionRequestId === null) {
+      return;
+    }
+    this.clearNotificationActionPending();
+    this.notificationCenter.showActionFeedback('failed');
+  }
+
+  private clearNotificationActionPending(): void {
+    if (this.notificationActionTimer !== null) {
+      clearTimeout(this.notificationActionTimer);
+      this.notificationActionTimer = null;
+    }
+    this.pendingNotificationActionRequestId = null;
+    this.notificationCenter.setActionPending(false);
+  }
+
   /**
-   * Flow "Show notification" / realtime push should present the Center immediately
-   * (triangle alone is easy to miss on a wall display).
+   * Realtime push auto-open. Snapshot/reconnect never calls this.
+   * Manual ribbon open never schedules auto-close.
    */
-  private openNotificationCenterFromPush(): void {
+  private maybeAutoOpenFromPush(
+    notification: {
+      readonly autoOpen?: boolean;
+      readonly autoCloseSeconds?: number;
+      readonly dismissable?: boolean;
+      readonly id: string;
+    },
+    _reason: 'added' | 'restored',
+  ): void {
+    if (notification.autoOpen === false) {
+      return;
+    }
     if (!this.notifications.openCenter(true)) {
       return;
     }
+    this.send({ type: 'notification-auto-opened' });
     this.send({ type: 'notification-center-opened' });
+    const seconds = notification.autoCloseSeconds ?? 0;
+    if (seconds > 0 && notification.dismissable !== false) {
+      this.notificationCenter.scheduleAutoClose(seconds);
+    }
   }
 
   private applyConfigurationUpdate(message: {

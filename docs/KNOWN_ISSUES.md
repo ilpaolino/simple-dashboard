@@ -1,5 +1,13 @@
 # Known issues
 
+## Fixed / superseded during Milestone 12
+
+- **Notification CTA stayed pending forever and Homey WHEN never ran.** `DisplayRealtimeSession` only parsed M11 client types, so `notification-action` was logged as `unknown_client_message` and never reached the Flow trigger. The session now forwards action / auto-open / auto-close messages; the client also times out the CTA after 8s.
+- **Always auto-open on every realtime push.** Auto-open is now per-notification (`autoOpen`) with safe defaults; updates of already-visible notifications no longer reopen loops; snapshots never storm auto-open.
+- **Non-dismissable still closed via Hide / X / backdrop.** `dismissable: false` now blocks those closes and skips auto-close.
+- **No notification actions / Flow triggers.** Device trigger + semantic `actionId` path is implemented.
+- **No auto-close presentation.** Optional `autoCloseSeconds` closes the Center only (not SoT).
+
 ## Fixed / superseded during Milestone 11B
 
 - **No Homey Flow cards yet.** Device Flow Action Cards `show_notification`, `remove_notification`, and `remove_all_notifications` are registered for Shelly + Generic Wall Displays.
@@ -24,6 +32,16 @@
 
 - **No CoverWidget.** CoverWidget with `windowcoverings_set` (read path + shared device visuals) is implemented; M9 adds control.
 - **LightWidget without decorative icon.** Light and Cover share the device-widget visual language.
+
+## Deferred by design (Milestone 12)
+
+- **Two Show cards.** Light `show_notification` (M11B) stays unchanged; interactive options use `show_interactive_notification`.
+- **No Condition Card for “last action”.** Filtering uses trigger Action ID args + Flow state (official pattern). Avoids concurrent last-action races.
+- **One action per notification.** Multi-CTA arrays are out of scope.
+- **Auto-close never removes.** Use existing Remove Notification Flow to clear SoT.
+- **Trigger success ≠ automation success.** UI shows neutral “Action sent” only.
+- **`activeAutoCloseTimers` is frontend-local** (0/1). Backend diagnostics expose auto-open/close/action counters from WS metrics.
+- **Homey CLI may hit local `.homeybuild` EPERM** on some machines when cleaning nested IDE junk under `node_modules`; compose still regenerates `app.json` Flow cards.
 
 ## Deferred by design (Milestone 11B)
 

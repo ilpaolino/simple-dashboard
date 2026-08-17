@@ -20,3 +20,9 @@ export const NOTIFICATION_SWIPE_MAX_VERTICAL_PX = 56;
 
 /** Require horizontal dominance over vertical by this ratio. */
 export const NOTIFICATION_SWIPE_HORIZONTAL_RATIO = 1.35;
+
+/**
+ * Auto-close upper bound (seconds). 0 disables.
+ * 300s (5 min) keeps Wall Display auto-close useful without long orphan timers.
+ */
+export const NOTIFICATION_AUTO_CLOSE_MAX_SECONDS = 300;

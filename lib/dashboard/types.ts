@@ -108,6 +108,9 @@ export interface DashboardUiCopy {
     readonly severityInfo: string;
     /** Template with `{current}` and `{total}` placeholders. */
     readonly position: string;
+    readonly actionSent: string;
+    readonly actionFailed: string;
+    readonly autoCloseHint: string;
   };
 }
 

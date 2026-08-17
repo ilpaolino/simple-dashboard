@@ -1,8 +1,8 @@
 # Simple Dashboard
 
-Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync and bidirectional LightWidget toggle.
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync, interactive Light/Cover widgets, and a Flow-driven Notification Center (auto-open/close + semantic actions).
 
-This milestone includes widgets, interactive Homey LightWidget (tap to toggle `onoff`), live WebSocket updates, and validated widget-intent commands. It does **not** include dimmer/color, advanced gestures, or Flow cards.
+See [`docs/PROJECT.md`](docs/PROJECT.md) for current milestone status.
 
 ## Requirements
 
@@ -94,5 +94,6 @@ Persistent project memory lives in [`docs/`](docs/):
 - [DECISIONS.md](docs/DECISIONS.md)
 - [MILESTONES.md](docs/MILESTONES.md)
 - [MILESTONE-6.md](docs/MILESTONE-6.md)
+- [MILESTONE-12.md](docs/MILESTONE-12.md) (Action ID: filter that matches SHOW ↔ WHEN)
 - [TODO.md](docs/TODO.md)
 - [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)

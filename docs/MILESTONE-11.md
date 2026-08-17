@@ -38,8 +38,8 @@ RealtimeClient → NotificationController
 
 ### Dismiss semantics
 
-- `dismissable: false` → no dismiss control
-- `dismissable: true` → hide on that Display only
+- `dismissable: false` → blocking: no Hide / X / Dismiss, no backdrop or Escape close, no auto-close. Center stays until Homey removes it.
+- `dismissable: true` → Hide closes the Center (ribbon stays); Dismiss hides on that Display only
 - Backend keeps the notification active for other Displays
 - Dismiss state is `Map<displayId, Set<notificationId>>` (RAM only)
 - App restart clears dismiss; still-active notifications can reappear

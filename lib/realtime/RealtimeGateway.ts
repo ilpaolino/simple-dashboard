@@ -56,11 +56,14 @@ import {
 import { WidgetCommandHandler } from './WidgetCommandHandler';
 import type {
   DashboardSnapshotPayload,
+  NotificationActionRejectReason,
   RealtimeUiCopy,
   ServerMessage,
 } from './protocol';
 import {
   NotificationManager,
+  type NotificationActionFlowTokens,
+  type NotificationActionTriggerState,
   type NotificationChangeEvent,
   type PublishNotificationInput,
   type UpdateNotificationInput,
@@ -84,6 +87,14 @@ export interface RealtimeGatewayOptions {
   readonly onNotificationAggregatesChanged?: (
     displayIds: readonly string[],
   ) => void;
+  /**
+   * Fire Homey Device Flow Trigger for a validated notification action.
+   */
+  readonly onNotificationActionPressed?: (input: {
+    readonly displayId: string;
+    readonly tokens: NotificationActionFlowTokens;
+    readonly state: NotificationActionTriggerState;
+  }) => Promise<void>;
 }
 
 /**
@@ -99,6 +110,13 @@ export class RealtimeGateway {
   private readonly getLanguage: () => string;
   private readonly onNotificationAggregatesChanged:
     | ((displayIds: readonly string[]) => void)
+    | null;
+  private readonly onNotificationActionPressed:
+    | ((input: {
+        readonly displayId: string;
+        readonly tokens: NotificationActionFlowTokens;
+        readonly state: NotificationActionTriggerState;
+      }) => Promise<void>)
     | null;
 
   public readonly metrics = new RealtimeMetrics();
@@ -124,6 +142,8 @@ export class RealtimeGateway {
     this.getLanguage = options.getLanguage;
     this.onNotificationAggregatesChanged =
       options.onNotificationAggregatesChanged ?? null;
+    this.onNotificationActionPressed =
+      options.onNotificationActionPressed ?? null;
 
     this.pendingCommands = new PendingCommandManager({
       onTimeout: (command) => {
@@ -197,6 +217,24 @@ export class RealtimeGateway {
         }
         if (message.type === 'notification-center-opened') {
           this.metrics.recordNotificationCenterOpened();
+          return;
+        }
+        if (message.type === 'notification-auto-opened') {
+          this.metrics.recordNotificationAutoOpened();
+          this.logger.info('Notification auto-open', {
+            displayId: session.displayId,
+          });
+          return;
+        }
+        if (message.type === 'notification-auto-closed') {
+          this.metrics.recordNotificationAutoClosed();
+          this.logger.info('Notification auto-close fired', {
+            displayId: session.displayId,
+          });
+          return;
+        }
+        if (message.type === 'notification-action') {
+          void this.handleNotificationAction(session, message);
         }
       },
     });
@@ -614,6 +652,119 @@ export class RealtimeGateway {
     notificationId: string,
   ): void {
     this.notifications.dismissForDisplay(session.displayId, notificationId);
+  }
+
+  private async handleNotificationAction(
+    session: DisplayRealtimeSession,
+    message: {
+      readonly notificationId: string;
+      readonly notificationKey: string;
+      readonly actionId: string;
+      readonly requestId: string;
+    },
+  ): Promise<void> {
+    const reject = (reason: NotificationActionRejectReason): void => {
+      this.metrics.recordNotificationActionValidationRejected();
+      this.logger.warn('Notification action validation rejected', {
+        displayId: session.displayId,
+        notificationId: message.notificationId,
+        actionId: message.actionId,
+        reason,
+      });
+      session.send({
+        type: 'notification-action-rejected',
+        requestId: message.requestId,
+        reason,
+      });
+    };
+
+    this.metrics.recordNotificationActionPressed();
+    this.logger.info('Notification action pressed', {
+      displayId: session.displayId,
+      notificationId: message.notificationId,
+      actionId: message.actionId,
+    });
+
+    const notification = this.notifications.resolveNotificationAction({
+      displayId: session.displayId,
+      notificationId: message.notificationId,
+      actionId: message.actionId,
+      notificationKey: message.notificationKey,
+    });
+
+    if (!notification) {
+      const active = this.notifications.getActiveNotification(
+        message.notificationId.trim(),
+      );
+      if (
+        !active ||
+        !this.notifications
+          .getDisplayIdsForNotification(message.notificationId.trim())
+          .includes(session.displayId)
+      ) {
+        reject('notification_not_found');
+        return;
+      }
+      if (!active.action) {
+        reject('notification_action_invalid');
+        return;
+      }
+      reject('notification_action_mismatch');
+      return;
+    }
+
+    if (!this.onNotificationActionPressed) {
+      reject('homey_api_error');
+      return;
+    }
+
+    session.send({
+      type: 'notification-action-accepted',
+      requestId: message.requestId,
+    });
+
+    const tokens: NotificationActionFlowTokens = {
+      notificationKey: notification.notificationKey ?? '',
+      actionId: notification.action!.actionId,
+      actionLabel: notification.action!.label,
+      actionText: notification.action!.text ?? '',
+      notificationTitle: notification.title ?? '',
+      notificationMessage: notification.message,
+    };
+    const state: NotificationActionTriggerState = {
+      actionId: notification.action!.actionId,
+      notificationKey: notification.notificationKey ?? '',
+    };
+
+    try {
+      this.logger.info('Flow trigger fired for notification action', {
+        displayId: session.displayId,
+        actionId: state.actionId,
+        notificationKey: state.notificationKey,
+      });
+      await this.onNotificationActionPressed({
+        displayId: session.displayId,
+        tokens,
+        state,
+      });
+      this.metrics.recordNotificationActionTriggerSucceeded();
+      session.send({
+        type: 'notification-action-succeeded',
+        requestId: message.requestId,
+      });
+    } catch (error) {
+      this.metrics.recordNotificationActionTriggerFailed();
+      this.logger.error('Flow trigger failure for notification action', {
+        displayId: session.displayId,
+        actionId: state.actionId,
+        error,
+      });
+      session.send({
+        type: 'notification-action-rejected',
+        requestId: message.requestId,
+        reason: 'homey_api_error',
+      });
+    }
   }
 
   private handleNotificationChange(event: NotificationChangeEvent): void {

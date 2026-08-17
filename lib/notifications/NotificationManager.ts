@@ -110,6 +110,10 @@ export class NotificationManager {
         icon: normalized.value.icon ?? null,
         dismissable: normalized.value.dismissable,
         highlight: normalized.value.highlight,
+        autoOpen: normalized.value.autoOpen,
+        autoCloseSeconds: normalized.value.autoCloseSeconds ?? null,
+        action: normalized.value.action ?? null,
+        notificationKey: normalized.value.notificationKey ?? null,
         displayIds: normalized.value.displayIds,
       });
     }
@@ -136,6 +140,16 @@ export class NotificationManager {
       icon: normalized.value.icon,
       dismissable: normalized.value.dismissable,
       highlight: normalized.value.highlight,
+      autoOpen: normalized.value.autoOpen,
+      ...(normalized.value.autoCloseSeconds !== undefined
+        ? { autoCloseSeconds: normalized.value.autoCloseSeconds }
+        : {}),
+      ...(normalized.value.action !== undefined
+        ? { action: normalized.value.action }
+        : {}),
+      ...(normalized.value.notificationKey !== undefined
+        ? { notificationKey: normalized.value.notificationKey }
+        : {}),
       publishedAt: this.now(),
     };
 
@@ -191,6 +205,25 @@ export class NotificationManager {
     }
 
     const prev = stored.notification;
+    const nextAutoClose =
+      normalized.value.autoCloseSeconds === null
+        ? undefined
+        : normalized.value.autoCloseSeconds !== undefined
+          ? normalized.value.autoCloseSeconds
+          : prev.autoCloseSeconds;
+    const nextAction =
+      normalized.value.action === null
+        ? undefined
+        : normalized.value.action !== undefined
+          ? normalized.value.action
+          : prev.action;
+    const nextKey =
+      normalized.value.notificationKey === null
+        ? undefined
+        : normalized.value.notificationKey !== undefined
+          ? normalized.value.notificationKey
+          : prev.notificationKey;
+
     const nextNotification: DisplayNotification = {
       id: prev.id,
       title:
@@ -209,6 +242,10 @@ export class NotificationManager {
             : prev.icon,
       dismissable: normalized.value.dismissable ?? prev.dismissable,
       highlight: normalized.value.highlight ?? prev.highlight,
+      autoOpen: normalized.value.autoOpen ?? prev.autoOpen,
+      ...(nextAutoClose !== undefined ? { autoCloseSeconds: nextAutoClose } : {}),
+      ...(nextAction !== undefined ? { action: nextAction } : {}),
+      ...(nextKey !== undefined ? { notificationKey: nextKey } : {}),
       publishedAt: prev.publishedAt,
     };
 
@@ -304,6 +341,10 @@ export class NotificationManager {
         ...(input.icon !== undefined ? { icon: input.icon } : {}),
         dismissable: input.dismissable,
         highlight: input.highlight,
+        autoOpen: input.autoOpen,
+        autoCloseSeconds: input.autoCloseSeconds ?? null,
+        ...(input.action !== undefined ? { action: input.action } : {}),
+        notificationKey,
         displayIds: [displayId],
       });
       if (!updated.ok) {
@@ -319,6 +360,12 @@ export class NotificationManager {
       icon: input.icon,
       dismissable: input.dismissable,
       highlight: input.highlight,
+      autoOpen: input.autoOpen,
+      autoCloseSeconds: input.autoCloseSeconds,
+      ...(input.action !== undefined && input.action !== null
+        ? { action: input.action }
+        : {}),
+      notificationKey,
       displayIds: [displayId],
     });
     if (!published.ok) {
@@ -556,6 +603,45 @@ export class NotificationManager {
 
   public getActiveNotification(notificationId: string): DisplayNotification | null {
     return this.notifications.get(notificationId)?.notification ?? null;
+  }
+
+  /**
+   * Resolve authoritative notification for a Display-scoped action press.
+   * Returns null when missing, not targeted, without action, or actionId mismatch.
+   */
+  public resolveNotificationAction(input: {
+    readonly displayId: string;
+    readonly notificationId: string;
+    readonly actionId: string;
+    readonly notificationKey?: string;
+  }): DisplayNotification | null {
+    const displayId = input.displayId.trim();
+    const notificationId = input.notificationId.trim();
+    const stored = this.notifications.get(notificationId);
+    if (!stored || !stored.displayIds.has(displayId)) {
+      return null;
+    }
+
+    const notification = stored.notification;
+    if (!notification.action) {
+      return null;
+    }
+    if (notification.action.actionId !== input.actionId.trim()) {
+      return null;
+    }
+
+    const authoritativeKey = notification.notificationKey;
+    if (authoritativeKey !== undefined) {
+      const clientKey =
+        typeof input.notificationKey === 'string'
+          ? input.notificationKey.trim()
+          : '';
+      if (clientKey !== authoritativeKey) {
+        return null;
+      }
+    }
+
+    return notification;
   }
 
   public listActiveNotifications(): readonly DisplayNotification[] {

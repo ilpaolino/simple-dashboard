@@ -390,7 +390,16 @@
       "flowUpdated": "Notifiche Flow aggiornate",
       "flowRemoved": "Notifiche Flow rimosse",
       "flowRemoveAll": "Operazioni Flow rimuovi tutte",
-      "flowErrors": "Errori Flow notifiche"
+      "flowErrors": "Errori Flow notifiche",
+      "actionSent": "Azione inviata",
+      "actionFailed": "Impossibile inviare l'azione",
+      "autoCloseHint": "Chiusura automatica",
+      "autoOpened": "Notifiche aperte automaticamente",
+      "autoClosed": "Notifiche chiuse automaticamente",
+      "actionsPressed": "Azioni notifica premute",
+      "actionTriggersSucceeded": "Trigger azione notifica riusciti",
+      "actionTriggersFailed": "Trigger azione notifica falliti",
+      "actionValidationRejected": "Validazioni azione notifica rifiutate"
     }
   },
   "flow": {
@@ -402,7 +411,11 @@
         "invalidSeverity": "Tipo di notifica non valido",
         "invalidIcon": "Icona notifica non supportata",
         "displayLimit": "Limite notifiche raggiunto per questo display",
-        "managerFailed": "Operazione notifica non riuscita"
+        "managerFailed": "Operazione notifica non riuscita",
+        "invalidActionId": "ID azione non valido",
+        "invalidActionLabel": "Il testo del pulsante è obbligatorio quando l'azione è abilitata",
+        "invalidActionText": "Testo azione non valido",
+        "invalidAutoClose": "Secondi di chiusura automatica non validi"
       }
     }
   },

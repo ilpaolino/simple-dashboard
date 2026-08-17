@@ -1,4 +1,77 @@
 {
+  "triggers": [
+    {
+      "id": "notification_action_pressed",
+      "title": {
+        "en": "A notification action is pressed",
+        "it": "Viene premuta un'azione di una notifica"
+      },
+      "titleFormatted": {
+        "en": "A notification action is pressed — Action ID [[action_id]]",
+        "it": "Viene premuta un'azione di una notifica — ID azione [[action_id]]"
+      },
+      "hint": {
+        "en": "Fires when the user presses the notification button on this Wall Display. Type the same Action ID you invented in “Show interactive notification” (e.g. open-gate) so only this Flow runs. Leave empty to run on any tap on this Display.",
+        "it": "Si attiva quando l'utente preme il pulsante della notifica su questo Wall Display. Scrivi lo stesso ID azione inventato in “Mostra notifica interattiva” (es. open-gate) così parte solo questa Flow. Lascia vuoto per qualsiasi tap su questo Display."
+      },
+      "tokens": [
+        {
+          "name": "notificationKey",
+          "type": "string",
+          "title": { "en": "Notification Key", "it": "Chiave notifica" },
+          "example": { "en": "doorbell", "it": "campanello" }
+        },
+        {
+          "name": "actionId",
+          "type": "string",
+          "title": { "en": "Action ID", "it": "ID azione" },
+          "example": { "en": "open-gate", "it": "apri-cancello" }
+        },
+        {
+          "name": "actionLabel",
+          "type": "string",
+          "title": { "en": "Action button label", "it": "Testo pulsante" },
+          "example": { "en": "Open gate", "it": "Apri cancello" }
+        },
+        {
+          "name": "actionText",
+          "type": "string",
+          "title": { "en": "Action text", "it": "Testo azione" },
+          "example": {
+            "en": "Press to open the pedestrian gate",
+            "it": "Premi per aprire il cancello pedonale"
+          }
+        },
+        {
+          "name": "notificationTitle",
+          "type": "string",
+          "title": { "en": "Notification title", "it": "Titolo notifica" },
+          "example": { "en": "Doorbell", "it": "Campanello" }
+        },
+        {
+          "name": "notificationMessage",
+          "type": "string",
+          "title": { "en": "Notification message", "it": "Messaggio notifica" },
+          "example": {
+            "en": "Someone rang at the entrance",
+            "it": "Qualcuno ha suonato all'ingresso"
+          }
+        }
+      ],
+      "args": [
+        {
+          "type": "text",
+          "name": "action_id",
+          "title": { "en": "Action ID", "it": "ID azione" },
+          "placeholder": {
+            "en": "Same as in Show interactive, e.g. open-gate",
+            "it": "Uguale a Mostra interattiva, es. open-gate"
+          },
+          "required": false
+        }
+      ]
+    }
+  ],
   "actions": [
     {
       "id": "show_notification",
@@ -11,8 +84,8 @@
         "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]])"
       },
       "hint": {
-        "en": "Creates or updates a notification on this Wall Display using a deterministic Notification Key (upsert).",
-        "it": "Crea o aggiorna una notifica su questo Wall Display usando una Notification Key deterministica (upsert)."
+        "en": "Creates or updates a simple notification on this Wall Display (upsert by Notification Key). Opens automatically; no auto-close timer or action button.",
+        "it": "Crea o aggiorna una notifica semplice su questo Wall Display (upsert per Notification Key). Si apre automaticamente; senza chiusura automatica né pulsante azione."
       },
       "highlight": true,
       "args": [
@@ -74,6 +147,138 @@
           "name": "dismissable",
           "title": { "en": "Dismissable", "it": "Può essere nascosta" },
           "value": true
+        }
+      ]
+    },
+    {
+      "id": "show_interactive_notification",
+      "title": {
+        "en": "Show interactive notification",
+        "it": "Mostra notifica interattiva"
+      },
+      "titleFormatted": {
+        "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]])",
+        "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]])"
+      },
+      "hint": {
+        "en": "Upsert with auto-open, optional auto-close, and one optional action button. Use this card (not “Show notification”) if you want a button. Fill Action ID and button label — that is enough to show the CTA. Action ID is a name you invent (e.g. open-gate) to match the WHEN card. It is not a Homey device and is not shown on the Display.",
+        "it": "Upsert con apertura/chiusura automatica e pulsante azione opzionale. Usa questa card (non “Mostra notifica”) se vuoi un pulsante. Compila ID azione e testo pulsante: basta quello per mostrare la CTA. L’ID azione è un nome che inventi (es. open-gate) per la card WHEN. Non è un dispositivo Homey e non compare sul Display."
+      },
+      "args": [
+        {
+          "type": "text",
+          "name": "notification_key",
+          "title": { "en": "Notification Key", "it": "Chiave notifica" },
+          "placeholder": { "en": "e.g. doorbell", "it": "es. campanello" }
+        },
+        {
+          "type": "text",
+          "name": "title",
+          "title": { "en": "Title", "it": "Titolo" },
+          "required": false
+        },
+        {
+          "type": "text",
+          "name": "message",
+          "title": { "en": "Message", "it": "Messaggio" }
+        },
+        {
+          "type": "dropdown",
+          "name": "severity",
+          "title": { "en": "Severity", "it": "Severity" },
+          "values": [
+            { "id": "critical", "label": { "en": "Critical", "it": "Critico" } },
+            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
+            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
+            { "id": "info", "label": { "en": "Info", "it": "Informazione" } }
+          ]
+        },
+        {
+          "type": "dropdown",
+          "name": "icon",
+          "title": { "en": "Icon", "it": "Icona" },
+          "required": false,
+          "values": [
+            { "id": "info", "label": { "en": "Info", "it": "Info" } },
+            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
+            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
+            { "id": "error", "label": { "en": "Error", "it": "Errore" } },
+            { "id": "home", "label": { "en": "Home", "it": "Casa" } },
+            { "id": "bell", "label": { "en": "Bell", "it": "Campanella" } },
+            { "id": "door", "label": { "en": "Door", "it": "Porta" } },
+            {
+              "id": "washing-machine",
+              "label": { "en": "Washing machine", "it": "Lavatrice" }
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "highlight",
+          "title": { "en": "Highlight", "it": "Evidenzia" },
+          "value": false
+        },
+        {
+          "type": "checkbox",
+          "name": "dismissable",
+          "title": { "en": "Dismissable", "it": "Può essere nascosta" },
+          "value": true
+        },
+        {
+          "type": "checkbox",
+          "name": "auto_open",
+          "title": { "en": "Open automatically", "it": "Apri automaticamente" },
+          "value": true
+        },
+        {
+          "type": "number",
+          "name": "auto_close_seconds",
+          "title": {
+            "en": "Auto-close (seconds)",
+            "it": "Chiusura automatica (secondi)"
+          },
+          "placeholder": { "en": "0 = disabled", "it": "0 = disabilitata" },
+          "min": 0,
+          "max": 300,
+          "step": 1,
+          "value": 0,
+          "required": false
+        },
+        {
+          "type": "checkbox",
+          "name": "enable_action",
+          "title": { "en": "Enable action", "it": "Abilita azione" },
+          "value": false
+        },
+        {
+          "type": "text",
+          "name": "action_id",
+          "title": { "en": "Action ID", "it": "ID azione" },
+          "placeholder": {
+            "en": "You choose this, e.g. open-gate",
+            "it": "Lo scegli tu, es. open-gate"
+          },
+          "required": false
+        },
+        {
+          "type": "text",
+          "name": "action_label",
+          "title": { "en": "Action button label", "it": "Testo pulsante" },
+          "placeholder": {
+            "en": "Shown on the button, e.g. Open gate",
+            "it": "Scritto sul pulsante, es. Apri cancello"
+          },
+          "required": false
+        },
+        {
+          "type": "text",
+          "name": "action_text",
+          "title": { "en": "Action text", "it": "Testo azione" },
+          "placeholder": {
+            "en": "Optional sentence above the button",
+            "it": "Frase opzionale sopra il pulsante"
+          },
+          "required": false
         }
       ]
     },

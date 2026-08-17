@@ -7,6 +7,7 @@ import {
 import type { RealtimeMetrics } from './RealtimeMetrics';
 import {
   serializeServerMessage,
+  isClientMessage,
   isWidgetActionId,
   type ClientMessage,
   type ServerMessage,
@@ -318,6 +319,51 @@ export class DisplayRealtimeSession {
 
     if (type === 'notification-center-opened') {
       this.onClientMessage(this, { type: 'notification-center-opened' });
+      return;
+    }
+
+    if (type === 'notification-auto-opened') {
+      this.onClientMessage(this, { type: 'notification-auto-opened' });
+      return;
+    }
+
+    if (type === 'notification-auto-closed') {
+      this.onClientMessage(this, { type: 'notification-auto-closed' });
+      return;
+    }
+
+    if (type === 'notification-action') {
+      const candidate = parsed as {
+        readonly notificationId?: unknown;
+        readonly notificationKey?: unknown;
+        readonly actionId?: unknown;
+        readonly requestId?: unknown;
+      };
+      if (
+        typeof candidate.notificationId !== 'string' ||
+        candidate.notificationId.trim() === '' ||
+        typeof candidate.notificationKey !== 'string' ||
+        typeof candidate.actionId !== 'string' ||
+        candidate.actionId.trim() === '' ||
+        typeof candidate.requestId !== 'string' ||
+        candidate.requestId.trim() === ''
+      ) {
+        this.onProtocolError(this, 'invalid_notification_action');
+        return;
+      }
+      this.onClientMessage(this, {
+        type: 'notification-action',
+        notificationId: candidate.notificationId.trim(),
+        notificationKey: candidate.notificationKey,
+        actionId: candidate.actionId.trim(),
+        requestId: candidate.requestId.trim(),
+      });
+      return;
+    }
+
+    // Typed protocol messages added later must still reach the gateway.
+    if (isClientMessage(parsed)) {
+      this.onClientMessage(this, parsed);
       return;
     }
 

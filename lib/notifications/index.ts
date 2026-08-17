@@ -6,6 +6,7 @@ export {
   NOTIFICATION_SWIPE_MIN_DISTANCE_PX,
   NOTIFICATION_SWIPE_MAX_VERTICAL_PX,
   NOTIFICATION_SWIPE_HORIZONTAL_RATIO,
+  NOTIFICATION_AUTO_CLOSE_MAX_SECONDS,
 } from './constants';
 export {
   NOTIFICATION_SEVERITY_PRIORITY,
@@ -16,8 +17,18 @@ export {
 } from './severity';
 export { NOTIFICATION_ICONS, isNotificationIcon } from './icons';
 export {
+  normalizeNotificationAction,
+  normalizeActionId,
+  isNotificationAction,
+  NOTIFICATION_ACTION_ID_MAX_LENGTH,
+  NOTIFICATION_ACTION_LABEL_MAX_LENGTH,
+  NOTIFICATION_ACTION_TEXT_MAX_LENGTH,
+  type NotificationAction,
+} from './action';
+export {
   normalizePublishInput,
   normalizeUpdateInput,
+  normalizeAutoCloseSeconds,
   type NormalizedPublishInput,
   type NormalizedUpdateInput,
   type NormalizeResult,
@@ -42,6 +53,8 @@ export {
 export type {
   UpsertDisplayNotificationInput,
   AggregateNotificationSeverity,
+  NotificationActionFlowTokens,
+  NotificationActionTriggerState,
 } from './flowTypes';
 export type {
   NotificationSeverity,

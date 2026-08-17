@@ -390,7 +390,16 @@
       "flowUpdated": "Flow notifications updated",
       "flowRemoved": "Flow notifications removed",
       "flowRemoveAll": "Flow remove-all operations",
-      "flowErrors": "Flow notification errors"
+      "flowErrors": "Flow notification errors",
+      "actionSent": "Action sent",
+      "actionFailed": "Could not send action",
+      "autoCloseHint": "Closing automatically",
+      "autoOpened": "Notifications auto-opened",
+      "autoClosed": "Notifications auto-closed",
+      "actionsPressed": "Notification actions pressed",
+      "actionTriggersSucceeded": "Notification action triggers succeeded",
+      "actionTriggersFailed": "Notification action triggers failed",
+      "actionValidationRejected": "Notification action validation rejected"
     }
   },
   "flow": {
@@ -402,7 +411,11 @@
         "invalidSeverity": "Invalid notification severity",
         "invalidIcon": "Unsupported notification icon",
         "displayLimit": "Notification limit reached for this display",
-        "managerFailed": "Notification operation failed"
+        "managerFailed": "Notification operation failed",
+        "invalidActionId": "Invalid action ID",
+        "invalidActionLabel": "Action button label is required when action is enabled",
+        "invalidActionText": "Invalid action text",
+        "invalidAutoClose": "Invalid auto-close seconds"
       }
     }
   },

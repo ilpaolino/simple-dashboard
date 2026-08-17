@@ -17,6 +17,7 @@ import type {
   GridConfig,
 } from '../dashboard/types';
 import type { DisplayNotification } from '../notifications/types';
+import { isNotificationAction } from '../notifications/action';
 import { isNotificationIcon } from '../notifications/icons';
 import { isNotificationSeverity } from '../notifications/severity';
 import { REALTIME_PROTOCOL_VERSION } from './constants';
@@ -57,7 +58,17 @@ export type CommandRejectReason =
   | 'invalid_value'
   | 'homey_api_error'
   | 'already_pending'
-  | 'unexpected_state';
+  | 'unexpected_state'
+  | 'notification_not_found'
+  | 'notification_action_invalid'
+  | 'notification_action_mismatch';
+
+export type NotificationActionRejectReason =
+  | 'display_session_invalid'
+  | 'notification_not_found'
+  | 'notification_action_invalid'
+  | 'notification_action_mismatch'
+  | 'homey_api_error';
 
 export type RealtimeUiCopy = DashboardUiCopy['realtime'];
 
@@ -111,6 +122,19 @@ export type ServerMessage =
   | {
       readonly type: 'notification-removed';
       readonly notificationId: string;
+    }
+  | {
+      readonly type: 'notification-action-accepted';
+      readonly requestId: string;
+    }
+  | {
+      readonly type: 'notification-action-succeeded';
+      readonly requestId: string;
+    }
+  | {
+      readonly type: 'notification-action-rejected';
+      readonly requestId: string;
+      readonly reason: NotificationActionRejectReason;
     }
   | {
       readonly type: 'heartbeat';
@@ -194,6 +218,19 @@ export type ClientMessage =
     }
   | {
       readonly type: 'notification-center-opened';
+    }
+  | {
+      readonly type: 'notification-auto-opened';
+    }
+  | {
+      readonly type: 'notification-auto-closed';
+    }
+  | {
+      readonly type: 'notification-action';
+      readonly notificationId: string;
+      readonly notificationKey: string;
+      readonly actionId: string;
+      readonly requestId: string;
     };
 
 export function isWidgetActionId(value: unknown): value is WidgetActionId {
@@ -224,6 +261,24 @@ export function isCommandRejectReason(
     case 'homey_api_error':
     case 'already_pending':
     case 'unexpected_state':
+    case 'notification_not_found':
+    case 'notification_action_invalid':
+    case 'notification_action_mismatch':
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isNotificationActionRejectReason(
+  value: unknown,
+): value is NotificationActionRejectReason {
+  switch (value) {
+    case 'display_session_invalid':
+    case 'notification_not_found':
+    case 'notification_action_invalid':
+    case 'notification_action_mismatch':
+    case 'homey_api_error':
       return true;
     default:
       return false;
@@ -246,6 +301,10 @@ export function isDisplayNotification(
     readonly dismissable?: unknown;
     readonly highlight?: unknown;
     readonly publishedAt?: unknown;
+    readonly autoOpen?: unknown;
+    readonly autoCloseSeconds?: unknown;
+    readonly action?: unknown;
+    readonly notificationKey?: unknown;
   };
 
   if (typeof candidate.id !== 'string' || candidate.id.trim() === '') {
@@ -275,7 +334,48 @@ export function isDisplayNotification(
   if (candidate.icon !== undefined && !isNotificationIcon(candidate.icon)) {
     return false;
   }
+  // Backward compatible wire: missing autoOpen → treat as true at apply time,
+  // but strict parser requires boolean when present. Accept missing for M11 payloads.
+  if (
+    candidate.autoOpen !== undefined &&
+    typeof candidate.autoOpen !== 'boolean'
+  ) {
+    return false;
+  }
+  if (candidate.autoCloseSeconds !== undefined) {
+    if (
+      typeof candidate.autoCloseSeconds !== 'number' ||
+      !Number.isFinite(candidate.autoCloseSeconds) ||
+      candidate.autoCloseSeconds < 0
+    ) {
+      return false;
+    }
+  }
+  if (candidate.action !== undefined && !isNotificationAction(candidate.action)) {
+    return false;
+  }
+  if (
+    candidate.notificationKey !== undefined &&
+    typeof candidate.notificationKey !== 'string'
+  ) {
+    return false;
+  }
   return true;
+}
+
+/**
+ * Coerce optional M11 fields onto a DisplayNotification with M12 defaults.
+ */
+export function coerceDisplayNotification(
+  value: DisplayNotification,
+): DisplayNotification {
+  return {
+    ...value,
+    autoOpen: value.autoOpen !== false,
+    ...(value.autoCloseSeconds !== undefined && value.autoCloseSeconds > 0
+      ? { autoCloseSeconds: Math.floor(value.autoCloseSeconds) }
+      : {}),
+  };
 }
 
 export function isServerMessage(value: unknown): value is ServerMessage {
@@ -309,6 +409,22 @@ export function isServerMessage(value: unknown): value is ServerMessage {
       const notificationId = (value as { readonly notificationId?: unknown })
         .notificationId;
       return typeof notificationId === 'string' && notificationId.trim() !== '';
+    }
+    case 'notification-action-accepted':
+    case 'notification-action-succeeded': {
+      const requestId = (value as { readonly requestId?: unknown }).requestId;
+      return typeof requestId === 'string' && requestId.trim() !== '';
+    }
+    case 'notification-action-rejected': {
+      const message = value as {
+        readonly requestId?: unknown;
+        readonly reason?: unknown;
+      };
+      return (
+        typeof message.requestId === 'string' &&
+        message.requestId.trim() !== '' &&
+        isNotificationActionRejectReason(message.reason)
+      );
     }
     case 'command-accepted':
     case 'command-succeeded':
@@ -365,6 +481,31 @@ export function isClientMessage(value: unknown): value is ClientMessage {
 
   if (candidate.type === 'notification-center-opened') {
     return true;
+  }
+
+  if (
+    candidate.type === 'notification-auto-opened' ||
+    candidate.type === 'notification-auto-closed'
+  ) {
+    return true;
+  }
+
+  if (candidate.type === 'notification-action') {
+    const message = value as {
+      readonly notificationId?: unknown;
+      readonly notificationKey?: unknown;
+      readonly actionId?: unknown;
+      readonly requestId?: unknown;
+    };
+    return (
+      typeof message.notificationId === 'string' &&
+      message.notificationId.trim() !== '' &&
+      typeof message.notificationKey === 'string' &&
+      typeof message.actionId === 'string' &&
+      message.actionId.trim() !== '' &&
+      typeof message.requestId === 'string' &&
+      message.requestId.trim() !== ''
+    );
   }
 
   if (candidate.type !== 'widget-action') {

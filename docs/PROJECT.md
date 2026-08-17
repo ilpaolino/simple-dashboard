@@ -4,11 +4,11 @@
 
 **Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
-It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added a global **Notification Center**. Milestone **11B** adds native **Homey Flow Action Cards** (show/upsert, remove by key, remove all) plus optional aggregate notification capabilities — without rewriting the Notification Center.
+It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added a global **Notification Center**. Milestone **11B** added native **Homey Flow Action Cards**. Milestone **12** adds configurable auto-open / auto-close and a single semantic notification action that triggers Homey Flows — without rewriting the Notification Center.
 
 ## Current status
 
-**Milestone 11B is implemented.** Milestone 0–11 behavior is preserved.
+**Milestone 12 is implemented.** Milestone 0–11B behavior is preserved.
 
 | Area | Status |
 | --- | --- |
@@ -17,7 +17,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M11) |
+| Diagnostics page | Done (M2–M12) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5/M8) |
@@ -28,12 +28,13 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | WidgetControlOverlay + CoverControlPanel + LightControlPanel | Done (M9/M10) |
 | NotificationManager + Notification Center | Done (M11) |
 | Homey Flow notification actions + aggregate capabilities | Done (M11B) |
-| WebSocket realtime (same port) | Done (M6/M11 notifications) |
+| Notification auto-open / auto-close + semantic actions | Done (M12) |
+| WebSocket realtime (same port) | Done (M6/M11/M12 notifications) |
 | Selective Homey capability subscriptions | Done (M6/M8/M9/M10 light optional caps) |
 | Live dashboard configuration | Done (M6) |
 | Bidirectional widget commands | Done (M7/M9/M10) |
 | Dim / color / color temperature | Done (M10) |
-| Flow cards (notifications) | Done (M11B) |
+| Flow cards (notifications) | Done (M11B/M12) |
 
 ## How to resume after a break
 
@@ -106,3 +107,17 @@ Widget configuration is stored per Homey Device in the Device Store key `dashboa
 LightWidget and CoverWidget persist **only** `deviceId`. Name, zone, availability, and capability values are read from Homey (snapshot + realtime). Commands are issued as widget intents (`widgetId` + `action` [+ normalized UX fields]), never as raw Homey device writes from the browser.
 
 Notifications are runtime-only (not Device Store). Creation/update/remove are decided by Homey/backend; dismiss is local per Display and never persisted.
+
+## Notification action fields (Flow)
+
+Used only on **Mostra notifica interattiva**. You type them; Homey has no picker.
+
+**ID azione** is the filter that connects two Flows. Homey has a single WHEN card (“azione premuta”). You invent a short name (`open-gate`) when you **show** the notification, then type the **same** name on the WHEN card that should run. Without it, every tap on that Display would start every “azione premuta” Flow.
+
+- **ID azione** (`open-gate`) — not shown on screen; used only to match SHOW ↔ WHEN.
+- **Testo pulsante** (`Apri cancello`) — the button the user taps.
+- **Testo azione** — optional sentence above the button.
+
+Filling **ID azione** and **Testo pulsante** on **Mostra notifica interattiva** is enough to show the button (the enable checkbox is optional). The simple **Mostra notifica** card never shows a CTA.
+
+Walkthrough and troubleshooting: [MILESTONE-12.md](MILESTONE-12.md#what-action-id-is-for).

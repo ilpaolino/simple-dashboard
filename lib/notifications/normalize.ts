@@ -3,7 +3,13 @@
  */
 
 import {
+  isNotificationAction,
+  normalizeNotificationAction,
+  type NotificationAction,
+} from './action';
+import {
   MAX_NOTIFICATION_DISPLAY_TARGETS,
+  NOTIFICATION_AUTO_CLOSE_MAX_SECONDS,
   NOTIFICATION_MESSAGE_MAX_LENGTH,
   NOTIFICATION_TITLE_MAX_LENGTH,
 } from './constants';
@@ -24,6 +30,10 @@ export interface NormalizedPublishInput {
   readonly icon: NotificationIcon | undefined;
   readonly dismissable: boolean;
   readonly highlight: boolean;
+  readonly autoOpen: boolean;
+  readonly autoCloseSeconds: number | undefined;
+  readonly action: NotificationAction | undefined;
+  readonly notificationKey: string | undefined;
   readonly displayIds: readonly string[];
 }
 
@@ -35,6 +45,10 @@ export interface NormalizedUpdateInput {
   readonly icon: NotificationIcon | null | undefined;
   readonly dismissable: boolean | undefined;
   readonly highlight: boolean | undefined;
+  readonly autoOpen: boolean | undefined;
+  readonly autoCloseSeconds: number | null | undefined;
+  readonly action: NotificationAction | null | undefined;
+  readonly notificationKey: string | null | undefined;
   readonly displayIds: readonly string[] | undefined;
 }
 
@@ -83,6 +97,53 @@ function normalizeDisplayIds(
   }
 
   return { ok: true, value: unique };
+}
+
+/**
+ * 0 / absent / invalid → disabled (undefined).
+ * Values above max are clamped.
+ */
+export function normalizeAutoCloseSeconds(
+  value: unknown,
+): NormalizeResult<number | undefined> {
+  if (value === undefined || value === null || value === '') {
+    return { ok: true, value: undefined };
+  }
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return { ok: false, message: 'invalid_auto_close' };
+  }
+  const rounded = Math.floor(value);
+  if (rounded <= 0) {
+    return { ok: true, value: undefined };
+  }
+  return {
+    ok: true,
+    value: Math.min(rounded, NOTIFICATION_AUTO_CLOSE_MAX_SECONDS),
+  };
+}
+
+function normalizeOptionalAction(
+  action: unknown,
+): NormalizeResult<NotificationAction | undefined> {
+  if (action === undefined || action === null) {
+    return { ok: true, value: undefined };
+  }
+  if (!isNotificationAction(action) && typeof action === 'object') {
+    const candidate = action as {
+      readonly actionId?: unknown;
+      readonly label?: unknown;
+      readonly text?: unknown;
+    };
+    return normalizeNotificationAction({
+      actionId: candidate.actionId,
+      label: candidate.label,
+      text: candidate.text,
+    });
+  }
+  if (!isNotificationAction(action)) {
+    return { ok: false, message: 'invalid_action' };
+  }
+  return { ok: true, value: action };
 }
 
 export function normalizePublishInput(
@@ -135,6 +196,28 @@ export function normalizePublishInput(
     return displays;
   }
 
+  const autoClose = normalizeAutoCloseSeconds(input.autoCloseSeconds);
+  if (!autoClose.ok) {
+    return autoClose;
+  }
+
+  const actionResult =
+    input.action === null
+      ? ({ ok: true, value: undefined } as const)
+      : normalizeOptionalAction(input.action);
+  if (!actionResult.ok) {
+    return actionResult;
+  }
+
+  let notificationKey: string | undefined;
+  if (input.notificationKey !== undefined) {
+    if (typeof input.notificationKey !== 'string') {
+      return { ok: false, message: 'invalid_key' };
+    }
+    const trimmed = input.notificationKey.trim();
+    notificationKey = trimmed === '' ? undefined : trimmed;
+  }
+
   return {
     ok: true,
     value: {
@@ -145,6 +228,11 @@ export function normalizePublishInput(
       icon,
       dismissable: input.dismissable !== false,
       highlight: input.highlight === true,
+      // M11/M11B default: push opened the Center. Preserve unless explicitly false.
+      autoOpen: input.autoOpen !== false,
+      autoCloseSeconds: autoClose.value,
+      action: actionResult.value,
+      notificationKey,
       displayIds: displays.value,
     },
   };
@@ -230,6 +318,47 @@ export function normalizeUpdateInput(
     highlight = input.highlight;
   }
 
+  let autoOpen: boolean | undefined;
+  if (input.autoOpen !== undefined) {
+    if (typeof input.autoOpen !== 'boolean') {
+      return { ok: false, message: 'invalid_auto_open' };
+    }
+    autoOpen = input.autoOpen;
+  }
+
+  let autoCloseSeconds: number | null | undefined;
+  if (input.autoCloseSeconds === null) {
+    autoCloseSeconds = null;
+  } else if (input.autoCloseSeconds !== undefined) {
+    const autoClose = normalizeAutoCloseSeconds(input.autoCloseSeconds);
+    if (!autoClose.ok) {
+      return autoClose;
+    }
+    autoCloseSeconds = autoClose.value ?? null;
+  }
+
+  let action: NotificationAction | null | undefined;
+  if (input.action === null) {
+    action = null;
+  } else if (input.action !== undefined) {
+    const actionResult = normalizeOptionalAction(input.action);
+    if (!actionResult.ok) {
+      return actionResult;
+    }
+    action = actionResult.value ?? null;
+  }
+
+  let notificationKey: string | null | undefined;
+  if (input.notificationKey === null) {
+    notificationKey = null;
+  } else if (input.notificationKey !== undefined) {
+    if (typeof input.notificationKey !== 'string') {
+      return { ok: false, message: 'invalid_key' };
+    }
+    const trimmed = input.notificationKey.trim();
+    notificationKey = trimmed === '' ? null : trimmed;
+  }
+
   return {
     ok: true,
     value: {
@@ -240,6 +369,10 @@ export function normalizeUpdateInput(
       icon,
       dismissable,
       highlight,
+      autoOpen,
+      autoCloseSeconds,
+      action,
+      notificationKey,
       displayIds,
     },
   };

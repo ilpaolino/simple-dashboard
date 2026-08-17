@@ -52,6 +52,12 @@ export interface RealtimeMetricsSnapshot {
   readonly flowNotificationsRemoved: number;
   readonly flowNotificationsRemoveAll: number;
   readonly flowNotificationErrors: number;
+  readonly notificationAutoOpened: number;
+  readonly notificationAutoClosed: number;
+  readonly notificationActionsPressed: number;
+  readonly notificationActionTriggersSucceeded: number;
+  readonly notificationActionTriggersFailed: number;
+  readonly notificationActionValidationRejected: number;
 }
 
 export class RealtimeMetrics {
@@ -103,6 +109,12 @@ export class RealtimeMetrics {
   private flowNotificationsRemoved = 0;
   private flowNotificationsRemoveAll = 0;
   private flowNotificationErrors = 0;
+  private notificationAutoOpened = 0;
+  private notificationAutoClosed = 0;
+  private notificationActionsPressed = 0;
+  private notificationActionTriggersSucceeded = 0;
+  private notificationActionTriggersFailed = 0;
+  private notificationActionValidationRejected = 0;
 
   public recordConnectionOpened(): void {
     this.connectionsOpened += 1;
@@ -288,6 +300,30 @@ export class RealtimeMetrics {
     this.flowNotificationErrors += 1;
   }
 
+  public recordNotificationAutoOpened(): void {
+    this.notificationAutoOpened += 1;
+  }
+
+  public recordNotificationAutoClosed(): void {
+    this.notificationAutoClosed += 1;
+  }
+
+  public recordNotificationActionPressed(): void {
+    this.notificationActionsPressed += 1;
+  }
+
+  public recordNotificationActionTriggerSucceeded(): void {
+    this.notificationActionTriggersSucceeded += 1;
+  }
+
+  public recordNotificationActionTriggerFailed(): void {
+    this.notificationActionTriggersFailed += 1;
+  }
+
+  public recordNotificationActionValidationRejected(): void {
+    this.notificationActionValidationRejected += 1;
+  }
+
   public snapshot(): RealtimeMetricsSnapshot {
     return {
       connectionsOpened: this.connectionsOpened,
@@ -338,6 +374,14 @@ export class RealtimeMetrics {
       flowNotificationsRemoved: this.flowNotificationsRemoved,
       flowNotificationsRemoveAll: this.flowNotificationsRemoveAll,
       flowNotificationErrors: this.flowNotificationErrors,
+      notificationAutoOpened: this.notificationAutoOpened,
+      notificationAutoClosed: this.notificationAutoClosed,
+      notificationActionsPressed: this.notificationActionsPressed,
+      notificationActionTriggersSucceeded:
+        this.notificationActionTriggersSucceeded,
+      notificationActionTriggersFailed: this.notificationActionTriggersFailed,
+      notificationActionValidationRejected:
+        this.notificationActionValidationRejected,
     };
   }
 
@@ -390,5 +434,11 @@ export class RealtimeMetrics {
     this.flowNotificationsRemoved = 0;
     this.flowNotificationsRemoveAll = 0;
     this.flowNotificationErrors = 0;
+    this.notificationAutoOpened = 0;
+    this.notificationAutoClosed = 0;
+    this.notificationActionsPressed = 0;
+    this.notificationActionTriggersSucceeded = 0;
+    this.notificationActionTriggersFailed = 0;
+    this.notificationActionValidationRejected = 0;
   }
 }

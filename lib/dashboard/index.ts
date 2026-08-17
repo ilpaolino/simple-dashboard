@@ -166,6 +166,9 @@ export function createDashboardUiCopy(
       severitySuccess: translate('pages.notifications.severitySuccess'),
       severityInfo: translate('pages.notifications.severityInfo'),
       position: translate('pages.notifications.position'),
+      actionSent: translate('pages.notifications.actionSent'),
+      actionFailed: translate('pages.notifications.actionFailed'),
+      autoCloseHint: translate('pages.notifications.autoCloseHint'),
     },
   };
 }
@@ -237,6 +240,9 @@ export function defaultDashboardUiCopy(): DashboardUiCopy {
       severitySuccess: 'Success',
       severityInfo: 'Info',
       position: '{current} / {total}',
+      actionSent: 'Action sent',
+      actionFailed: 'Could not send action',
+      autoCloseHint: 'Closing automatically',
     },
   };
 }

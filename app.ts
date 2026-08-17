@@ -25,11 +25,17 @@ import type { CoverBindingError } from './lib/widgets/cover/types';
 import { validateLightWidgetBinding } from './lib/widgets/light/runtime';
 import type { LightBindingError } from './lib/widgets/light/types';
 import { RealtimeGateway } from './lib/realtime';
-import { registerNotificationFlowCards } from './lib/flow/registerNotificationFlowCards';
+import {
+  registerNotificationFlowCards,
+  resolveNotificationActionTriggerCardId,
+} from './lib/flow/registerNotificationFlowCards';
 import { setNotificationAggregateCapabilities } from './lib/device/notificationCapabilities';
 import {
   isNotificationIcon,
   isNotificationSeverity,
+  type NotificationAction,
+  type NotificationActionFlowTokens,
+  type NotificationActionTriggerState,
 } from './lib/notifications';
 import type {
   DisplayNotification,
@@ -64,6 +70,16 @@ class WelcomeWallApp extends Homey.App {
   public readonly diagnosticsLog = new DiagnosticsLog();
   private deviceRepository!: HomeyDeviceRepository;
   private realtimeGateway!: RealtimeGateway;
+  private notificationActionTriggers = new Map<
+    string,
+    {
+      trigger(
+        device: Homey.Device,
+        tokens: NotificationActionFlowTokens,
+        state: NotificationActionTriggerState,
+      ): Promise<unknown>;
+    }
+  >();
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
@@ -85,14 +101,17 @@ class WelcomeWallApp extends Homey.App {
           this.syncNotificationCapabilities(displayId);
         }
       },
+      onNotificationActionPressed: (input) =>
+        this.triggerNotificationActionPressed(input),
     });
 
-    registerNotificationFlowCards({
-      homey: this.homey,
+    const { triggerCards } = registerNotificationFlowCards({
+      homey: this.homey as Parameters<typeof registerNotificationFlowCards>[0]['homey'],
       app: this,
       logger: this.logger,
       translate: (key: string) => this.homey.__(key),
     });
+    this.notificationActionTriggers = new Map(triggerCards);
 
     const adapters = createDefaultAdapterRegistry();
     this.requestHandler = new DisplayRequestHandler({
@@ -216,6 +235,9 @@ class WelcomeWallApp extends Homey.App {
     readonly icon?: string;
     readonly dismissable?: boolean;
     readonly highlight?: boolean;
+    readonly autoOpen?: boolean;
+    readonly autoCloseSeconds?: number;
+    readonly action?: NotificationAction | null;
   }): {
     readonly ok: true;
     readonly created: boolean;
@@ -237,6 +259,9 @@ class WelcomeWallApp extends Homey.App {
       icon: input.icon,
       dismissable: input.dismissable,
       highlight: input.highlight,
+      autoOpen: input.autoOpen,
+      autoCloseSeconds: input.autoCloseSeconds,
+      action: input.action,
     });
 
     if (!result.ok) {
@@ -254,6 +279,25 @@ class WelcomeWallApp extends Homey.App {
       created: result.created === true,
       notificationId: result.value.id,
     };
+  }
+
+  public async triggerNotificationActionPressed(input: {
+    readonly displayId: string;
+    readonly tokens: NotificationActionFlowTokens;
+    readonly state: NotificationActionTriggerState;
+  }): Promise<void> {
+    const device = this.findWallDisplayDevice(input.displayId);
+    if (!device) {
+      throw new Error('invalid_device');
+    }
+
+    const cardId = resolveNotificationActionTriggerCardId(device.driver.id);
+    const card = this.notificationActionTriggers.get(cardId);
+    if (!card) {
+      throw new Error('trigger_not_registered');
+    }
+
+    await card.trigger(device, input.tokens, input.state);
   }
 
   public removeDisplayNotificationByKey(

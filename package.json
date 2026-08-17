@@ -1,7 +1,7 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.13.0",
-  "description": "Simple Dashboard — Homey Flow notification actions on Wall Displays",
+  "version": "0.14.0",
+  "description": "Simple Dashboard — Homey Flow notifications with actions on Wall Displays",
   "main": "app.js",
   "scripts": {
     "build": "tsc && npm run build:frontend",

@@ -14,21 +14,54 @@ Homey Flow / Web API
         ▼
 NotificationManager
         │  active notifications + key index (displayId + key)
+        │  autoOpen / autoCloseSeconds / optional action (M12)
         │  Map<displayId, Set<notificationId>> dismissed (runtime)
         │
         ▼
 RealtimeGateway
         │
-        ├─ dashboard-snapshot.notifications (visible only)
+        ├─ dashboard-snapshot.notifications (visible only; no auto-open storm)
         ├─ notification-added | notification-updated | notification-removed
-        └─ client: notification-dismiss | notification-center-opened
+        ├─ client: notification-dismiss | notification-center-opened
+        ├─ client: notification-auto-opened | notification-auto-closed
+        └─ client: notification-action → validate → Device Flow Trigger
                 │
 Wall Display
         │
         ├─ NotificationController (visible array, carousel index)
-        ├─ NotificationIndicator (triangle, max severity color)
-        └─ NotificationCenter (modal carousel, swipe, highlight CSS)
+        ├─ NotificationIndicator (corner ribbon, max severity color)
+        └─ NotificationCenter (modal carousel, swipe, highlight, auto-close, CTA)
 ```
+
+### Milestone 12 — Lifecycle & actions (incremental)
+
+```text
+Show notification (simple Flow, M11B)
+  args: key, title, message, severity, icon, highlight, dismissable
+  → autoOpen=true, no auto-close, no action
+
+Show interactive notification (M12)
+  args: … + auto_open, auto_close_seconds, enable_action, action_id, action_label, action_text
+        │
+        ▼
+NotificationManager.upsertForDisplay
+        │
+        ▼
+Realtime push (if online)
+        │  autoOpen? → open Center; autoCloseSeconds? → one timer + CSS progress
+        │
+User presses CTA
+        │
+notification-action { notificationId, notificationKey, actionId, requestId }
+        │
+Backend resolveNotificationAction (SoT authoritative)
+        │
+Device trigger notification_action_pressed (filter Action ID via args/state)
+        │
+tokens: notificationKey, actionId, actionLabel, actionText, notificationTitle, notificationMessage
+```
+
+Action ID is a routing key you invent (`open-gate`): same string on SHOW and on WHEN, so Homey can tell taps apart. It is not a Homey device. See [MILESTONE-12.md](MILESTONE-12.md#what-action-id-is-for).
 
 ### Milestone 11B — Homey Flow (incremental)
 
@@ -57,7 +90,7 @@ Notifications never occupy grid cells. Indicator and Center are dashboard chrome
 
 ### Source of truth
 
-Homey/backend decides publish / update / remove. The frontend does not invent TTLs. Local dismiss only hides on that Display; the global notification stays active until Homey removes it.
+Homey/backend decides publish / update / remove. The frontend does not invent TTLs that delete SoT notifications. Auto-close (M12) only closes the Center, and is skipped when `dismissable: false`. Local dismiss only hides on that Display; the global notification stays active until Homey removes it. Non-dismissable notifications keep the Center open (no Hide / X / backdrop).
 
 ### Snapshot & reconnect
 

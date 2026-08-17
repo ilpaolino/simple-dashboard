@@ -459,6 +459,12 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       <dt>${escapeHtml(t('pages.notifications.flowRemoved'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationsRemoved ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.notifications.flowRemoveAll'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationsRemoveAll ?? 0))}</dd>
       <dt>${escapeHtml(t('pages.notifications.flowErrors'))}</dt><dd>${escapeHtml(String(metrics.flowNotificationErrors ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.autoOpened'))}</dt><dd>${escapeHtml(String(metrics.notificationAutoOpened ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.autoClosed'))}</dt><dd>${escapeHtml(String(metrics.notificationAutoClosed ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.actionsPressed'))}</dt><dd>${escapeHtml(String(metrics.notificationActionsPressed ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.actionTriggersSucceeded'))}</dt><dd>${escapeHtml(String(metrics.notificationActionTriggersSucceeded ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.actionTriggersFailed'))}</dt><dd>${escapeHtml(String(metrics.notificationActionTriggersFailed ?? 0))}</dd>
+      <dt>${escapeHtml(t('pages.notifications.actionValidationRejected'))}</dt><dd>${escapeHtml(String(metrics.notificationActionValidationRejected ?? 0))}</dd>
     </dl>`;
 
   const notificationDiagnostics = input.notifications;

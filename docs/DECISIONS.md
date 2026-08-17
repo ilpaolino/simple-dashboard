@@ -1,5 +1,67 @@
 # Decisions
 
+Architectural choices for Milestone 12. Earlier decisions remain in force below and in prior milestone docs.
+
+## Notifications remain the single attention system
+
+**Choice:** No Event Overlay / second NotificationManager / parallel attention protocol. Auto-open, auto-close, and actions extend the existing Notification Center.
+
+**Why:** Wall Displays need one global attention surface; duplicating systems increases RAM and UX confusion.
+
+## Auto-open is notification metadata
+
+**Choice:** `autoOpen` is stored on each `DisplayNotification`. The light Show card always uses `true`. The interactive card configures it from Flow. Snapshot/reconnect never storms auto-open.
+
+**Why:** Homey Flow authors decide presentation; reconnect must not replay historical opens.
+
+## Auto-close affects presentation only
+
+**Choice:** Auto-close closes the fullscreen Center after N seconds when opened via auto-open. It never removes, dismisses, or TTL-deletes SoT notifications. Ribbon stays. Manual ribbon open does not start the countdown. User interaction cancels the timer. **`dismissable: false` skips auto-close** so a blocking notification cannot time out.
+
+**Why:** Homey remains lifecycle SoT; auto-close is UX, not state mutation. “Cannot be hidden” must also mean it stays on screen.
+
+## Notification actions are semantic events
+
+**Choice:** The Display emits `actionId` over a typed WebSocket message. It never receives Homey `deviceId` / capability / value commands for notification CTAs. Backend validates against SoT before triggering Flow.
+
+**Why:** Security and architecture: Homey Flow owns automation consequences.
+
+**User-facing split:**
+
+- **ID azione** (`actionId`) — routing key the Flow author invents. Written on the SHOW card and again on the WHEN card so Homey can tell `open-gate` apart from `acknowledge` on the same Display. Not a Homey device, not shown on screen.
+- **Testo pulsante** (`actionLabel`) — CTA on the button.
+- **Testo azione** (`actionText`) — optional explanation above the button.
+
+See [MILESTONE-12.md](MILESTONE-12.md#what-action-id-is-for).
+
+## Homey Flow owns automation
+
+**Choice:** Device Flow Trigger `notification_action_pressed` (Shelly-prefixed twin) carries tokens; optional Action ID arg filters via `registerRunListener(args, state)`.
+
+**Why:** Official Homey trigger-state pattern is event-context-safe; avoids fragile global “last action”.
+
+## One action per notification
+
+**Choice:** M12 supports a single optional CTA (`actionId`, `label`, optional `text`).
+
+**Why:** Keep Wall Display UI and protocol simple.
+
+## Existing M11/M11B Flow compatibility
+
+**Choice:** Keep the original lightweight Device Action Card `show_notification` / `shelly_show_notification` unchanged (M11B args only). Add a separate interactive card `show_interactive_notification` / `shelly_show_interactive_notification` for auto-open, auto-close, and action.
+
+**Why:** Extending the same card with many new args would bloat every simple Flow and risk surprising Homey migrations. Two cards keep “light” Flows untouched and make advanced options opt-in.
+
+**Simple card semantics on upsert:** `autoOpen=true`, auto-close disabled, action cleared (so a light Show of the same key does not leave a stale CTA).
+
+## Upsert auto-open decision
+
+**Choice:** Auto-open on `notification-added`, and on `notification-updated` only when the id was not already visible (restore-after-dismiss). Content updates of a visible notification do not reopen.
+
+**Why:** Least surprising; avoids reopen loops while preserving Flow “Show” re-surface.
+
+---
+
 Architectural choices for Milestone 11B. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Notifications are controlled natively through Homey Flow
@@ -74,6 +136,12 @@ Architectural choices for Milestone 11. Earlier decisions remain in force below 
 **Choice:** Dismiss hides a notification only on the current Display. Other Displays and the backend source of truth are unchanged.
 
 **Why:** Two kitchens may share an alert; one user clearing it must not silence the other screen.
+
+## Non-dismissable notifications stay on screen
+
+**Choice:** `dismissable: false` hides Hide, X, and Dismiss, ignores backdrop / Escape, and skips auto-close. The Center stays open until Homey removes the notification (or the visible list becomes empty). Carousel navigation to another visible notification is still allowed.
+
+**Why:** The Flow checkbox is labelled “can be hidden”. Closing the modal would put a blocking alarm/doorbell away from the Display.
 
 ## Dismiss state is runtime-only
 

@@ -161,6 +161,26 @@
 - Using capabilities as notification payload transport
 - Persistent dismiss / notification history DB
 
+## Milestone 12 — Notification Lifecycle, Auto-Close & Native Flow Actions
+
+**Status:** Done. Details: [MILESTONE-12.md](MILESTONE-12.md).
+
+### In scope (implemented)
+
+- `autoOpen` / `autoCloseSeconds` / optional single `action` on existing `DisplayNotification`
+- Separate interactive Show Flow card (`show_interactive_notification`) without changing the light M11B Show card
+- Device Flow Trigger `notification_action_pressed` with Action ID filter + tokens
+- Typed `notification-action` WebSocket path with SoT validation
+- Auto-close progress (CSS) + interaction cancels timer; manual open skips auto-close
+- Diagnostics counters; IT/EN; automated M12 tests
+
+### Out of scope (explicitly deferred)
+
+- Multiple actions per notification
+- Condition Card based on fragile global “last action”
+- Auto-close that removes/dismisses notifications
+- Direct Display→capability commands
+
 ## Later milestones (not started)
 
 - Additional widget types (sensors, thermostats)
@@ -171,3 +191,4 @@
 
 - Milestone 11: [MILESTONE-11.md](MILESTONE-11.md)
 - Milestone 11B: [MILESTONE-11B.md](MILESTONE-11B.md)
+- Milestone 12: [MILESTONE-12.md](MILESTONE-12.md)

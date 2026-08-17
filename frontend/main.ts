@@ -198,7 +198,10 @@ function isDashboardCopy(value: unknown): boolean {
     typeof notifications.severityWarning === 'string' &&
     typeof notifications.severitySuccess === 'string' &&
     typeof notifications.severityInfo === 'string' &&
-    typeof notifications.position === 'string'
+    typeof notifications.position === 'string' &&
+    typeof notifications.actionSent === 'string' &&
+    typeof notifications.actionFailed === 'string' &&
+    typeof notifications.autoCloseHint === 'string'
   );
 }
 

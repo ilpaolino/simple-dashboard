@@ -50,6 +50,9 @@ export const COMMAND_TIMEOUTS = {
   coverStop: 4_000,
 } as const;
 
+/** Max wait for Homey Flow trigger confirmation after a notification CTA. */
+export const NOTIFICATION_ACTION_TIMEOUT_MS = 8_000;
+
 /** Centralized long-press threshold for LightWidget (touch-first). */
 export const LONG_PRESS_MS = 500;
 

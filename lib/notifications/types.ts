@@ -2,6 +2,8 @@
  * Display notification contracts (global chrome — not grid widgets).
  */
 
+import type { NotificationAction } from './action';
+
 export type NotificationSeverity =
   | 'critical'
   | 'warning'
@@ -22,6 +24,8 @@ export type NotificationIcon =
   | 'door'
   | 'washing-machine';
 
+export type { NotificationAction };
+
 /**
  * Wire / frontend notification instance (no display routing).
  */
@@ -35,6 +39,22 @@ export interface DisplayNotification {
   readonly highlight: boolean;
   /** Monotonic publish order (ms since epoch). Used for deterministic carousel order. */
   readonly publishedAt: number;
+  /**
+   * When true, realtime push may open the Notification Center.
+   * Default true for M11/M11B backward compatibility.
+   */
+  readonly autoOpen: boolean;
+  /**
+   * Seconds until the Center may auto-close after an auto-open presentation.
+   * Absent or 0 = disabled. Never removes/dismisses the notification.
+   */
+  readonly autoCloseSeconds?: number;
+  /** At most one semantic CTA per notification (M12). */
+  readonly action?: NotificationAction;
+  /**
+   * Flow logical key when published via upsert. Absent for keyless HTTP publishes.
+   */
+  readonly notificationKey?: string;
 }
 
 export interface PublishNotificationInput {
@@ -45,6 +65,10 @@ export interface PublishNotificationInput {
   readonly icon?: NotificationIcon;
   readonly dismissable?: boolean;
   readonly highlight?: boolean;
+  readonly autoOpen?: boolean;
+  readonly autoCloseSeconds?: number;
+  readonly action?: NotificationAction | null;
+  readonly notificationKey?: string;
   /** One or more Display ids. Never broadcast to all Displays by default. */
   readonly displayIds: readonly string[];
 }
@@ -57,6 +81,14 @@ export interface UpdateNotificationInput {
   readonly icon?: NotificationIcon | null;
   readonly dismissable?: boolean;
   readonly highlight?: boolean;
+  readonly autoOpen?: boolean;
+  readonly autoCloseSeconds?: number | null;
+  /**
+   * Set to replace action; `null` clears action.
+   * Omit to keep the existing action.
+   */
+  readonly action?: NotificationAction | null;
+  readonly notificationKey?: string | null;
   /**
    * Optional display re-routing. When set, replaces the notification’s targets.
    * When omitted, existing targets are kept.
