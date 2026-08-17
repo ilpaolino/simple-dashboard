@@ -3,8 +3,13 @@ import { buildDisplaySnapshot } from '../../lib/device/buildDisplaySnapshot';
 import {
   getDisplayId,
   isDisplayAppHost,
+  isShellyHardwareAppHost,
 } from '../../lib/device/DisplayAppHost';
 import { ensureNotificationCapabilities } from '../../lib/device/notificationCapabilities';
+import {
+  ensureRediscoverHardwareCapability,
+  REDISCOVER_HARDWARE_CAPABILITY_ID,
+} from '../../lib/device/shellyHardwareCapabilities';
 import { parseWallDisplayStore } from '../../lib/device/types';
 import { validateDeviceSettingsChange } from '../../lib/device/settingsValidation';
 import { DISPLAY_TYPE_IDS } from '../../lib/display/types';
@@ -20,6 +25,14 @@ class ShellyWallDisplayDevice extends Homey.Device {
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
     await ensureNotificationCapabilities(this);
+    await ensureRediscoverHardwareCapability(this);
+
+    this.registerCapabilityListener(
+      REDISCOVER_HARDWARE_CAPABILITY_ID,
+      async () => {
+        await this.runManualHardwareDiscovery();
+      },
+    );
 
     const snapshot = buildDisplaySnapshot({
       device: this,
@@ -35,6 +48,16 @@ class ShellyWallDisplayDevice extends Homey.Device {
     if (snapshot && isDisplayAppHost(this.homey.app)) {
       this.homey.app.registerDisplay(snapshot);
       this.homey.app.syncNotificationCapabilities?.(snapshot.displayId);
+      if (isShellyHardwareAppHost(this.homey.app)) {
+        void this.homey.app
+          .ensureShellyHardwareDiscovered?.(snapshot.displayId)
+          .catch((error: unknown) => {
+            this.logger.warn('Shelly hardware discovery after init failed', {
+              displayId: snapshot.displayId,
+              error,
+            });
+          });
+      }
     }
   }
 
@@ -85,6 +108,27 @@ class ShellyWallDisplayDevice extends Homey.Device {
     const displayId = getDisplayId(this.getData());
     if (displayId && isDisplayAppHost(this.homey.app)) {
       this.homey.app.unregisterDisplay(displayId);
+    }
+  }
+
+  private async runManualHardwareDiscovery(): Promise<void> {
+    const displayId = getDisplayId(this.getData());
+    const app = this.homey.app;
+    if (!displayId || !isShellyHardwareAppHost(app)) {
+      throw new Error(this.homey.__('hardware.errors.rediscoveryFailed'));
+    }
+
+    this.logger.info('Manual Shelly hardware rediscovery requested', { displayId });
+
+    try {
+      await app.discoverShellyHardware(displayId);
+      this.logger.info('Manual Shelly hardware rediscovery completed', { displayId });
+    } catch (error) {
+      this.logger.error('Manual Shelly hardware rediscovery failed', {
+        displayId,
+        error,
+      });
+      throw new Error(this.homey.__('hardware.errors.rediscoveryFailed'));
     }
   }
 }

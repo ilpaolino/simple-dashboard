@@ -86,6 +86,31 @@ GET /notification-media/:id/video  (415 — no transcoding)
 
 Homey camera video types (RTSP / WebRTC / HLS / DASH / RTMP) are **detected** but not piped to `<video>`. When Homey also exposes an image, that snapshot is shown and refreshed every 3 s while the Center is open. See [MILESTONE-13.md](MILESTONE-13.md).
 
+### Milestone 14 — Shelly hardware discovery & reboot
+
+```text
+Pairing / App startup / Maintenance action
+        │
+        ▼
+ShellyHardwareCoordinator (sequential per display, no polling)
+        │
+        ▼
+ShellyWallDisplayHardwareService
+        │
+        ▼
+ShellyWallDisplayRpcClient
+        │  GET /rpc/Shelly.ListMethods  (discovery)
+        │  GET /rpc/Shelly.Reboot       (command)
+        ▼
+ShellyHardwareProfileStore (runtime RAM)
+        │
+        ├─ Device Settings read-only labels
+        ├─ /diagnostics hardware section
+        └─ Flow Action shelly_reboot_display (Shelly driver only)
+```
+
+Normalized features are derived from discovered RPC method names in `lib/shelly/mapFeatures.ts`. **Unknown** (discovery failed) differs from **unsupported** (method absent after successful discovery). Generic Web Display never uses this stack. See [MILESTONE-14.md](MILESTONE-14.md).
+
 ### Milestone 11B — Homey Flow (incremental)
 
 ```text

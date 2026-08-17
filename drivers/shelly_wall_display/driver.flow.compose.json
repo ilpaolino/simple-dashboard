@@ -334,6 +334,21 @@
         "en": "Removes every active notification for this Wall Display only. Other Displays are unchanged.",
         "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano."
       }
+    },
+    {
+      "id": "shelly_reboot_display",
+      "title": {
+        "en": "Reboot display",
+        "it": "Riavvia il display"
+      },
+      "titleFormatted": {
+        "en": "Reboot display",
+        "it": "Riavvia il display"
+      },
+      "hint": {
+        "en": "Sends the official Shelly.Reboot RPC command. The display may disconnect immediately while restarting.",
+        "it": "Invia il comando RPC ufficiale Shelly.Reboot. Il display può disconnettersi subito durante il riavvio."
+      }
     }
   ]
 }

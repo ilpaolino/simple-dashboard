@@ -8,7 +8,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 
 ## Current status
 
-**Milestone 13 is implemented.** Milestone 0–12 behavior is preserved.
+**Milestone 14 is implemented.** Milestone 0–13 behavior is preserved.
 
 | Area | Status |
 | --- | --- |
@@ -17,7 +17,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M13) |
+| Diagnostics page | Done (M2–M14) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5/M8) |
@@ -30,6 +30,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | Homey Flow notification actions + aggregate capabilities | Done (M11B) |
 | Notification auto-open / auto-close + semantic actions | Done (M12) |
 | Optional Homey camera/media inside Notifications | Done (M13) |
+| Shelly RPC hardware discovery + reboot Flow | Done (M14) |
 | WebSocket realtime (same port) | Done (M6/M11/M12/M13 notifications) |
 | Selective Homey capability subscriptions | Done (M6/M8/M9/M10 light optional caps) |
 | Live dashboard configuration | Done (M6) |
@@ -91,6 +92,7 @@ homey app run --remote
 | `frontend/widgets/shared/` | Shared device-widget CSS, control-panel CSS, decorative icon helper |
 | `assets/dashboard/` | Built `dashboard.css` / `dashboard.js` served on LAN |
 | `settings/` | Official Homey app settings + Dashboard Editor |
+| `lib/shelly/` | Shelly RPC client, hardware discovery, runtime profile store (M14) |
 | `lib/adapters/` | Shelly + Generic protocol adapters |
 | `lib/pairing/` | Shared pairing state machine |
 | `drivers/shelly_wall_display/` | Shelly driver, device, pairing, settings |

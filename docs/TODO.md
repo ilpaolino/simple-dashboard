@@ -1,5 +1,13 @@
 # TODO
 
+## Milestone 14 follow-up (optional, not blocking)
+
+- [ ] Pair Shelly Wall Display; verify hardware summary at confirm step
+- [ ] Restart app; confirm one ListMethods per Shelly in logs; no periodic discovery
+- [ ] Maintenance → Detect hardware capabilities again; verify settings + diagnostics
+- [ ] Flow: Shelly → Reboot display; expect brief disconnect then recovery
+- [ ] Generic Web Display: no reboot card, no hardware maintenance action
+
 ## Milestone 13 follow-up (optional, not blocking)
 
 - [ ] Homey Pro: doorbell Flow with Camera / Media + auto-close 60s + action `open-gate`
@@ -44,4 +52,4 @@ Only when a later milestone is requested:
 - [ ] Additional widget types (sensors, thermostats)
 - [ ] Drag & drop editor enhancements (still Homey App Settings only)
 - [ ] Shelly authenticated RPC if probe fails with 401
-- [ ] Shelly hardware controls (reboot, brightness, volume) via official APIs only
+- [ ] Additional Shelly hardware controls when officially documented (brightness, volume, …)

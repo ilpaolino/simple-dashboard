@@ -1,6 +1,6 @@
 # Simple Dashboard
 
-Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync, interactive Light/Cover widgets, and a Flow-driven Notification Center (auto-open/close, semantic actions, optional camera snapshot).
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync, interactive Light/Cover widgets, Flow-driven Notification Center, and Shelly Wall Display hardware discovery (RPC reboot).
 
 See [`docs/PROJECT.md`](docs/PROJECT.md) for current milestone status.
 

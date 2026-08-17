@@ -10,6 +10,14 @@ export interface DisplayAppHost {
   syncNotificationCapabilities?(displayId: string): void;
 }
 
+export interface ShellyHardwareAppHost extends DisplayAppHost {
+  discoverShellyHardware(displayId: string): Promise<void>;
+  ensureShellyHardwareDiscovered?(displayId: string): Promise<void>;
+  syncShellyHardwareSettingsForDevice?(device: {
+    getData(): unknown;
+  }): Promise<void>;
+}
+
 export function isDisplayAppHost(value: unknown): value is DisplayAppHost {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -20,6 +28,15 @@ export function isDisplayAppHost(value: unknown): value is DisplayAppHost {
     typeof candidate.registerDisplay === 'function' &&
     typeof candidate.unregisterDisplay === 'function' &&
     typeof candidate.updateDisplay === 'function'
+  );
+}
+
+export function isShellyHardwareAppHost(
+  value: unknown,
+): value is ShellyHardwareAppHost {
+  return (
+    isDisplayAppHost(value) &&
+    typeof (value as ShellyHardwareAppHost).discoverShellyHardware === 'function'
   );
 }
 

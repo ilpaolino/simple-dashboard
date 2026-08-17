@@ -115,5 +115,68 @@
         "value": ""
       }
     ]
+  },
+  {
+    "type": "group",
+    "label": {
+      "en": "Hardware capabilities",
+      "it": "Funzionalità hardware"
+    },
+    "children": [
+      {
+        "id": "hardware_discovery_status",
+        "type": "label",
+        "label": {
+          "en": "Discovery status",
+          "it": "Stato rilevamento"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_last_discovery",
+        "type": "label",
+        "label": {
+          "en": "Last discovery",
+          "it": "Ultimo rilevamento"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_reboot_support",
+        "type": "label",
+        "label": {
+          "en": "Reboot",
+          "it": "Riavvio"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_rpc_method_count",
+        "type": "label",
+        "label": {
+          "en": "RPC methods",
+          "it": "Metodi RPC"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_last_error",
+        "type": "label",
+        "label": {
+          "en": "Last hardware error",
+          "it": "Ultimo errore hardware"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_rediscovery_note",
+        "type": "label",
+        "label": {
+          "en": "Use Maintenance actions to detect hardware capabilities again.",
+          "it": "Usa Azioni di manutenzione per rilevare nuovamente le funzionalità hardware."
+        },
+        "value": ""
+      }
+    ]
   }
 ]

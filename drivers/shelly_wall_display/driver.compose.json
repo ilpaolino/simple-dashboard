@@ -4,7 +4,24 @@
     "it": "Shelly Wall Display"
   },
   "class": "other",
-  "capabilities": ["notification_count", "highest_notification_severity"],
+  "capabilities": [
+    "notification_count",
+    "highest_notification_severity",
+    "button.rediscover_hardware"
+  ],
+  "capabilitiesOptions": {
+    "button.rediscover_hardware": {
+      "maintenanceAction": true,
+      "title": {
+        "en": "Detect hardware capabilities again",
+        "it": "Rileva nuovamente funzionalità hardware"
+      },
+      "desc": {
+        "en": "Queries the Shelly RPC API (Shelly.ListMethods) and refreshes detected hardware features.",
+        "it": "Interroga l'API RPC Shelly (Shelly.ListMethods) e aggiorna le funzionalità hardware rilevate."
+      }
+    }
+  },
   "platforms": ["local"],
   "connectivity": ["lan"],
   "icon": "{{driverAssetsPath}}/icon.svg",

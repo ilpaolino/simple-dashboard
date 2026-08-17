@@ -200,14 +200,32 @@
 - Arbitrary URL proxy
 - Separate Camera Overlay
 
+## Milestone 14 — Shelly hardware discovery & reboot
+
+**Status:** Done. Details: [MILESTONE-14.md](MILESTONE-14.md).
+
+### In scope (implemented)
+
+- Official `Shelly.ListMethods` discovery → normalized runtime profile
+- Discovery at pairing (non-blocking on failure), app startup (once per display), Maintenance rediscovery
+- `Shelly.Reboot` via Flow Action `shelly_reboot_display` (Shelly driver only)
+- Diagnostics hardware section + IT/EN + automated tests
+- Generic Web Display unchanged
+
+### Out of scope (no official Wall Display RPC docs found)
+
+- Brightness, volume, sound, screen on/off, browser reload hardware commands
+
 ## Later milestones (not started)
 
 - Additional widget types (sensors, thermostats)
-- Display hardware controls beyond recognition
-- Global notification Flow across all Displays (optional)
+- Optional global Flow: show notification on all Displays
+- Shelly authenticated RPC if probe fails with 401
+- Additional Shelly hardware controls when officially documented **and** discovered
 
 ## Manual test checklist
 
+- Milestone 14: [MILESTONE-14.md](MILESTONE-14.md)
 - Milestone 11: [MILESTONE-11.md](MILESTONE-11.md)
 - Milestone 11B: [MILESTONE-11B.md](MILESTONE-11B.md)
 - Milestone 12: [MILESTONE-12.md](MILESTONE-12.md)

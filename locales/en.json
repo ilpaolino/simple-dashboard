@@ -171,7 +171,35 @@
       "model": "Model",
       "firmware": "Firmware",
       "serial": "UUID / Serial",
-      "confirm": "Add device"
+      "confirm": "Add device",
+      "hardwareLegend": "Hardware capabilities",
+      "hardwareDiscovery": "Discovery",
+      "hardwareReboot": "Reboot",
+      "hardwareMethods": "RPC methods"
+    }
+  },
+  "hardware": {
+    "features": {
+      "reboot": "Reboot"
+    },
+    "discoveryStatus": {
+      "not_discovered": "Not discovered yet",
+      "successful": "Discovery successful",
+      "failed": "Discovery failed",
+      "device_offline": "Device offline"
+    },
+    "featureStatus": {
+      "supported": "Supported",
+      "unsupported": "Unsupported",
+      "unknown": "Unknown"
+    },
+    "discovery": {
+      "pairingWarning": "Hardware discovery failed. The device was added with a minimal profile; use Maintenance actions to retry.",
+      "completed": "Detection completed",
+      "failed": "Detection failed"
+    },
+    "errors": {
+      "rediscoveryFailed": "Hardware capability detection failed"
     }
   },
   "pages": {
@@ -319,6 +347,19 @@
       "canDim": "Dim supported",
       "canSetTemperature": "Temperature supported",
       "canSetColor": "Color supported",
+      "noShellyHardware": "No Shelly Wall Display hardware profiles in runtime.",
+      "shellyHardware": "Shelly hardware discovery",
+      "hardwareDiscoveryStatus": "Discovery status",
+      "hardwareLastDiscovery": "Last discovery",
+      "hardwareRpcMethodCount": "RPC methods count",
+      "hardwareRebootSupport": "Reboot support",
+      "hardwareLastError": "Last hardware error",
+      "hardwareFeatureMatrix": "Detected features",
+      "hardwareFeature": "Feature",
+      "hardwareFeatureStatus": "Status",
+      "hardwareRpcMethodsTechnical": "RPC methods (technical)",
+      "hardwareRpcMethods": "Methods",
+      "noShellyHardwareMethods": "No RPC method list available.",
       "canStop": "Stop supported",
       "commandTarget": "Baseline → target",
       "recentCommands": "Recent commands",
@@ -441,6 +482,15 @@
         "invalidActionText": "Invalid action text",
         "invalidAutoClose": "Invalid auto-close seconds",
         "invalidMediaDevice": "Invalid camera / media device"
+      }
+    },
+    "hardware": {
+      "errors": {
+        "invalidDevice": "Invalid Shelly Wall Display device",
+        "rebootUnsupported": "Reboot is not supported on this display",
+        "rebootUnknown": "Reboot support is unknown — run hardware detection first",
+        "rebootFailed": "Reboot command failed",
+        "deviceOffline": "Shelly Wall Display is offline or unreachable"
       }
     }
   },

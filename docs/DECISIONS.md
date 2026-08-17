@@ -1,5 +1,53 @@
 # Decisions
 
+Architectural choices for Milestone 14. Earlier decisions remain in force below and in prior milestone docs.
+
+## Hardware features are discovered, not assumed
+
+**Choice:** Shelly-specific controls (today: reboot) are exposed only after `Shelly.ListMethods` discovery and mapping in `lib/shelly/mapFeatures.ts`. No brightness/volume/reload without official RPC documentation.
+
+**Why:** Avoid reverse-engineering; firmware may differ by model.
+
+**Refs:** [Shelly.ListMethods](https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Shelly#shellylistmethods), [Shelly.Reboot](https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Shelly#shellyreboot).
+
+## Discovery occurs at pairing, startup and manual request
+
+**Choice:** Hardware discovery runs at Shelly pairing (after identity), once per display at app startup (sequential), and via Homey Maintenance action `button.rediscover_hardware`. No `setInterval` polling.
+
+**Why:** Minimal LAN load; predictable RAM footprint.
+
+## Shelly RPC is isolated behind a dedicated client/service
+
+**Choice:** `ShellyWallDisplayRpcClient` + `ShellyWallDisplayHardwareService`. Flow handlers and Device classes never build raw RPC payloads.
+
+**Why:** Single timeout/error normalization; testability.
+
+## Unknown differs from unsupported
+
+**Choice:** `HardwareFeatureStatus`: discovery failure → `unknown`; successful discovery without method → `unsupported`.
+
+**Why:** Diagnostics must not treat offline devices as “feature absent”.
+
+## Generic Web Display does not expose Shelly hardware controls
+
+**Choice:** Shelly reboot Flow card, RPC discovery, and maintenance rediscovery exist only on `shelly_wall_display` driver.
+
+**Why:** Driver separation from Milestone 2 remains strict.
+
+## Reboot requires no additional confirmation
+
+**Choice:** Flow Action `shelly_reboot_display` executes immediately. Expected disconnect after reboot is logged, not treated as failure.
+
+**Why:** Flow execution is intentional automation.
+
+## Hardware profile is runtime-only
+
+**Choice:** `ShellyHardwareProfileStore` in RAM; not Homey Settings / Device Store. Device Settings labels are a read-only mirror for users.
+
+**Why:** Profile is reconstructable; avoids stale persisted capability assumptions.
+
+---
+
 Architectural choices for Milestone 13. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Camera media extends Notifications

@@ -89,7 +89,7 @@
 - **No drag & drop / advanced visual editor.** Placement is form-based with grid preview.
 - **No resize / orientation listeners.** Reload after viewport changes.
 - **Safety margin / gap constants are not Homey settings.**
-- **No Shelly hardware controls.**
+- **No Shelly hardware controls beyond identity probe.** M14 adds runtime RPC discovery and reboot Flow for Shelly Wall Display only; brightness/volume/etc. remain unimplemented pending official docs.
 - **No Shelly authentication** during identity probe.
 - **No hostname pairing / LAN discovery.** IPv4 only.
 - **Generic identity is a UUID generated at pairing.** Avoid duplicate IPs in the registry.

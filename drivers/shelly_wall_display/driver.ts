@@ -6,6 +6,17 @@ import { FetchJsonHttpClient } from '../../lib/http/JsonHttpClient';
 import { AppLogger } from '../../lib/Logger';
 import { PairingFlow } from '../../lib/pairing/PairingFlow';
 
+interface WelcomeWallAppLike {
+  discoverShellyHardwareAtPairing?(
+    ipAddress: string,
+  ): Promise<{
+    readonly discoveryStatus: string;
+    readonly rebootStatus: string;
+    readonly rpcMethodCount: number;
+    readonly warningKey: string | null;
+  }>;
+}
+
 /**
  * Shelly Wall Display driver — pairing requires Shelly.GetDeviceInfo recognition.
  * @see https://apps.developer.homey.app/the-basics/devices
@@ -22,14 +33,33 @@ class ShellyWallDisplayDriver extends Homey.Driver {
   public async onPair(session: Homey.Driver.PairSession): Promise<void> {
     this.logger.info('Shelly Wall Display pairing session started');
 
+    const app = this.homey.app as WelcomeWallAppLike;
+    const translate = (key: string): string => this.homey.__(key);
+
     const flow = new PairingFlow({
       registry: new AdapterRegistry([
         new ShellyWallDisplayAdapter(new FetchJsonHttpClient()),
       ]),
       mode: 'identify_required',
       adapterId: ADAPTER_IDS.SHELLY_WALL_DISPLAY,
-      translate: (key: string) => this.homey.__(key),
+      translate,
       logger: this.logger,
+      discoverHardware:
+        typeof app.discoverShellyHardwareAtPairing === 'function'
+          ? async (ip) => {
+              const summary = await app.discoverShellyHardwareAtPairing!(ip);
+              return {
+                discoveryStatus: translate(
+                  `hardware.discoveryStatus.${summary.discoveryStatus}`,
+                ),
+                rebootStatus: translate(
+                  `hardware.featureStatus.${summary.rebootStatus}`,
+                ),
+                rpcMethodCount: summary.rpcMethodCount,
+                warning: summary.warningKey ? translate(summary.warningKey) : null,
+              };
+            }
+          : undefined,
     });
 
     flow.bind({

@@ -18,6 +18,7 @@ import {
 } from '../widgets';
 import type { HomeyDeviceRepository } from '../homey/HomeyDeviceRepository';
 import type { NotificationDiagnosticsSnapshot } from '../notifications';
+import type { ShellyHardwareDiagnosticsEntry } from '../shelly';
 import { DashboardAssetStore } from './DashboardAssetStore';
 import {
   renderDiagnosticsPage,
@@ -49,6 +50,7 @@ export interface DisplayRequestHandlerOptions {
   readonly deviceRepository?: HomeyDeviceRepository | null;
   readonly getRealtimeDiagnostics?: () => DiagnosticsRealtimeSection | null;
   readonly getNotificationDiagnostics?: () => NotificationDiagnosticsSnapshot | null;
+  readonly getShellyHardwareDiagnostics?: () => readonly ShellyHardwareDiagnosticsEntry[];
   readonly serveNotificationMedia?: (input: {
     readonly displayId: string;
     readonly notificationId: string;
@@ -128,6 +130,7 @@ export class DisplayRequestHandler {
           recentErrors: this.options.diagnosticsLog.list(),
           realtime,
           notifications: this.options.getNotificationDiagnostics?.() ?? null,
+          shellyHardware: this.options.getShellyHardwareDiagnostics?.() ?? null,
         }),
       );
     } catch (error) {

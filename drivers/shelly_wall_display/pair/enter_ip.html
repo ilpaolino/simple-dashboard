@@ -88,6 +88,13 @@
             <label class="homey-form-label" data-i18n="pair.confirm.serial">UUID / Serial</label>
             <p class="homey-form-help" id="serial">—</p>
           </div>
+          <div class="homey-form-group" id="hardware-summary" style="display: none;">
+            <label class="homey-form-label" data-i18n="pair.confirm.hardwareLegend">Hardware</label>
+            <p class="homey-form-help" id="hardware-discovery">—</p>
+            <p class="homey-form-help" id="hardware-reboot">—</p>
+            <p class="homey-form-help" id="hardware-methods">—</p>
+            <p class="homey-form-help" id="hardware-warning" style="display: none;">—</p>
+          </div>
         </fieldset>
 
         <button
@@ -164,6 +171,29 @@
             document.getElementById('serial').textContent = info.serial;
           }
 
+          function fillHardwareSummary(summary) {
+            var section = document.getElementById('hardware-summary');
+            if (!summary) {
+              section.style.display = 'none';
+              return;
+            }
+            section.style.display = '';
+            document.getElementById('hardware-discovery').textContent =
+              Homey.__('pair.confirm.hardwareDiscovery') + ': ' + summary.discoveryStatus;
+            document.getElementById('hardware-reboot').textContent =
+              Homey.__('pair.confirm.hardwareReboot') + ': ' + summary.rebootStatus;
+            document.getElementById('hardware-methods').textContent =
+              Homey.__('pair.confirm.hardwareMethods') + ': ' + summary.rpcMethodCount;
+            var warning = document.getElementById('hardware-warning');
+            if (summary.warning) {
+              warning.style.display = '';
+              warning.textContent = summary.warning;
+            } else {
+              warning.style.display = 'none';
+              warning.textContent = '';
+            }
+          }
+
           function createPairedDevice() {
             return Homey.emit('get_pairing_device')
               .then(function (device) {
@@ -183,6 +213,10 @@
               })
               .then(function (info) {
                 fillDetectedInfo(info);
+                return Homey.emit('get_hardware_summary');
+              })
+              .then(function (summary) {
+                fillHardwareSummary(summary);
                 showStep('confirm');
               })
               .catch(function (error) {

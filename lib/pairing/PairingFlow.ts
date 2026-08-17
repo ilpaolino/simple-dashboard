@@ -31,6 +31,17 @@ export interface PairingFlowOptions {
   readonly translate: (key: string) => string;
   readonly createId?: () => string;
   readonly logger?: Logger;
+  /** Optional Shelly hardware discovery after successful identify (Shelly driver only). */
+  readonly discoverHardware?: (
+    ip: string,
+  ) => Promise<PairingHardwareSummaryView>;
+}
+
+export interface PairingHardwareSummaryView {
+  readonly discoveryStatus: string;
+  readonly rebootStatus: string;
+  readonly rpcMethodCount: number;
+  readonly warning: string | null;
 }
 
 interface SetIpPayload {
@@ -45,6 +56,7 @@ export class PairingFlow {
   private ip: string | null = null;
   private identifyResult: IdentifyResult | null = null;
   private selectedAdapter: WallDisplayAdapter | null = null;
+  private hardwareSummary: PairingHardwareSummaryView | null = null;
 
   public constructor(private readonly options: PairingFlowOptions) {
     if (options.mode === 'ip_only') {
@@ -59,6 +71,7 @@ export class PairingFlow {
     session.setHandler('probe', async (data: unknown) => this.probe(data));
     session.setHandler('list_adapters', async () => this.listAdapters());
     session.setHandler('get_detected_info', async () => this.getDetectedInfo());
+    session.setHandler('get_hardware_summary', async () => this.getHardwareSummary());
     session.setHandler('get_pairing_device', async () => this.getPairingDevice());
   }
 
@@ -66,6 +79,7 @@ export class PairingFlow {
     const ip = this.parseIpOrThrow(data);
     this.ip = ip;
     this.identifyResult = null;
+    this.hardwareSummary = null;
 
     if (this.options.mode === 'ip_only') {
       if (!this.options.adapterId) {
@@ -87,6 +101,31 @@ export class PairingFlow {
         adapterId: this.identifyResult.adapter.id,
         model: this.identifyResult.info.model,
       });
+
+      if (this.options.discoverHardware) {
+        try {
+          this.hardwareSummary = await this.options.discoverHardware(ip);
+          this.log('info', 'Pairing hardware discovery completed', {
+            ip,
+            status: this.hardwareSummary.discoveryStatus,
+            reboot: this.hardwareSummary.rebootStatus,
+          });
+        } catch (error) {
+          this.log('warn', 'Pairing hardware discovery failed (pairing continues)', {
+            ip,
+            error,
+          });
+          this.hardwareSummary = {
+            discoveryStatus: this.options.translate(
+              'hardware.discoveryStatus.failed',
+            ),
+            rebootStatus: this.options.translate('hardware.featureStatus.unknown'),
+            rpcMethodCount: 0,
+            warning: this.options.translate('hardware.discovery.pairingWarning'),
+          };
+        }
+      }
+
       return { ok: true, ip, nextView: 'confirm' };
     }
 
@@ -113,6 +152,18 @@ export class PairingFlow {
       this.options.translate(this.identifyResult.adapter.nameKey),
       this.options.translate('device.notAvailable'),
     );
+  }
+
+  private getHardwareSummary(): PairingHardwareSummaryView {
+    if (!this.hardwareSummary) {
+      return {
+        discoveryStatus: this.options.translate('hardware.discoveryStatus.not_discovered'),
+        rebootStatus: this.options.translate('hardware.featureStatus.unknown'),
+        rpcMethodCount: 0,
+        warning: null,
+      };
+    }
+    return this.hardwareSummary;
   }
 
   private getPairingDevice(): HomeyPairingDevice {

@@ -7,6 +7,7 @@ import type { DisplayRealtimeSessionInfo } from '../../realtime/DisplayRealtimeS
 import type { RealtimeMetricsSnapshot } from '../../realtime/RealtimeMetrics';
 import type { SubscriptionDiagnostic } from '../../realtime/RealtimeSubscriptionManager';
 import type { NotificationDiagnosticsSnapshot } from '../../notifications';
+import type { ShellyHardwareDiagnosticsEntry } from '../../shelly';
 import { escapeHtml, TECHNICAL_PAGE_STYLES } from './html';
 
 export interface DiagnosticsRealtimeSection {
@@ -26,6 +27,7 @@ export interface DiagnosticsPageInput {
   readonly recentErrors: readonly DiagnosticsRecentError[];
   readonly realtime?: DiagnosticsRealtimeSection | null;
   readonly notifications?: NotificationDiagnosticsSnapshot | null;
+  readonly shellyHardware?: readonly ShellyHardwareDiagnosticsEntry[] | null;
   readonly now?: Date;
 }
 
@@ -142,6 +144,20 @@ function coverErrorLabel(
     default:
       return error;
   }
+}
+
+function hardwareFeatureLabel(
+  status: string,
+  translate: (key: string) => string,
+): string {
+  return translate(`hardware.featureStatus.${status}`);
+}
+
+function hardwareDiscoveryLabel(
+  status: string,
+  translate: (key: string) => string,
+): string {
+  return translate(`hardware.discoveryStatus.${status}`);
 }
 
 export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
@@ -639,6 +655,97 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
       </tbody>
     </table>`;
 
+  const shellyHardwareEntries = Array.isArray(input.shellyHardware)
+    ? input.shellyHardware
+    : [];
+  const shellyHardwareRows = shellyHardwareEntries.map((entry) => {
+    const lastDiscovery = entry.lastDiscoveryAt
+      ? formatTimestamp(new Date(entry.lastDiscoveryAt), never)
+      : never;
+    const lastError = entry.lastHardwareError ?? none;
+    return `<tr>
+        <td>${escapeHtml(entry.displayName)}</td>
+        <td>${escapeHtml(entry.ipAddress)}</td>
+        <td>${escapeHtml(hardwareDiscoveryLabel(entry.discoveryStatus, t))}</td>
+        <td>${escapeHtml(lastDiscovery)}</td>
+        <td>${escapeHtml(String(entry.rpcMethodCount))}</td>
+        <td>${escapeHtml(hardwareFeatureLabel(entry.features.reboot, t))}</td>
+        <td>${escapeHtml(lastError)}</td>
+      </tr>`;
+  });
+
+  const shellyHardwareFeatureRows = shellyHardwareEntries.map((entry) => {
+    return `<tr>
+        <td>${escapeHtml(entry.displayName)}</td>
+        <td>${escapeHtml(t('hardware.features.reboot'))}</td>
+        <td>${escapeHtml(hardwareFeatureLabel(entry.features.reboot, t))}</td>
+      </tr>`;
+  });
+
+  const shellyHardwareMethodsRows = shellyHardwareEntries.flatMap((entry) => {
+    if (!entry.methods || entry.methods.length === 0) {
+      return [];
+    }
+    return [`<tr>
+        <td>${escapeHtml(entry.displayName)}</td>
+        <td><code>${escapeHtml(entry.methods.join(', '))}</code></td>
+      </tr>`];
+  });
+
+  const shellyHardwareTable =
+    shellyHardwareRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noShellyHardware'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.recognized.name'))}</th>
+          <th>${escapeHtml(t('pages.recognized.ip'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareDiscoveryStatus'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareLastDiscovery'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareRpcMethodCount'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareRebootSupport'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareLastError'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${shellyHardwareRows.join('\n')}
+      </tbody>
+    </table>`;
+
+  const shellyHardwareFeatureTable =
+    shellyHardwareFeatureRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noShellyHardware'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.recognized.name'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareFeature'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.hardwareFeatureStatus'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${shellyHardwareFeatureRows.join('\n')}
+      </tbody>
+    </table>`;
+
+  const shellyHardwareMethodsTable =
+    shellyHardwareMethodsRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noShellyHardwareMethods'))}</p>`
+      : `<details>
+      <summary>${escapeHtml(t('pages.diagnostics.hardwareRpcMethodsTechnical'))}</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>${escapeHtml(t('pages.recognized.name'))}</th>
+            <th>${escapeHtml(t('pages.diagnostics.hardwareRpcMethods'))}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${shellyHardwareMethodsRows.join('\n')}
+        </tbody>
+      </table>
+    </details>`;
+
   // Wide diagnostics tables need more than the default technical-page width.
   const diagnosticsStyles = `${TECHNICAL_PAGE_STYLES}
 main { width: min(96rem, 100%); overflow-x: auto; }
@@ -691,6 +798,11 @@ ${diagnosticsStyles}
         ${tableRows || `<tr><td colspan="20">${escapeHtml(t('pages.diagnostics.noDisplays'))}</td></tr>`}
       </tbody>
     </table>
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.shellyHardware'))}</h1>
+    ${shellyHardwareTable}
+    <h2 style="margin-top:1.5rem;font-size:1.05rem;">${escapeHtml(t('pages.diagnostics.hardwareFeatureMatrix'))}</h2>
+    ${shellyHardwareFeatureTable}
+    ${shellyHardwareMethodsTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.lightWidgets'))}</h1>
     ${lightTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.coverWidgets'))}</h1>

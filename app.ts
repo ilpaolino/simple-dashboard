@@ -9,6 +9,7 @@ import {
   buildDisplaySnapshot,
   DASHBOARD_STORE_KEY,
 } from './lib/device/buildDisplaySnapshot';
+import { getDisplayId } from './lib/device/DisplayAppHost';
 import { DISPLAY_TYPE_IDS } from './lib/display/types';
 import { DisplayRequestHandler } from './lib/http/DisplayRequestHandler';
 import { HttpServer } from './lib/HttpServer';
@@ -31,6 +32,7 @@ import {
   registerNotificationFlowCards,
   resolveNotificationActionTriggerCardId,
 } from './lib/flow/registerNotificationFlowCards';
+import { registerShellyHardwareFlowCards } from './lib/flow/registerShellyHardwareFlowCards';
 import { setNotificationAggregateCapabilities } from './lib/device/notificationCapabilities';
 import {
   isNotificationIcon,
@@ -46,6 +48,13 @@ import type {
   UpdateNotificationInput,
 } from './lib/notifications';
 
+import {
+  ShellyHardwareCoordinator,
+  readShellyDeviceRef,
+  type ShellyHardwareDiagnosticsEntry,
+  type ShellyHardwareProfileState,
+  type ShellyRebootResult,
+} from './lib/shelly';
 import {
   createDefaultWidgetRegistry,
   parseDashboardConfiguration,
@@ -86,6 +95,8 @@ class WelcomeWallApp extends Homey.App {
       ): Promise<unknown>;
     }
   >();
+  private shellyHardware!: ShellyHardwareCoordinator;
+  private shellyStartupDiscoveryPromise: Promise<void> | null = null;
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
@@ -126,6 +137,18 @@ class WelcomeWallApp extends Homey.App {
     });
     this.notificationActionTriggers = new Map(triggerCards);
 
+    this.shellyHardware = new ShellyHardwareCoordinator({
+      logger: this.logger,
+      listDevices: () => this.listShellyHardwareDeviceRefs(),
+    });
+
+    registerShellyHardwareFlowCards({
+      homey: this.homey as Parameters<typeof registerShellyHardwareFlowCards>[0]['homey'],
+      app: this,
+      logger: this.logger,
+      translate: (key: string) => this.homey.__(key),
+    });
+
     const adapters = createDefaultAdapterRegistry();
     this.requestHandler = new DisplayRequestHandler({
       registry: this.displayRegistry,
@@ -147,6 +170,7 @@ class WelcomeWallApp extends Homey.App {
       }),
       getNotificationDiagnostics: () =>
         this.realtimeGateway.getNotificationDiagnostics(),
+      getShellyHardwareDiagnostics: () => this.getShellyHardwareDiagnostics(),
       serveNotificationMedia: async (input) => {
         if (input.kind === 'video') {
           return this.realtimeGateway.serveNotificationVideo();
@@ -194,6 +218,38 @@ class WelcomeWallApp extends Homey.App {
       diagnosticsEnabled: this.settingsManager.isDiagnosticsEnabled(),
       realtime: this.realtimeGateway.isActive(),
     });
+
+    void this.runShellyStartupDiscoveryBatch();
+  }
+
+  private runShellyStartupDiscoveryBatch(): Promise<void> {
+    if (!this.shellyStartupDiscoveryPromise) {
+      this.shellyStartupDiscoveryPromise = (async () => {
+        try {
+          await this.shellyHardware.runStartupDiscovery();
+          for (const device of this.listWallDisplayDevices()) {
+            if (device.driver.id !== DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY) {
+              continue;
+            }
+            await this.syncShellyHardwareSettingsForDevice(device);
+          }
+        } catch (error) {
+          this.logger.error('Shelly startup hardware discovery failed', error);
+        }
+      })();
+    }
+    return this.shellyStartupDiscoveryPromise;
+  }
+
+  public async ensureShellyHardwareDiscovered(displayId: string): Promise<void> {
+    await this.runShellyStartupDiscoveryBatch();
+
+    const state = this.shellyHardware.getState(displayId);
+    if (state.discoveryStatus !== 'not_discovered') {
+      return;
+    }
+
+    await this.discoverShellyHardware(displayId);
   }
 
   public registerDisplay(snapshot: DisplaySnapshot): void {
@@ -207,6 +263,7 @@ class WelcomeWallApp extends Homey.App {
 
   public unregisterDisplay(displayId: string): void {
     void this.realtimeGateway.notifyDisplayRemoved(displayId);
+    this.shellyHardware.removeDisplay(displayId);
     this.displayRegistry.remove(displayId);
     this.logger.info('Display removed from runtime registry', { displayId });
   }
@@ -358,6 +415,62 @@ class WelcomeWallApp extends Homey.App {
 
   public recordFlowNotificationError(): void {
     this.realtimeGateway.metrics.recordFlowNotificationError();
+  }
+
+  public async discoverShellyHardware(displayId: string): Promise<void> {
+    const device = this.findWallDisplayDevice(displayId);
+    if (!device || device.driver.id !== DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY) {
+      throw new Error('invalid_device');
+    }
+
+    const ref = readShellyDeviceRef(device);
+    if (!ref) {
+      throw new Error('invalid_device');
+    }
+
+    const state = await this.shellyHardware.discoverForDisplay(ref, 'manual');
+    await this.syncShellyHardwareSettings(device, state);
+  }
+
+  public async syncShellyHardwareSettingsForDevice(device: Homey.Device): Promise<void> {
+    const displayId = getDisplayId(device.getData());
+    if (!displayId) {
+      return;
+    }
+    await this.syncShellyHardwareSettings(
+      device,
+      this.shellyHardware.getState(displayId),
+    );
+  }
+
+  public async rebootShellyDisplay(displayId: string): Promise<ShellyRebootResult> {
+    const device = this.findWallDisplayDevice(displayId);
+    if (!device || device.driver.id !== DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY) {
+      return {
+        ok: false,
+        error: 'rpc_error',
+        message: 'invalid_device',
+      };
+    }
+
+    const ref = readShellyDeviceRef(device);
+    if (!ref) {
+      return {
+        ok: false,
+        error: 'device_offline',
+        message: 'missing_ip',
+      };
+    }
+
+    return this.shellyHardware.rebootDisplay(ref);
+  }
+
+  public getShellyHardwareDiagnostics(): readonly ShellyHardwareDiagnosticsEntry[] {
+    return this.shellyHardware.listDiagnostics(this.listShellyHardwareDeviceRefs());
+  }
+
+  public async discoverShellyHardwareAtPairing(ipAddress: string) {
+    return this.shellyHardware.discoverAtPairing(ipAddress);
   }
 
   public async listNotificationMediaDevices(query: string): Promise<
@@ -613,8 +726,51 @@ class WelcomeWallApp extends Homey.App {
     }
 
     this.displayRegistry.clear();
+    this.shellyHardware.clear();
     this.diagnosticsLog.clear();
     this.logger.info('Simple Dashboard app uninitialized');
+  }
+
+  private listShellyHardwareDeviceRefs() {
+    const refs = [];
+    for (const device of this.listWallDisplayDevices()) {
+      if (device.driver.id !== DISPLAY_TYPE_IDS.SHELLY_WALL_DISPLAY) {
+        continue;
+      }
+      const ref = readShellyDeviceRef(device);
+      if (ref) {
+        refs.push(ref);
+      }
+    }
+    return refs;
+  }
+
+  private async syncShellyHardwareSettings(
+    device: Homey.Device,
+    state: ShellyHardwareProfileState,
+  ): Promise<void> {
+    const translate = (key: string): string => this.homey.__(key);
+    const rebootStatus = state.profile?.features.reboot ?? 'unknown';
+
+    try {
+      await device.setSettings({
+        hardware_discovery_status: translate(
+          `hardware.discoveryStatus.${state.discoveryStatus}`,
+        ),
+        hardware_last_discovery: state.lastDiscoveryAt
+          ? new Date(state.lastDiscoveryAt).toISOString()
+          : translate('device.notAvailable'),
+        hardware_reboot_support: translate(`hardware.featureStatus.${rebootStatus}`),
+        hardware_rpc_method_count:
+          state.rpcMethodCount > 0 ? String(state.rpcMethodCount) : '—',
+        hardware_last_error: state.lastHardwareError ?? '—',
+      });
+    } catch (error) {
+      this.logger.warn('Failed to sync Shelly hardware settings labels', {
+        displayId: state.displayId,
+        error,
+      });
+    }
   }
 
   private listWallDisplayDevices(): Homey.Device[] {

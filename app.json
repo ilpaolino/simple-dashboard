@@ -1303,6 +1303,28 @@
             "filter": "driver_id=shelly_wall_display"
           }
         ]
+      },
+      {
+        "id": "shelly_reboot_display",
+        "title": {
+          "en": "Reboot display",
+          "it": "Riavvia il display"
+        },
+        "titleFormatted": {
+          "en": "Reboot display",
+          "it": "Riavvia il display"
+        },
+        "hint": {
+          "en": "Sends the official Shelly.Reboot RPC command. The display may disconnect immediately while restarting.",
+          "it": "Invia il comando RPC ufficiale Shelly.Reboot. Il display può disconnettersi subito durante il riavvio."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=shelly_wall_display"
+          }
+        ]
       }
     ]
   },
@@ -1432,8 +1454,22 @@
       "class": "other",
       "capabilities": [
         "notification_count",
-        "highest_notification_severity"
+        "highest_notification_severity",
+        "button.rediscover_hardware"
       ],
+      "capabilitiesOptions": {
+        "button.rediscover_hardware": {
+          "maintenanceAction": true,
+          "title": {
+            "en": "Detect hardware capabilities again",
+            "it": "Rileva nuovamente funzionalità hardware"
+          },
+          "desc": {
+            "en": "Queries the Shelly RPC API (Shelly.ListMethods) and refreshes detected hardware features.",
+            "it": "Interroga l'API RPC Shelly (Shelly.ListMethods) e aggiorna le funzionalità hardware rilevate."
+          }
+        }
+      },
       "platforms": [
         "local"
       ],
@@ -1565,6 +1601,69 @@
               "label": {
                 "en": "Grid and widget configuration is managed from the Wall Display app settings.",
                 "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni dell'app Wall Display."
+              },
+              "value": ""
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Hardware capabilities",
+            "it": "Funzionalità hardware"
+          },
+          "children": [
+            {
+              "id": "hardware_discovery_status",
+              "type": "label",
+              "label": {
+                "en": "Discovery status",
+                "it": "Stato rilevamento"
+              },
+              "value": ""
+            },
+            {
+              "id": "hardware_last_discovery",
+              "type": "label",
+              "label": {
+                "en": "Last discovery",
+                "it": "Ultimo rilevamento"
+              },
+              "value": ""
+            },
+            {
+              "id": "hardware_reboot_support",
+              "type": "label",
+              "label": {
+                "en": "Reboot",
+                "it": "Riavvio"
+              },
+              "value": ""
+            },
+            {
+              "id": "hardware_rpc_method_count",
+              "type": "label",
+              "label": {
+                "en": "RPC methods",
+                "it": "Metodi RPC"
+              },
+              "value": ""
+            },
+            {
+              "id": "hardware_last_error",
+              "type": "label",
+              "label": {
+                "en": "Last hardware error",
+                "it": "Ultimo errore hardware"
+              },
+              "value": ""
+            },
+            {
+              "id": "hardware_rediscovery_note",
+              "type": "label",
+              "label": {
+                "en": "Use Maintenance actions to detect hardware capabilities again.",
+                "it": "Usa Azioni di manutenzione per rilevare nuovamente le funzionalità hardware."
               },
               "value": ""
             }

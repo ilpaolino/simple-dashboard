@@ -171,7 +171,35 @@
       "model": "Modello",
       "firmware": "Firmware",
       "serial": "UUID / Seriale",
-      "confirm": "Aggiungi dispositivo"
+      "confirm": "Aggiungi dispositivo",
+      "hardwareLegend": "Funzionalità hardware",
+      "hardwareDiscovery": "Rilevamento",
+      "hardwareReboot": "Riavvio",
+      "hardwareMethods": "Metodi RPC"
+    }
+  },
+  "hardware": {
+    "features": {
+      "reboot": "Riavvio"
+    },
+    "discoveryStatus": {
+      "not_discovered": "Non ancora rilevato",
+      "successful": "Rilevamento completato",
+      "failed": "Rilevamento non riuscito",
+      "device_offline": "Dispositivo offline"
+    },
+    "featureStatus": {
+      "supported": "Supportato",
+      "unsupported": "Non supportato",
+      "unknown": "Sconosciuto"
+    },
+    "discovery": {
+      "pairingWarning": "Rilevamento hardware non riuscito. Il dispositivo è stato aggiunto con profilo minimo; usa Azioni di manutenzione per riprovare.",
+      "completed": "Rilevamento completato",
+      "failed": "Rilevamento non riuscito"
+    },
+    "errors": {
+      "rediscoveryFailed": "Rilevamento funzionalità hardware non riuscito"
     }
   },
   "pages": {
@@ -319,6 +347,19 @@
       "canDim": "Dim supportato",
       "canSetTemperature": "Temperatura supportata",
       "canSetColor": "Colore supportato",
+      "noShellyHardware": "Nessun profilo hardware Shelly Wall Display in runtime.",
+      "shellyHardware": "Rilevamento hardware Shelly",
+      "hardwareDiscoveryStatus": "Stato rilevamento",
+      "hardwareLastDiscovery": "Ultimo rilevamento",
+      "hardwareRpcMethodCount": "Numero metodi RPC",
+      "hardwareRebootSupport": "Supporto riavvio",
+      "hardwareLastError": "Ultimo errore hardware",
+      "hardwareFeatureMatrix": "Funzionalità rilevate",
+      "hardwareFeature": "Funzionalità",
+      "hardwareFeatureStatus": "Stato",
+      "hardwareRpcMethodsTechnical": "Metodi RPC (tecnico)",
+      "hardwareRpcMethods": "Metodi",
+      "noShellyHardwareMethods": "Nessun elenco metodi RPC disponibile.",
       "canStop": "Stop supportato",
       "commandTarget": "Baseline → target",
       "recentCommands": "Comandi recenti",
@@ -441,6 +482,15 @@
         "invalidActionText": "Testo azione non valido",
         "invalidAutoClose": "Secondi di chiusura automatica non validi",
         "invalidMediaDevice": "Camera / media non valido"
+      }
+    },
+    "hardware": {
+      "errors": {
+        "invalidDevice": "Dispositivo Shelly Wall Display non valido",
+        "rebootUnsupported": "Il riavvio non è supportato su questo display",
+        "rebootUnknown": "Supporto riavvio sconosciuto — esegui prima il rilevamento hardware",
+        "rebootFailed": "Comando di riavvio non riuscito",
+        "deviceOffline": "Shelly Wall Display offline o non raggiungibile"
       }
     }
   },
