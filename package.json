@@ -1,7 +1,7 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.17.0",
-  "description": "Simple Dashboard — Homey Flow notifications with optional camera media on Wall Displays",
+  "version": "1.0.0",
+  "description": "LocalDashboard — locally hosted Homey Pro wall display dashboards with widgets, Flow notifications, and optional camera media",
   "main": "app.js",
   "scripts": {
     "build": "tsc && npm run build:frontend",

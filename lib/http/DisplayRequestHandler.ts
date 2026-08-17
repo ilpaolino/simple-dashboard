@@ -147,9 +147,7 @@ export class DisplayRequestHandler {
       );
     } catch (error) {
       this.options.logger.error('Diagnostics page render failed', error);
-      const detail =
-        error instanceof Error ? error.message : 'unknown_error';
-      return textResponse(500, `Diagnostics render failed: ${detail}`);
+      return textResponse(500, 'Diagnostics render failed');
     }
   }
 

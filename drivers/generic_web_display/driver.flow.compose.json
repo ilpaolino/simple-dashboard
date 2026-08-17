@@ -4,57 +4,162 @@
       "id": "notification_action_pressed",
       "title": {
         "en": "A notification action is pressed",
-        "it": "Viene premuta un'azione di una notifica"
+        "it": "Viene premuta un'azione di una notifica",
+        "de": "Eine Benachrichtigungsaktion wird gedrückt",
+        "fr": "Une action de notification est pressée",
+        "da": "En notifikationshandling trykkes",
+        "es": "Se pulsa una acción de notificación",
+        "pt": "É premida uma ação de notificação"
       },
       "titleFormatted": {
         "en": "A notification action is pressed — Action ID [[action_id]]",
-        "it": "Viene premuta un'azione di una notifica — ID azione [[action_id]]"
+        "it": "Viene premuta un'azione di una notifica — ID azione [[action_id]]",
+        "de": "Eine Benachrichtigungsaktion wird gedrückt — Action ID [[action_id]]",
+        "fr": "Une action de notification est pressée — Action ID [[action_id]]",
+        "da": "En notifikationshandling trykkes — Action ID [[action_id]]",
+        "es": "Se pulsa una acción de notificación — Action ID [[action_id]]",
+        "pt": "É premida uma ação de notificação — Action ID [[action_id]]"
       },
       "hint": {
         "en": "Fires when the user presses the notification button on this Wall Display. Type the same Action ID you invented in “Show interactive notification” (e.g. open-gate) so only this Flow runs. Leave empty to run on any tap on this Display.",
-        "it": "Si attiva quando l'utente preme il pulsante della notifica su questo Wall Display. Scrivi lo stesso ID azione inventato in “Mostra notifica interattiva” (es. open-gate) così parte solo questa Flow. Lascia vuoto per qualsiasi tap su questo Display."
+        "it": "Si attiva quando l'utente preme il pulsante della notifica su questo Wall Display. Scrivi lo stesso ID azione inventato in “Mostra notifica interattiva” (es. open-gate) così parte solo questa Flow. Lascia vuoto per qualsiasi tap su questo Display.",
+        "de": "Wird ausgelöst, wenn der Benutzer die Benachrichtigungsschaltfläche auf diesem Wall Display drückt. Gib dieselbe Action ID ein, die du in „Interaktive Benachrichtigung anzeigen“ festgelegt hast (z. B. open-gate), damit nur dieser Flow ausgeführt wird. Leer lassen, um bei jedem Tippen auf diesem Display auszulösen.",
+        "fr": "Se déclenche lorsque l'utilisateur appuie sur le bouton de notification de ce Wall Display. Saisissez le même Action ID que vous avez défini dans « Afficher une notification interactive » (p. ex. open-gate) pour que seul ce Flow s'exécute. Laissez vide pour s'exécuter à chaque appui sur ce Display.",
+        "da": "Udløses, når brugeren trykker på notifikationsknappen på dette Wall Display. Indtast det samme Action ID, som du opfandt i «Vis interaktiv notifikation» (f.eks. open-gate), så kun dette Flow kører. Lad feltet være tomt for at køre ved ethvert tryk på dette Display.",
+        "es": "Se activa cuando el usuario pulsa el botón de notificación en este Wall Display. Escribe el mismo Action ID que definiste en «Mostrar notificación interactiva» (p. ej. open-gate) para que solo se ejecute este Flow. Déjalo vacío para ejecutarse con cualquier pulsación en este Display.",
+        "pt": "Dispara quando o utilizador prime o botão de notificação neste Wall Display. Introduza o mesmo Action ID que definiu em «Mostrar notificação interativa» (p. ex. open-gate) para que apenas este Flow seja executado. Deixe em branco para executar com qualquer toque neste Display."
       },
       "tokens": [
         {
           "name": "notificationKey",
           "type": "string",
-          "title": { "en": "Notification Key", "it": "Chiave notifica" },
-          "example": { "en": "doorbell", "it": "campanello" }
+          "title": {
+            "en": "Notification Key",
+            "it": "Chiave notifica",
+            "de": "Notification Key",
+            "fr": "Notification Key",
+            "da": "Notification Key",
+            "es": "Notification Key",
+            "pt": "Notification Key"
+          },
+          "example": {
+            "en": "doorbell",
+            "it": "campanello",
+            "de": "doorbell",
+            "fr": "doorbell",
+            "da": "doorbell",
+            "es": "doorbell",
+            "pt": "doorbell"
+          }
         },
         {
           "name": "actionId",
           "type": "string",
-          "title": { "en": "Action ID", "it": "ID azione" },
-          "example": { "en": "open-gate", "it": "apri-cancello" }
+          "title": {
+            "en": "Action ID",
+            "it": "ID azione",
+            "de": "Action ID",
+            "fr": "Action ID",
+            "da": "Action ID",
+            "es": "Action ID",
+            "pt": "Action ID"
+          },
+          "example": {
+            "en": "open-gate",
+            "it": "apri-cancello",
+            "de": "open-gate",
+            "fr": "open-gate",
+            "da": "open-gate",
+            "es": "open-gate",
+            "pt": "open-gate"
+          }
         },
         {
           "name": "actionLabel",
           "type": "string",
-          "title": { "en": "Action button label", "it": "Testo pulsante" },
-          "example": { "en": "Open gate", "it": "Apri cancello" }
+          "title": {
+            "en": "Action button label",
+            "it": "Testo pulsante",
+            "de": "Beschriftung der Aktionsschaltfläche",
+            "fr": "Libellé du bouton d'action",
+            "da": "Etiket for handlingsknap",
+            "es": "Etiqueta del botón de acción",
+            "pt": "Etiqueta do botão de ação"
+          },
+          "example": {
+            "en": "Open gate",
+            "it": "Apri cancello",
+            "de": "Tor öffnen",
+            "fr": "Ouvrir le portail",
+            "da": "Åbn port",
+            "es": "Abrir portón",
+            "pt": "Abrir portão"
+          }
         },
         {
           "name": "actionText",
           "type": "string",
-          "title": { "en": "Action text", "it": "Testo azione" },
+          "title": {
+            "en": "Action text",
+            "it": "Testo azione",
+            "de": "Aktionstext",
+            "fr": "Texte de l'action",
+            "da": "Handlingstekst",
+            "es": "Texto de la acción",
+            "pt": "Texto da ação"
+          },
           "example": {
             "en": "Press to open the pedestrian gate",
-            "it": "Premi per aprire il cancello pedonale"
+            "it": "Premi per aprire il cancello pedonale",
+            "de": "Drücken, um das Fußgängertor zu öffnen",
+            "fr": "Appuyez pour ouvrir le portillon piéton",
+            "da": "Tryk for at åbne fodgængerporten",
+            "es": "Pulsa para abrir el portón peatonal",
+            "pt": "Prima para abrir o portão pedonal"
           }
         },
         {
           "name": "notificationTitle",
           "type": "string",
-          "title": { "en": "Notification title", "it": "Titolo notifica" },
-          "example": { "en": "Doorbell", "it": "Campanello" }
+          "title": {
+            "en": "Notification title",
+            "it": "Titolo notifica",
+            "de": "Benachrichtigungstitel",
+            "fr": "Titre de la notification",
+            "da": "Notifikationstitel",
+            "es": "Título de la notificación",
+            "pt": "Título da notificação"
+          },
+          "example": {
+            "en": "Doorbell",
+            "it": "Campanello",
+            "de": "Türklingel",
+            "fr": "Sonnette",
+            "da": "Dørklokke",
+            "es": "Timbre",
+            "pt": "Campainha"
+          }
         },
         {
           "name": "notificationMessage",
           "type": "string",
-          "title": { "en": "Notification message", "it": "Messaggio notifica" },
+          "title": {
+            "en": "Notification message",
+            "it": "Messaggio notifica",
+            "de": "Benachrichtigungstext",
+            "fr": "Message de notification",
+            "da": "Notifikationsbesked",
+            "es": "Mensaje de notificación",
+            "pt": "Mensagem da notificação"
+          },
           "example": {
             "en": "Someone rang at the entrance",
-            "it": "Qualcuno ha suonato all'ingresso"
+            "it": "Qualcuno ha suonato all'ingresso",
+            "de": "Jemand hat an der Eingangstür geklingelt",
+            "fr": "Quelqu'un a sonné à l'entrée",
+            "da": "Nogen ringede på ved indgangen",
+            "es": "Alguien ha llamado a la entrada",
+            "pt": "Alguém tocou à campainha na entrada"
           }
         }
       ],
@@ -62,10 +167,23 @@
         {
           "type": "text",
           "name": "action_id",
-          "title": { "en": "Action ID", "it": "ID azione" },
+          "title": {
+            "en": "Action ID",
+            "it": "ID azione",
+            "de": "Action ID",
+            "fr": "Action ID",
+            "da": "Action ID",
+            "es": "Action ID",
+            "pt": "Action ID"
+          },
           "placeholder": {
             "en": "Same as in Show interactive, e.g. open-gate",
-            "it": "Uguale a Mostra interattiva, es. open-gate"
+            "it": "Uguale a Mostra interattiva, es. open-gate",
+            "de": "Wie in „Interaktive Benachrichtigung anzeigen“, z. B. open-gate",
+            "fr": "Identique à Afficher une notification interactive, p. ex. open-gate",
+            "da": "Samme som i Vis interaktiv notifikation, f.eks. open-gate",
+            "es": "Igual que en Mostrar notificación interactiva, p. ej. open-gate",
+            "pt": "Igual ao de Mostrar notificação interativa, p. ex. open-gate"
           },
           "required": false
         }
@@ -77,84 +195,305 @@
       "id": "show_notification",
       "title": {
         "en": "Show notification",
-        "it": "Mostra notifica"
+        "it": "Mostra notifica",
+        "de": "Benachrichtigung anzeigen",
+        "fr": "Afficher une notification",
+        "da": "Vis notifikation",
+        "es": "Mostrar notificación",
+        "pt": "Mostrar notificação"
       },
       "titleFormatted": {
         "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
-        "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], media [[media]])"
+        "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], media [[media]])",
+        "de": "Benachrichtigung anzeigen [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+        "fr": "Afficher une notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+        "da": "Vis notifikation [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+        "es": "Mostrar notificación [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+        "pt": "Mostrar notificação [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])"
       },
       "hint": {
         "en": "Creates or updates a simple notification on this Wall Display (upsert by Notification Key). Opens automatically; no auto-close timer or action button.",
-        "it": "Crea o aggiorna una notifica semplice su questo Wall Display (upsert per Notification Key). Si apre automaticamente; senza chiusura automatica né pulsante azione."
+        "it": "Crea o aggiorna una notifica semplice su questo Wall Display (upsert per Notification Key). Si apre automaticamente; senza chiusura automatica né pulsante azione.",
+        "de": "Erstellt oder aktualisiert eine einfache Benachrichtigung auf diesem Wall Display (Upsert per Notification Key). Öffnet automatisch; ohne Auto-Close-Timer oder Aktionsschaltfläche.",
+        "fr": "Crée ou met à jour une notification simple sur ce Wall Display (upsert par Notification Key). S'ouvre automatiquement ; sans minuterie de fermeture automatique ni bouton d'action.",
+        "da": "Opretter eller opdaterer en simpel notifikation på dette Wall Display (upsert via Notification Key). Åbner automatisk; ingen auto-luk-timer eller handlingsknap.",
+        "es": "Crea o actualiza una notificación simple en este Wall Display (upsert por Notification Key). Se abre automáticamente; sin temporizador de cierre automático ni botón de acción.",
+        "pt": "Cria ou atualiza uma notificação simples neste Wall Display (upsert por Notification Key). Abre automaticamente; sem temporizador de fecho automático nem botão de ação."
       },
       "highlight": true,
       "args": [
         {
           "type": "text",
           "name": "notification_key",
-          "title": { "en": "Notification Key", "it": "Chiave notifica" },
-          "placeholder": { "en": "e.g. laundry-done", "it": "es. lavatrice-finita" }
+          "title": {
+            "en": "Notification Key",
+            "it": "Chiave notifica",
+            "de": "Notification Key",
+            "fr": "Notification Key",
+            "da": "Notification Key",
+            "es": "Notification Key",
+            "pt": "Notification Key"
+          },
+          "placeholder": {
+            "en": "e.g. laundry-done",
+            "it": "es. lavatrice-finita",
+            "de": "z. B. laundry-done",
+            "fr": "p. ex. laundry-done",
+            "da": "f.eks. laundry-done",
+            "es": "p. ej. laundry-done",
+            "pt": "p. ex. laundry-done"
+          }
         },
         {
           "type": "text",
           "name": "title",
-          "title": { "en": "Title", "it": "Titolo" },
+          "title": {
+            "en": "Title",
+            "it": "Titolo",
+            "de": "Titel",
+            "fr": "Titre",
+            "da": "Titel",
+            "es": "Título",
+            "pt": "Título"
+          },
           "required": false
         },
         {
           "type": "text",
           "name": "message",
-          "title": { "en": "Message", "it": "Messaggio" }
+          "title": {
+            "en": "Message",
+            "it": "Messaggio",
+            "de": "Nachricht",
+            "fr": "Message",
+            "da": "Besked",
+            "es": "Mensaje",
+            "pt": "Mensagem"
+          }
         },
         {
           "type": "dropdown",
           "name": "severity",
-          "title": { "en": "Severity", "it": "Severity" },
+          "title": {
+            "en": "Severity",
+            "it": "Severity",
+            "de": "Severity",
+            "fr": "Severity",
+            "da": "Severity",
+            "es": "Severity",
+            "pt": "Severity"
+          },
           "values": [
-            { "id": "critical", "label": { "en": "Critical", "it": "Critico" } },
-            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
-            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
-            { "id": "info", "label": { "en": "Info", "it": "Informazione" } }
+            {
+              "id": "critical",
+              "label": {
+                "en": "Critical",
+                "it": "Critico",
+                "de": "Kritisch",
+                "fr": "Critique",
+                "da": "Kritisk",
+                "es": "Crítico",
+                "pt": "Crítico"
+              }
+            },
+            {
+              "id": "warning",
+              "label": {
+                "en": "Warning",
+                "it": "Attenzione",
+                "de": "Warnung",
+                "fr": "Avertissement",
+                "da": "Advarsel",
+                "es": "Advertencia",
+                "pt": "Aviso"
+              }
+            },
+            {
+              "id": "success",
+              "label": {
+                "en": "Success",
+                "it": "Successo",
+                "de": "Erfolg",
+                "fr": "Succès",
+                "da": "Succes",
+                "es": "Éxito",
+                "pt": "Sucesso"
+              }
+            },
+            {
+              "id": "info",
+              "label": {
+                "en": "Info",
+                "it": "Informazione",
+                "de": "Info",
+                "fr": "Info",
+                "da": "Info",
+                "es": "Info",
+                "pt": "Info"
+              }
+            }
           ]
         },
         {
           "type": "dropdown",
           "name": "icon",
-          "title": { "en": "Icon", "it": "Icona" },
+          "title": {
+            "en": "Icon",
+            "it": "Icona",
+            "de": "Symbol",
+            "fr": "Icône",
+            "da": "Ikon",
+            "es": "Icono",
+            "pt": "Ícone"
+          },
           "required": false,
           "values": [
-            { "id": "info", "label": { "en": "Info", "it": "Info" } },
-            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
-            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
-            { "id": "error", "label": { "en": "Error", "it": "Errore" } },
-            { "id": "home", "label": { "en": "Home", "it": "Casa" } },
-            { "id": "bell", "label": { "en": "Bell", "it": "Campanella" } },
-            { "id": "door", "label": { "en": "Door", "it": "Porta" } },
+            {
+              "id": "info",
+              "label": {
+                "en": "Info",
+                "it": "Informazione",
+                "de": "Info",
+                "fr": "Info",
+                "da": "Info",
+                "es": "Info",
+                "pt": "Info"
+              }
+            },
+            {
+              "id": "warning",
+              "label": {
+                "en": "Warning",
+                "it": "Attenzione",
+                "de": "Warnung",
+                "fr": "Avertissement",
+                "da": "Advarsel",
+                "es": "Advertencia",
+                "pt": "Aviso"
+              }
+            },
+            {
+              "id": "success",
+              "label": {
+                "en": "Success",
+                "it": "Successo",
+                "de": "Erfolg",
+                "fr": "Succès",
+                "da": "Succes",
+                "es": "Éxito",
+                "pt": "Sucesso"
+              }
+            },
+            {
+              "id": "error",
+              "label": {
+                "en": "Error",
+                "it": "Errore",
+                "de": "Fehler",
+                "fr": "Erreur",
+                "da": "Fejl",
+                "es": "Error",
+                "pt": "Erro"
+              }
+            },
+            {
+              "id": "home",
+              "label": {
+                "en": "Home",
+                "it": "Casa",
+                "de": "Zuhause",
+                "fr": "Maison",
+                "da": "Hjem",
+                "es": "Hogar",
+                "pt": "Casa"
+              }
+            },
+            {
+              "id": "bell",
+              "label": {
+                "en": "Bell",
+                "it": "Campanella",
+                "de": "Glocke",
+                "fr": "Cloche",
+                "da": "Klokke",
+                "es": "Campana",
+                "pt": "Campainha"
+              }
+            },
+            {
+              "id": "door",
+              "label": {
+                "en": "Door",
+                "it": "Porta",
+                "de": "Tür",
+                "fr": "Porte",
+                "da": "Dør",
+                "es": "Puerta",
+                "pt": "Porta"
+              }
+            },
             {
               "id": "washing-machine",
-              "label": { "en": "Washing machine", "it": "Lavatrice" }
+              "label": {
+                "en": "Washing machine",
+                "it": "Lavatrice",
+                "de": "Waschmaschine",
+                "fr": "Machine à laver",
+                "da": "Vaskemaskine",
+                "es": "Lavadora",
+                "pt": "Máquina de lavar"
+              }
             }
           ]
         },
         {
           "type": "checkbox",
           "name": "highlight",
-          "title": { "en": "Highlight", "it": "Evidenzia" },
+          "title": {
+            "en": "Highlight",
+            "it": "Evidenzia",
+            "de": "Hervorheben",
+            "fr": "Mettre en évidence",
+            "da": "Fremhæv",
+            "es": "Resaltar",
+            "pt": "Destacar"
+          },
           "value": false
         },
         {
           "type": "checkbox",
           "name": "dismissable",
-          "title": { "en": "Dismissable", "it": "Può essere nascosta" },
+          "title": {
+            "en": "Dismissable",
+            "it": "Può essere nascosta",
+            "de": "Ausblendbar",
+            "fr": "Peut être masquée",
+            "da": "Kan afvises",
+            "es": "Se puede ocultar",
+            "pt": "Pode ser ocultada"
+          },
           "value": true
         },
         {
           "type": "autocomplete",
           "name": "media",
-          "title": { "en": "Camera / Media", "it": "Camera / Media" },
+          "title": {
+            "en": "Camera / Media",
+            "it": "Camera / Media",
+            "de": "Kamera / Medien",
+            "fr": "Caméra / Média",
+            "da": "Kamera / Medier",
+            "es": "Cámara / Medios",
+            "pt": "Câmara / Media"
+          },
           "placeholder": {
             "en": "Optional camera",
-            "it": "Camera opzionale"
+            "it": "Camera opzionale",
+            "de": "Optionale Kamera",
+            "fr": "Caméra optionnelle",
+            "da": "Valgfrit kamera",
+            "es": "Cámara opcional",
+            "pt": "Câmara opcional"
           },
           "required": false
         }
@@ -164,80 +503,296 @@
       "id": "show_interactive_notification",
       "title": {
         "en": "Show interactive notification",
-        "it": "Mostra notifica interattiva"
+        "it": "Mostra notifica interattiva",
+        "de": "Interaktive Benachrichtigung anzeigen",
+        "fr": "Afficher une notification interactive",
+        "da": "Vis interaktiv notifikation",
+        "es": "Mostrar notificación interactiva",
+        "pt": "Mostrar notificação interativa"
       },
       "titleFormatted": {
         "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
-        "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])"
+        "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+        "de": "Interaktive Benachrichtigung anzeigen [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+        "fr": "Afficher une notification interactive [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+        "da": "Vis interaktiv notifikation [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+        "es": "Mostrar notificación interactiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+        "pt": "Mostrar notificação interativa [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])"
       },
       "hint": {
         "en": "Upsert with auto-open, optional auto-close, and one optional action button. Use this card (not “Show notification”) if you want a button. Fill Action ID and button label — that is enough to show the CTA. Action ID is a name you invent (e.g. open-gate) to match the WHEN card. It is not a Homey device and is not shown on the Display.",
-        "it": "Upsert con apertura/chiusura automatica e pulsante azione opzionale. Usa questa card (non “Mostra notifica”) se vuoi un pulsante. Compila ID azione e testo pulsante: basta quello per mostrare la CTA. L’ID azione è un nome che inventi (es. open-gate) per la card WHEN. Non è un dispositivo Homey e non compare sul Display."
+        "it": "Upsert con apertura/chiusura automatica e pulsante azione opzionale. Usa questa card (non “Mostra notifica”) se vuoi un pulsante. Compila ID azione e testo pulsante: basta quello per mostrare la CTA. L’ID azione è un nome che inventi (es. open-gate) per la card WHEN. Non è un dispositivo Homey e non compare sul Display.",
+        "de": "Upsert mit Auto-Open, optionalem Auto-Close und einer optionalen Aktionsschaltfläche. Verwende diese Karte (nicht „Benachrichtigung anzeigen“), wenn du eine Schaltfläche möchtest. Action ID und Beschriftung ausfüllen — das reicht für die CTA. Die Action ID ist ein von dir gewählter Name (z. B. open-gate) für die WHEN-Karte. Es ist kein Homey-Gerät und wird nicht auf dem Display angezeigt.",
+        "fr": "Upsert avec ouverture automatique, fermeture automatique optionnelle et un bouton d'action optionnel. Utilisez cette carte (pas « Afficher une notification ») si vous voulez un bouton. Renseignez Action ID et le libellé du bouton — cela suffit pour afficher le CTA. L'Action ID est un nom que vous inventez (p. ex. open-gate) pour correspondre à la carte WHEN. Ce n'est pas un appareil Homey et n'apparaît pas sur le Display.",
+        "da": "Upsert med auto-åbning, valgfri auto-luk og én valgfri handlingsknap. Brug dette kort (ikke «Vis notifikation»), hvis du vil have en knap. Udfyld Action ID og knapetiket — det er nok til at vise CTA'en. Action ID er et navn, du opfinder (f.eks. open-gate), der matcher WHEN-kortet. Det er ikke en Homey-enhed og vises ikke på Displayet.",
+        "es": "Upsert con apertura automática, cierre automático opcional y un botón de acción opcional. Usa esta tarjeta (no «Mostrar notificación») si quieres un botón. Rellena Action ID y la etiqueta del botón — eso basta para mostrar el CTA. El Action ID es un nombre que inventas (p. ej. open-gate) para coincidir con la tarjeta WHEN. No es un dispositivo Homey y no se muestra en el Display.",
+        "pt": "Upsert com abertura automática, fecho automático opcional e um botão de ação opcional. Use este cartão (não «Mostrar notificação») se quiser um botão. Preencha Action ID e a etiqueta do botão — isso basta para mostrar o CTA. O Action ID é um nome que inventa (p. ex. open-gate) para corresponder ao cartão WHEN. Não é um dispositivo Homey e não aparece no Display."
       },
       "args": [
         {
           "type": "text",
           "name": "notification_key",
-          "title": { "en": "Notification Key", "it": "Chiave notifica" },
-          "placeholder": { "en": "e.g. doorbell", "it": "es. campanello" }
+          "title": {
+            "en": "Notification Key",
+            "it": "Chiave notifica",
+            "de": "Notification Key",
+            "fr": "Notification Key",
+            "da": "Notification Key",
+            "es": "Notification Key",
+            "pt": "Notification Key"
+          },
+          "placeholder": {
+            "en": "e.g. doorbell",
+            "it": "es. campanello",
+            "de": "z. B. doorbell",
+            "fr": "p. ex. doorbell",
+            "da": "f.eks. doorbell",
+            "es": "p. ej. doorbell",
+            "pt": "p. ex. doorbell"
+          }
         },
         {
           "type": "text",
           "name": "title",
-          "title": { "en": "Title", "it": "Titolo" },
+          "title": {
+            "en": "Title",
+            "it": "Titolo",
+            "de": "Titel",
+            "fr": "Titre",
+            "da": "Titel",
+            "es": "Título",
+            "pt": "Título"
+          },
           "required": false
         },
         {
           "type": "text",
           "name": "message",
-          "title": { "en": "Message", "it": "Messaggio" }
+          "title": {
+            "en": "Message",
+            "it": "Messaggio",
+            "de": "Nachricht",
+            "fr": "Message",
+            "da": "Besked",
+            "es": "Mensaje",
+            "pt": "Mensagem"
+          }
         },
         {
           "type": "dropdown",
           "name": "severity",
-          "title": { "en": "Severity", "it": "Severity" },
+          "title": {
+            "en": "Severity",
+            "it": "Severity",
+            "de": "Severity",
+            "fr": "Severity",
+            "da": "Severity",
+            "es": "Severity",
+            "pt": "Severity"
+          },
           "values": [
-            { "id": "critical", "label": { "en": "Critical", "it": "Critico" } },
-            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
-            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
-            { "id": "info", "label": { "en": "Info", "it": "Informazione" } }
+            {
+              "id": "critical",
+              "label": {
+                "en": "Critical",
+                "it": "Critico",
+                "de": "Kritisch",
+                "fr": "Critique",
+                "da": "Kritisk",
+                "es": "Crítico",
+                "pt": "Crítico"
+              }
+            },
+            {
+              "id": "warning",
+              "label": {
+                "en": "Warning",
+                "it": "Attenzione",
+                "de": "Warnung",
+                "fr": "Avertissement",
+                "da": "Advarsel",
+                "es": "Advertencia",
+                "pt": "Aviso"
+              }
+            },
+            {
+              "id": "success",
+              "label": {
+                "en": "Success",
+                "it": "Successo",
+                "de": "Erfolg",
+                "fr": "Succès",
+                "da": "Succes",
+                "es": "Éxito",
+                "pt": "Sucesso"
+              }
+            },
+            {
+              "id": "info",
+              "label": {
+                "en": "Info",
+                "it": "Informazione",
+                "de": "Info",
+                "fr": "Info",
+                "da": "Info",
+                "es": "Info",
+                "pt": "Info"
+              }
+            }
           ]
         },
         {
           "type": "dropdown",
           "name": "icon",
-          "title": { "en": "Icon", "it": "Icona" },
+          "title": {
+            "en": "Icon",
+            "it": "Icona",
+            "de": "Symbol",
+            "fr": "Icône",
+            "da": "Ikon",
+            "es": "Icono",
+            "pt": "Ícone"
+          },
           "required": false,
           "values": [
-            { "id": "info", "label": { "en": "Info", "it": "Info" } },
-            { "id": "warning", "label": { "en": "Warning", "it": "Attenzione" } },
-            { "id": "success", "label": { "en": "Success", "it": "Successo" } },
-            { "id": "error", "label": { "en": "Error", "it": "Errore" } },
-            { "id": "home", "label": { "en": "Home", "it": "Casa" } },
-            { "id": "bell", "label": { "en": "Bell", "it": "Campanella" } },
-            { "id": "door", "label": { "en": "Door", "it": "Porta" } },
+            {
+              "id": "info",
+              "label": {
+                "en": "Info",
+                "it": "Informazione",
+                "de": "Info",
+                "fr": "Info",
+                "da": "Info",
+                "es": "Info",
+                "pt": "Info"
+              }
+            },
+            {
+              "id": "warning",
+              "label": {
+                "en": "Warning",
+                "it": "Attenzione",
+                "de": "Warnung",
+                "fr": "Avertissement",
+                "da": "Advarsel",
+                "es": "Advertencia",
+                "pt": "Aviso"
+              }
+            },
+            {
+              "id": "success",
+              "label": {
+                "en": "Success",
+                "it": "Successo",
+                "de": "Erfolg",
+                "fr": "Succès",
+                "da": "Succes",
+                "es": "Éxito",
+                "pt": "Sucesso"
+              }
+            },
+            {
+              "id": "error",
+              "label": {
+                "en": "Error",
+                "it": "Errore",
+                "de": "Fehler",
+                "fr": "Erreur",
+                "da": "Fejl",
+                "es": "Error",
+                "pt": "Erro"
+              }
+            },
+            {
+              "id": "home",
+              "label": {
+                "en": "Home",
+                "it": "Casa",
+                "de": "Zuhause",
+                "fr": "Maison",
+                "da": "Hjem",
+                "es": "Hogar",
+                "pt": "Casa"
+              }
+            },
+            {
+              "id": "bell",
+              "label": {
+                "en": "Bell",
+                "it": "Campanella",
+                "de": "Glocke",
+                "fr": "Cloche",
+                "da": "Klokke",
+                "es": "Campana",
+                "pt": "Campainha"
+              }
+            },
+            {
+              "id": "door",
+              "label": {
+                "en": "Door",
+                "it": "Porta",
+                "de": "Tür",
+                "fr": "Porte",
+                "da": "Dør",
+                "es": "Puerta",
+                "pt": "Porta"
+              }
+            },
             {
               "id": "washing-machine",
-              "label": { "en": "Washing machine", "it": "Lavatrice" }
+              "label": {
+                "en": "Washing machine",
+                "it": "Lavatrice",
+                "de": "Waschmaschine",
+                "fr": "Machine à laver",
+                "da": "Vaskemaskine",
+                "es": "Lavadora",
+                "pt": "Máquina de lavar"
+              }
             }
           ]
         },
         {
           "type": "checkbox",
           "name": "highlight",
-          "title": { "en": "Highlight", "it": "Evidenzia" },
+          "title": {
+            "en": "Highlight",
+            "it": "Evidenzia",
+            "de": "Hervorheben",
+            "fr": "Mettre en évidence",
+            "da": "Fremhæv",
+            "es": "Resaltar",
+            "pt": "Destacar"
+          },
           "value": false
         },
         {
           "type": "checkbox",
           "name": "dismissable",
-          "title": { "en": "Dismissable", "it": "Può essere nascosta" },
+          "title": {
+            "en": "Dismissable",
+            "it": "Può essere nascosta",
+            "de": "Ausblendbar",
+            "fr": "Peut être masquée",
+            "da": "Kan afvises",
+            "es": "Se puede ocultar",
+            "pt": "Pode ser ocultada"
+          },
           "value": true
         },
         {
           "type": "checkbox",
           "name": "auto_open",
-          "title": { "en": "Open automatically", "it": "Apri automaticamente" },
+          "title": {
+            "en": "Open automatically",
+            "it": "Apri automaticamente",
+            "de": "Automatisch öffnen",
+            "fr": "Ouvrir automatiquement",
+            "da": "Åbn automatisk",
+            "es": "Abrir automáticamente",
+            "pt": "Abrir automaticamente"
+          },
           "value": true
         },
         {
@@ -245,9 +800,22 @@
           "name": "auto_close_seconds",
           "title": {
             "en": "Auto-close (seconds)",
-            "it": "Chiusura automatica (secondi)"
+            "it": "Chiusura automatica (secondi)",
+            "de": "Automatisches Schließen (Sekunden)",
+            "fr": "Fermeture automatique (secondes)",
+            "da": "Luk automatisk (sekunder)",
+            "es": "Cierre automático (segundos)",
+            "pt": "Fecho automático (segundos)"
           },
-          "placeholder": { "en": "0 = disabled", "it": "0 = disabilitata" },
+          "placeholder": {
+            "en": "0 = disabled",
+            "it": "0 = disabilitata",
+            "de": "0 = deaktiviert",
+            "fr": "0 = désactivé",
+            "da": "0 = deaktiveret",
+            "es": "0 = desactivado",
+            "pt": "0 = desativado"
+          },
           "min": 0,
           "max": 300,
           "step": 1,
@@ -257,46 +825,106 @@
         {
           "type": "checkbox",
           "name": "enable_action",
-          "title": { "en": "Enable action", "it": "Abilita azione" },
+          "title": {
+            "en": "Enable action",
+            "it": "Abilita azione",
+            "de": "Aktion aktivieren",
+            "fr": "Activer l'action",
+            "da": "Aktivér handling",
+            "es": "Activar acción",
+            "pt": "Ativar ação"
+          },
           "value": false
         },
         {
           "type": "text",
           "name": "action_id",
-          "title": { "en": "Action ID", "it": "ID azione" },
+          "title": {
+            "en": "Action ID",
+            "it": "ID azione",
+            "de": "Action ID",
+            "fr": "Action ID",
+            "da": "Action ID",
+            "es": "Action ID",
+            "pt": "Action ID"
+          },
           "placeholder": {
             "en": "You choose this, e.g. open-gate",
-            "it": "Lo scegli tu, es. open-gate"
+            "it": "Lo scegli tu, es. open-gate",
+            "de": "Du wählst dies selbst, z. B. open-gate",
+            "fr": "Vous le choisissez, p. ex. open-gate",
+            "da": "Du vælger dette selv, f.eks. open-gate",
+            "es": "Lo eliges tú, p. ej. open-gate",
+            "pt": "Escolhe isto tu, p. ex. open-gate"
           },
           "required": false
         },
         {
           "type": "text",
           "name": "action_label",
-          "title": { "en": "Action button label", "it": "Testo pulsante" },
+          "title": {
+            "en": "Action button label",
+            "it": "Testo pulsante",
+            "de": "Beschriftung der Aktionsschaltfläche",
+            "fr": "Libellé du bouton d'action",
+            "da": "Etiket for handlingsknap",
+            "es": "Etiqueta del botón de acción",
+            "pt": "Etiqueta do botão de ação"
+          },
           "placeholder": {
             "en": "Shown on the button, e.g. Open gate",
-            "it": "Scritto sul pulsante, es. Apri cancello"
+            "it": "Scritto sul pulsante, es. Apri cancello",
+            "de": "Auf der Schaltfläche angezeigt, z. B. Tor öffnen",
+            "fr": "Affiché sur le bouton, p. ex. Ouvrir le portail",
+            "da": "Vises på knappen, f.eks. Åbn port",
+            "es": "Mostrado en el botón, p. ej. Abrir portón",
+            "pt": "Mostrado no botão, p. ex. Abrir portão"
           },
           "required": false
         },
         {
           "type": "text",
           "name": "action_text",
-          "title": { "en": "Action text", "it": "Testo azione" },
+          "title": {
+            "en": "Action text",
+            "it": "Testo azione",
+            "de": "Aktionstext",
+            "fr": "Texte de l'action",
+            "da": "Handlingstekst",
+            "es": "Texto de la acción",
+            "pt": "Texto da ação"
+          },
           "placeholder": {
             "en": "Optional sentence above the button",
-            "it": "Frase opzionale sopra il pulsante"
+            "it": "Frase opzionale sopra il pulsante",
+            "de": "Optionaler Satz über der Schaltfläche",
+            "fr": "Phrase optionnelle au-dessus du bouton",
+            "da": "Valgfri sætning over knappen",
+            "es": "Frase opcional encima del botón",
+            "pt": "Frase opcional acima do botão"
           },
           "required": false
         },
         {
           "type": "autocomplete",
           "name": "media",
-          "title": { "en": "Camera / Media", "it": "Camera / Media" },
+          "title": {
+            "en": "Camera / Media",
+            "it": "Camera / Media",
+            "de": "Kamera / Medien",
+            "fr": "Caméra / Média",
+            "da": "Kamera / Medier",
+            "es": "Cámara / Medios",
+            "pt": "Câmara / Media"
+          },
           "placeholder": {
             "en": "Optional camera",
-            "it": "Camera opzionale"
+            "it": "Camera opzionale",
+            "de": "Optionale Kamera",
+            "fr": "Caméra optionnelle",
+            "da": "Valgfrit kamera",
+            "es": "Cámara opcional",
+            "pt": "Câmara opcional"
           },
           "required": false
         }
@@ -306,21 +934,44 @@
       "id": "remove_notification",
       "title": {
         "en": "Remove notification",
-        "it": "Rimuovi notifica"
+        "it": "Rimuovi notifica",
+        "de": "Benachrichtigung entfernen",
+        "fr": "Supprimer la notification",
+        "da": "Fjern notifikation",
+        "es": "Eliminar notificación",
+        "pt": "Remover notificação"
       },
       "titleFormatted": {
         "en": "Remove notification [[notification_key]]",
-        "it": "Rimuovi notifica [[notification_key]]"
+        "it": "Rimuovi notifica [[notification_key]]",
+        "de": "Benachrichtigung entfernen [[notification_key]]",
+        "fr": "Supprimer la notification [[notification_key]]",
+        "da": "Fjern notifikation [[notification_key]]",
+        "es": "Eliminar notificación [[notification_key]]",
+        "pt": "Remover notificação [[notification_key]]"
       },
       "hint": {
         "en": "Removes the notification identified by Notification Key on this Display. Safe if the key does not exist.",
-        "it": "Rimuove la notifica identificata dalla Notification Key su questo Display. Sicuro se la chiave non esiste."
+        "it": "Rimuove la notifica identificata dalla Notification Key su questo Display. Sicuro se la chiave non esiste.",
+        "de": "Entfernt die Benachrichtigung, die auf diesem Display per Notification Key identifiziert ist. Unbedenklich, wenn der Schlüssel nicht existiert.",
+        "fr": "Supprime la notification identifiée par Notification Key sur ce Display. Sans risque si la clé n'existe pas.",
+        "da": "Fjerner notifikationen identificeret via Notification Key på dette Display. Sikker, hvis nøglen ikke findes.",
+        "es": "Elimina la notificación identificada por Notification Key en este Display. Seguro si la clave no existe.",
+        "pt": "Remove a notificação identificada pela Notification Key neste Display. Seguro se a chave não existir."
       },
       "args": [
         {
           "type": "text",
           "name": "notification_key",
-          "title": { "en": "Notification Key", "it": "Chiave notifica" }
+          "title": {
+            "en": "Notification Key",
+            "it": "Chiave notifica",
+            "de": "Notification Key",
+            "fr": "Notification Key",
+            "da": "Notification Key",
+            "es": "Notification Key",
+            "pt": "Notification Key"
+          }
         }
       ]
     },
@@ -328,11 +979,21 @@
       "id": "remove_all_notifications",
       "title": {
         "en": "Remove all notifications",
-        "it": "Rimuovi tutte le notifiche"
+        "it": "Rimuovi tutte le notifiche",
+        "de": "Alle Benachrichtigungen entfernen",
+        "fr": "Supprimer toutes les notifications",
+        "da": "Fjern alle notifikationer",
+        "es": "Eliminar todas las notificaciones",
+        "pt": "Remover todas as notificações"
       },
       "hint": {
         "en": "Removes every active notification for this Wall Display only. Other Displays are unchanged.",
-        "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano."
+        "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano.",
+        "de": "Entfernt alle aktiven Benachrichtigungen nur für dieses Wall Display. Andere Displays bleiben unverändert.",
+        "fr": "Supprime toutes les notifications actives de ce Wall Display uniquement. Les autres Displays restent inchangés.",
+        "da": "Fjerner alle aktive notifikationer kun for dette Wall Display. Andre Displays er uændrede.",
+        "es": "Elimina todas las notificaciones activas solo de este Wall Display. Los demás Displays no cambian.",
+        "pt": "Remove todas as notificações ativas apenas deste Wall Display. Os outros Displays permanecem inalterados."
       }
     }
   ]

@@ -1,23 +1,128 @@
 {
   "id": "dev.dadda.simpledashboard",
-  "version": "0.16.0",
+  "version": "1.0.0",
   "compatibility": ">=12.9.0",
   "sdk": 3,
-  "platforms": ["local"],
+  "platforms": [
+    "local"
+  ],
   "name": {
-    "en": "Simple Dashboard",
-    "it": "Simple Dashboard"
+    "en": "LocalDashboard",
+    "it": "LocalDashboard",
+    "de": "LocalDashboard",
+    "fr": "LocalDashboard",
+    "da": "LocalDashboard",
+    "es": "LocalDashboard",
+    "pt": "LocalDashboard"
   },
   "description": {
     "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, optional camera media, auto-close, and Homey Flow notification actions.",
-    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, media camera opzionale, chiusura automatica e azioni Flow native per le notifiche."
+    "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, media camera opzionale, chiusura automatica e azioni Flow native per le notifiche.",
+    "de": "Vanilla-Widget-Dashboard für Homey Pro Wall Displays mit interaktiven Steuerungen, Notification Center, optionalen Kameramedien, Auto-Close und Homey Flow-Benachrichtigungsaktionen.",
+    "fr": "Tableau de bord à widgets vanilla pour wall displays Homey Pro avec contrôles interactifs, Notification Center, médias caméra optionnels, fermeture automatique et actions de notification Homey Flow.",
+    "da": "Vanilla widget-dashboard til Homey Pro wall displays med interaktive kontroller, Notification Center, valgfrie kameramedier, auto-luk og Homey Flow-notifikationshandlinger.",
+    "es": "Panel de widgets vanilla para wall displays Homey Pro con controles interactivos, Notification Center, medios de cámara opcionales, cierre automático y acciones de notificación de Homey Flow.",
+    "pt": "Painel de widgets vanilla para wall displays Homey Pro com controlos interativos, Notification Center, media de câmara opcional, fecho automático e ações de notificação Homey Flow."
   },
-  "category": ["tools"],
+  "category": [
+    "tools"
+  ],
   "tags": {
-    "en": ["http", "websocket", "dashboard", "wall display", "widgets", "light", "cover", "notifications", "flow", "realtime", "diagnostics"],
-    "it": ["http", "websocket", "dashboard", "wall display", "widget", "luce", "tapparella", "notifiche", "flow", "realtime", "diagnostica"]
+    "en": [
+      "http",
+      "websocket",
+      "dashboard",
+      "wall display",
+      "widgets",
+      "light",
+      "cover",
+      "notifications",
+      "flow",
+      "realtime",
+      "diagnostics"
+    ],
+    "it": [
+      "http",
+      "websocket",
+      "dashboard",
+      "wall display",
+      "widget",
+      "luce",
+      "tapparella",
+      "notifiche",
+      "flow",
+      "realtime",
+      "diagnostica"
+    ],
+    "de": [
+      "http",
+      "websocket",
+      "dashboard",
+      "wall display",
+      "widgets",
+      "licht",
+      "rollo",
+      "benachrichtigungen",
+      "flow",
+      "realtime",
+      "diagnostik"
+    ],
+    "fr": [
+      "http",
+      "websocket",
+      "tableau de bord",
+      "wall display",
+      "widgets",
+      "lumière",
+      "volet",
+      "notifications",
+      "flow",
+      "realtime",
+      "diagnostic"
+    ],
+    "da": [
+      "http",
+      "websocket",
+      "dashboard",
+      "wall display",
+      "widgets",
+      "lys",
+      "gardin",
+      "notifikationer",
+      "flow",
+      "realtime",
+      "diagnostik"
+    ],
+    "es": [
+      "http",
+      "websocket",
+      "panel",
+      "wall display",
+      "widgets",
+      "luz",
+      "persiana",
+      "notificaciones",
+      "flow",
+      "realtime",
+      "diagnóstico"
+    ],
+    "pt": [
+      "http",
+      "websocket",
+      "painel",
+      "wall display",
+      "widgets",
+      "luz",
+      "estore",
+      "notificações",
+      "flow",
+      "realtime",
+      "diagnóstico"
+    ]
   },
-  "permissions": ["homey:manager:api"],
+  "permissions": [
+    "homey:manager:api"
+  ],
   "images": {
     "small": "/assets/images/small.png",
     "large": "/assets/images/large.png",

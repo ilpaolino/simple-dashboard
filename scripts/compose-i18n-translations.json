@@ -1,0 +1,936 @@
+{
+  "strings": [
+    {
+      "en": "0 = disabled",
+      "it": "0 = disabilitata",
+      "de": "0 = deaktiviert",
+      "fr": "0 = désactivé",
+      "da": "0 = deaktiveret",
+      "es": "0 = desactivado",
+      "pt": "0 = desativado"
+    },
+    {
+      "en": "2 × 2",
+      "it": "2 × 2",
+      "de": "2 × 2",
+      "fr": "2 × 2",
+      "da": "2 × 2",
+      "es": "2 × 2",
+      "pt": "2 × 2"
+    },
+    {
+      "en": "2 × 4 (portrait)",
+      "it": "2 × 4 (verticale)",
+      "de": "2 × 4 (Hochformat)",
+      "fr": "2 × 4 (portrait)",
+      "da": "2 × 4 (portræt)",
+      "es": "2 × 4 (vertical)",
+      "pt": "2 × 4 (retrato)"
+    },
+    {
+      "en": "3 × 3",
+      "it": "3 × 3",
+      "de": "3 × 3",
+      "fr": "3 × 3",
+      "da": "3 × 3",
+      "es": "3 × 3",
+      "pt": "3 × 3"
+    },
+    {
+      "en": "3 × 6 (portrait)",
+      "it": "3 × 6 (verticale)",
+      "de": "3 × 6 (Hochformat)",
+      "fr": "3 × 6 (portrait)",
+      "da": "3 × 6 (portræt)",
+      "es": "3 × 6 (vertical)",
+      "pt": "3 × 6 (retrato)"
+    },
+    {
+      "en": "4 × 2 (landscape)",
+      "it": "4 × 2 (orizzontale)",
+      "de": "4 × 2 (Querformat)",
+      "fr": "4 × 2 (paysage)",
+      "da": "4 × 2 (landskab)",
+      "es": "4 × 2 (horizontal)",
+      "pt": "4 × 2 (paisagem)"
+    },
+    {
+      "en": "6 × 3 (landscape)",
+      "it": "6 × 3 (orizzontale)",
+      "de": "6 × 3 (Querformat)",
+      "fr": "6 × 3 (paysage)",
+      "da": "6 × 3 (landskab)",
+      "es": "6 × 3 (horizontal)",
+      "pt": "6 × 3 (paisagem)"
+    },
+    {
+      "en": "A notification action is pressed",
+      "it": "Viene premuta un'azione di una notifica",
+      "de": "Eine Benachrichtigungsaktion wird gedrückt",
+      "fr": "Une action de notification est pressée",
+      "da": "En notifikationshandling trykkes",
+      "es": "Se pulsa una acción de notificación",
+      "pt": "É premida uma ação de notificação"
+    },
+    {
+      "en": "A notification action is pressed — Action ID [[action_id]]",
+      "it": "Viene premuta un'azione di una notifica — ID azione [[action_id]]",
+      "de": "Eine Benachrichtigungsaktion wird gedrückt — Action ID [[action_id]]",
+      "fr": "Une action de notification est pressée — Action ID [[action_id]]",
+      "da": "En notifikationshandling trykkes — Action ID [[action_id]]",
+      "es": "Se pulsa una acción de notificación — Action ID [[action_id]]",
+      "pt": "É premida uma ação de notificação — Action ID [[action_id]]"
+    },
+    {
+      "en": "Action button label",
+      "it": "Testo pulsante",
+      "de": "Beschriftung der Aktionsschaltfläche",
+      "fr": "Libellé du bouton d'action",
+      "da": "Etiket for handlingsknap",
+      "es": "Etiqueta del botón de acción",
+      "pt": "Etiqueta do botão de ação"
+    },
+    {
+      "en": "Action ID",
+      "it": "ID azione",
+      "de": "Action ID",
+      "fr": "Action ID",
+      "da": "Action ID",
+      "es": "Action ID",
+      "pt": "Action ID"
+    },
+    {
+      "en": "Action text",
+      "it": "Testo azione",
+      "de": "Aktionstext",
+      "fr": "Texte de l'action",
+      "da": "Handlingstekst",
+      "es": "Texto de la acción",
+      "pt": "Texto da ação"
+    },
+    {
+      "en": "Active notifications",
+      "it": "Notifiche attive",
+      "de": "Aktive Benachrichtigungen",
+      "fr": "Notifications actives",
+      "da": "Aktive notifikationer",
+      "es": "Notificaciones activas",
+      "pt": "Notificações ativas"
+    },
+    {
+      "en": "Auto-close (seconds)",
+      "it": "Chiusura automatica (secondi)",
+      "de": "Automatisches Schließen (Sekunden)",
+      "fr": "Fermeture automatique (secondes)",
+      "da": "Luk automatisk (sekunder)",
+      "es": "Cierre automático (segundos)",
+      "pt": "Fecho automático (segundos)"
+    },
+    {
+      "en": "Bell",
+      "it": "Campanella",
+      "de": "Glocke",
+      "fr": "Cloche",
+      "da": "Klokke",
+      "es": "Campana",
+      "pt": "Campainha"
+    },
+    {
+      "en": "Camera / Media",
+      "it": "Camera / Media",
+      "de": "Kamera / Medien",
+      "fr": "Caméra / Média",
+      "da": "Kamera / Medier",
+      "es": "Cámara / Medios",
+      "pt": "Câmara / Media"
+    },
+    {
+      "en": "Connection",
+      "it": "Connessione",
+      "de": "Verbindung",
+      "fr": "Connexion",
+      "da": "Forbindelse",
+      "es": "Conexión",
+      "pt": "Ligação"
+    },
+    {
+      "en": "Creates or updates a simple notification on this Wall Display (upsert by Notification Key). Opens automatically; no auto-close timer or action button.",
+      "it": "Crea o aggiorna una notifica semplice su questo Wall Display (upsert per Notification Key). Si apre automaticamente; senza chiusura automatica né pulsante azione.",
+      "de": "Erstellt oder aktualisiert eine einfache Benachrichtigung auf diesem Wall Display (Upsert per Notification Key). Öffnet automatisch; ohne Auto-Close-Timer oder Aktionsschaltfläche.",
+      "fr": "Crée ou met à jour une notification simple sur ce Wall Display (upsert par Notification Key). S'ouvre automatiquement ; sans minuterie de fermeture automatique ni bouton d'action.",
+      "da": "Opretter eller opdaterer en simpel notifikation på dette Wall Display (upsert via Notification Key). Åbner automatisk; ingen auto-luk-timer eller handlingsknap.",
+      "es": "Crea o actualiza una notificación simple en este Wall Display (upsert por Notification Key). Se abre automáticamente; sin temporizador de cierre automático ni botón de acción.",
+      "pt": "Cria ou atualiza uma notificação simples neste Wall Display (upsert por Notification Key). Abre automaticamente; sem temporizador de fecho automático nem botão de ação."
+    },
+    {
+      "en": "Critical",
+      "it": "Critico",
+      "de": "Kritisch",
+      "fr": "Critique",
+      "da": "Kritisk",
+      "es": "Crítico",
+      "pt": "Crítico"
+    },
+    {
+      "en": "Detect hardware capabilities again",
+      "it": "Rileva nuovamente funzionalità hardware",
+      "de": "Hardwarefunktionen erneut erkennen",
+      "fr": "Détecter à nouveau les capacités matérielles",
+      "da": "Registrer hardwarefunktioner igen",
+      "es": "Detectar de nuevo las capacidades de hardware",
+      "pt": "Detetar novamente as capacidades de hardware"
+    },
+    {
+      "en": "Device",
+      "it": "Dispositivo",
+      "de": "Gerät",
+      "fr": "Appareil",
+      "da": "Enhed",
+      "es": "Dispositivo",
+      "pt": "Dispositivo"
+    },
+    {
+      "en": "Discovery status",
+      "it": "Stato rilevamento",
+      "de": "Erkennungsstatus",
+      "fr": "État de la détection",
+      "da": "Registreringsstatus",
+      "es": "Estado del descubrimiento",
+      "pt": "Estado da deteção"
+    },
+    {
+      "en": "Dismissable",
+      "it": "Può essere nascosta",
+      "de": "Ausblendbar",
+      "fr": "Peut être masquée",
+      "da": "Kan afvises",
+      "es": "Se puede ocultar",
+      "pt": "Pode ser ocultada"
+    },
+    {
+      "en": "Display",
+      "it": "Display",
+      "de": "Display",
+      "fr": "Display",
+      "da": "Display",
+      "es": "Display",
+      "pt": "Display"
+    },
+    {
+      "en": "Door",
+      "it": "Porta",
+      "de": "Tür",
+      "fr": "Porte",
+      "da": "Dør",
+      "es": "Puerta",
+      "pt": "Porta"
+    },
+    {
+      "en": "doorbell",
+      "it": "campanello",
+      "de": "doorbell",
+      "fr": "doorbell",
+      "da": "doorbell",
+      "es": "doorbell",
+      "pt": "doorbell"
+    },
+    {
+      "en": "Doorbell",
+      "it": "Campanello",
+      "de": "Türklingel",
+      "fr": "Sonnette",
+      "da": "Dørklokke",
+      "es": "Timbre",
+      "pt": "Campainha"
+    },
+    {
+      "en": "e.g. doorbell",
+      "it": "es. campanello",
+      "de": "z. B. doorbell",
+      "fr": "p. ex. doorbell",
+      "da": "f.eks. doorbell",
+      "es": "p. ej. doorbell",
+      "pt": "p. ex. doorbell"
+    },
+    {
+      "en": "e.g. laundry-done",
+      "it": "es. lavatrice-finita",
+      "de": "z. B. laundry-done",
+      "fr": "p. ex. laundry-done",
+      "da": "f.eks. laundry-done",
+      "es": "p. ej. laundry-done",
+      "pt": "p. ex. laundry-done"
+    },
+    {
+      "en": "Enable action",
+      "it": "Abilita azione",
+      "de": "Aktion aktivieren",
+      "fr": "Activer l'action",
+      "da": "Aktivér handling",
+      "es": "Activar acción",
+      "pt": "Ativar ação"
+    },
+    {
+      "en": "Error",
+      "it": "Errore",
+      "de": "Fehler",
+      "fr": "Erreur",
+      "da": "Fejl",
+      "es": "Error",
+      "pt": "Erro"
+    },
+    {
+      "en": "Fires when the user presses the notification button on this Wall Display. Type the same Action ID you invented in “Show interactive notification” (e.g. open-gate) so only this Flow runs. Leave empty to run on any tap on this Display.",
+      "it": "Si attiva quando l'utente preme il pulsante della notifica su questo Wall Display. Scrivi lo stesso ID azione inventato in “Mostra notifica interattiva” (es. open-gate) così parte solo questa Flow. Lascia vuoto per qualsiasi tap su questo Display.",
+      "de": "Wird ausgelöst, wenn der Benutzer die Benachrichtigungsschaltfläche auf diesem Wall Display drückt. Gib dieselbe Action ID ein, die du in „Interaktive Benachrichtigung anzeigen“ festgelegt hast (z. B. open-gate), damit nur dieser Flow ausgeführt wird. Leer lassen, um bei jedem Tippen auf diesem Display auszulösen.",
+      "fr": "Se déclenche lorsque l'utilisateur appuie sur le bouton de notification de ce Wall Display. Saisissez le même Action ID que vous avez défini dans « Afficher une notification interactive » (p. ex. open-gate) pour que seul ce Flow s'exécute. Laissez vide pour s'exécuter à chaque appui sur ce Display.",
+      "da": "Udløses, når brugeren trykker på notifikationsknappen på dette Wall Display. Indtast det samme Action ID, som du opfandt i «Vis interaktiv notifikation» (f.eks. open-gate), så kun dette Flow kører. Lad feltet være tomt for at køre ved ethvert tryk på dette Display.",
+      "es": "Se activa cuando el usuario pulsa el botón de notificación en este Wall Display. Escribe el mismo Action ID que definiste en «Mostrar notificación interactiva» (p. ej. open-gate) para que solo se ejecute este Flow. Déjalo vacío para ejecutarse con cualquier pulsación en este Display.",
+      "pt": "Dispara quando o utilizador prime o botão de notificação neste Wall Display. Introduza o mesmo Action ID que definiu em «Mostrar notificação interativa» (p. ex. open-gate) para que apenas este Flow seja executado. Deixe em branco para executar com qualquer toque neste Display."
+    },
+    {
+      "en": "Firmware",
+      "it": "Firmware",
+      "de": "Firmware",
+      "fr": "Firmware",
+      "da": "Firmware",
+      "es": "Firmware",
+      "pt": "Firmware"
+    },
+    {
+      "en": "Generic Web Display",
+      "it": "Generic Web Display",
+      "de": "Generic Web Display",
+      "fr": "Generic Web Display",
+      "da": "Generic Web Display",
+      "es": "Generic Web Display",
+      "pt": "Generic Web Display"
+    },
+    {
+      "en": "Grid and widget configuration is managed from LocalDashboard App Settings.",
+      "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni app LocalDashboard.",
+      "de": "Raster- und Widget-Konfiguration wird in den LocalDashboard-App-Einstellungen verwaltet.",
+      "fr": "La configuration de la grille et des widgets se gère dans les paramètres de l'app LocalDashboard.",
+      "da": "Gitter- og widget-konfiguration administreres fra LocalDashboard app-indstillinger.",
+      "es": "La configuración de la cuadrícula y los widgets se gestiona desde los ajustes de la app LocalDashboard.",
+      "pt": "A configuração da grelha e dos widgets é gerida nas definições da app LocalDashboard."
+    },
+    {
+      "en": "Hardware capabilities",
+      "it": "Funzionalità hardware",
+      "de": "Hardwarefunktionen",
+      "fr": "Capacités matérielles",
+      "da": "Hardwarefunktioner",
+      "es": "Capacidades de hardware",
+      "pt": "Capacidades de hardware"
+    },
+    {
+      "en": "Highest notification severity",
+      "it": "Severity massima notifiche",
+      "de": "Höchste Benachrichtigungs-Severity",
+      "fr": "Severity maximale des notifications",
+      "da": "Højeste notifikations-severity",
+      "es": "Severity máxima de las notificaciones",
+      "pt": "Severity máxima das notificações"
+    },
+    {
+      "en": "Highlight",
+      "it": "Evidenzia",
+      "de": "Hervorheben",
+      "fr": "Mettre en évidence",
+      "da": "Fremhæv",
+      "es": "Resaltar",
+      "pt": "Destacar"
+    },
+    {
+      "en": "Home",
+      "it": "Casa",
+      "de": "Zuhause",
+      "fr": "Maison",
+      "da": "Hjem",
+      "es": "Hogar",
+      "pt": "Casa"
+    },
+    {
+      "en": "Icon",
+      "it": "Icona",
+      "de": "Symbol",
+      "fr": "Icône",
+      "da": "Ikon",
+      "es": "Icono",
+      "pt": "Ícone"
+    },
+    {
+      "en": "Info",
+      "it": "Informazione",
+      "de": "Info",
+      "fr": "Info",
+      "da": "Info",
+      "es": "Info",
+      "pt": "Info"
+    },
+    {
+      "en": "IP address",
+      "it": "Indirizzo IP",
+      "de": "IP-Adresse",
+      "fr": "Adresse IP",
+      "da": "IP-adresse",
+      "es": "Dirección IP",
+      "pt": "Endereço IP"
+    },
+    {
+      "en": "IPv4 address of the generic web display. Changing this does not change the device identity.",
+      "it": "Indirizzo IPv4 del display web generico. La modifica non cambia l'identità del dispositivo.",
+      "de": "IPv4-Adresse des Generic Web Display. Eine Änderung ändert nicht die Geräteidentität.",
+      "fr": "Adresse IPv4 du Generic Web Display. La modifier ne change pas l'identité de l'appareil.",
+      "da": "IPv4-adresse på Generic Web Display. Ændring af denne ændrer ikke enhedens identitet.",
+      "es": "Dirección IPv4 del Generic Web Display. Cambiarla no modifica la identidad del dispositivo.",
+      "pt": "Endereço IPv4 do Generic Web Display. Alterá-lo não muda a identidade do dispositivo."
+    },
+    {
+      "en": "IPv4 address of the Shelly Wall Display. Changing this does not change the device identity.",
+      "it": "Indirizzo IPv4 dello Shelly Wall Display. La modifica non cambia l'identità del dispositivo.",
+      "de": "IPv4-Adresse des Shelly Wall Display. Eine Änderung ändert nicht die Geräteidentität.",
+      "fr": "Adresse IPv4 du Shelly Wall Display. La modifier ne change pas l'identité de l'appareil.",
+      "da": "IPv4-adresse på Shelly Wall Display. Ændring af denne ændrer ikke enhedens identitet.",
+      "es": "Dirección IPv4 del Shelly Wall Display. Cambiarla no modifica la identidad del dispositivo.",
+      "pt": "Endereço IPv4 do Shelly Wall Display. Alterá-lo não muda a identidade do dispositivo."
+    },
+    {
+      "en": "Last discovery",
+      "it": "Ultimo rilevamento",
+      "de": "Letzte Erkennung",
+      "fr": "Dernière détection",
+      "da": "Seneste registrering",
+      "es": "Último descubrimiento",
+      "pt": "Última deteção"
+    },
+    {
+      "en": "Last hardware error",
+      "it": "Ultimo errore hardware",
+      "de": "Letzter Hardwarefehler",
+      "fr": "Dernière erreur matérielle",
+      "da": "Seneste hardwarefejl",
+      "es": "Último error de hardware",
+      "pt": "Último erro de hardware"
+    },
+    {
+      "en": "Layout",
+      "it": "Layout",
+      "de": "Layout",
+      "fr": "Disposition",
+      "da": "Layout",
+      "es": "Diseño",
+      "pt": "Layout"
+    },
+    {
+      "en": "LocalDashboard",
+      "it": "LocalDashboard",
+      "de": "LocalDashboard",
+      "fr": "LocalDashboard",
+      "da": "LocalDashboard",
+      "es": "LocalDashboard",
+      "pt": "LocalDashboard"
+    },
+    {
+      "en": "Manufacturer",
+      "it": "Produttore",
+      "de": "Hersteller",
+      "fr": "Fabricant",
+      "da": "Producent",
+      "es": "Fabricante",
+      "pt": "Fabricante"
+    },
+    {
+      "en": "Message",
+      "it": "Messaggio",
+      "de": "Nachricht",
+      "fr": "Message",
+      "da": "Besked",
+      "es": "Mensaje",
+      "pt": "Mensagem"
+    },
+    {
+      "en": "Model",
+      "it": "Modello",
+      "de": "Modell",
+      "fr": "Modèle",
+      "da": "Model",
+      "es": "Modelo",
+      "pt": "Modelo"
+    },
+    {
+      "en": "None",
+      "it": "Nessuna",
+      "de": "Keine",
+      "fr": "Aucune",
+      "da": "Ingen",
+      "es": "Ninguna",
+      "pt": "Nenhuma"
+    },
+    {
+      "en": "Notification Key",
+      "it": "Chiave notifica",
+      "de": "Notification Key",
+      "fr": "Notification Key",
+      "da": "Notification Key",
+      "es": "Notification Key",
+      "pt": "Notification Key"
+    },
+    {
+      "en": "Notification message",
+      "it": "Messaggio notifica",
+      "de": "Benachrichtigungstext",
+      "fr": "Message de notification",
+      "da": "Notifikationsbesked",
+      "es": "Mensaje de notificación",
+      "pt": "Mensagem da notificação"
+    },
+    {
+      "en": "Notification title",
+      "it": "Titolo notifica",
+      "de": "Benachrichtigungstitel",
+      "fr": "Titre de la notification",
+      "da": "Notifikationstitel",
+      "es": "Título de la notificación",
+      "pt": "Título da notificação"
+    },
+    {
+      "en": "Only layouts supported by this Shelly Wall Display can be saved.",
+      "it": "È possibile salvare solo i layout supportati da questo Shelly Wall Display.",
+      "de": "Es können nur Layouts gespeichert werden, die von diesem Shelly Wall Display unterstützt werden.",
+      "fr": "Seules les dispositions prises en charge par ce Shelly Wall Display peuvent être enregistrées.",
+      "da": "Kun layouts understøttet af dette Shelly Wall Display kan gemmes.",
+      "es": "Solo se pueden guardar los diseños compatibles con este Shelly Wall Display.",
+      "pt": "Só podem ser guardados layouts suportados por este Shelly Wall Display."
+    },
+    {
+      "en": "Open automatically",
+      "it": "Apri automaticamente",
+      "de": "Automatisch öffnen",
+      "fr": "Ouvrir automatiquement",
+      "da": "Åbn automatisk",
+      "es": "Abrir automáticamente",
+      "pt": "Abrir automaticamente"
+    },
+    {
+      "en": "Open gate",
+      "it": "Apri cancello",
+      "de": "Tor öffnen",
+      "fr": "Ouvrir le portail",
+      "da": "Åbn port",
+      "es": "Abrir portón",
+      "pt": "Abrir portão"
+    },
+    {
+      "en": "open-gate",
+      "it": "apri-cancello",
+      "de": "open-gate",
+      "fr": "open-gate",
+      "da": "open-gate",
+      "es": "open-gate",
+      "pt": "open-gate"
+    },
+    {
+      "en": "Optional camera",
+      "it": "Camera opzionale",
+      "de": "Optionale Kamera",
+      "fr": "Caméra optionnelle",
+      "da": "Valgfrit kamera",
+      "es": "Cámara opcional",
+      "pt": "Câmara opcional"
+    },
+    {
+      "en": "Optional sentence above the button",
+      "it": "Frase opzionale sopra il pulsante",
+      "de": "Optionaler Satz über der Schaltfläche",
+      "fr": "Phrase optionnelle au-dessus du bouton",
+      "da": "Valgfri sætning over knappen",
+      "es": "Frase opcional encima del botón",
+      "pt": "Frase opcional acima do botão"
+    },
+    {
+      "en": "Portrait and landscape variants of the same grid. Only layouts supported by this Generic Web Display can be saved.",
+      "it": "Varianti verticale e orizzontale della stessa griglia. È possibile salvare solo i layout supportati da questo Generic Web Display.",
+      "de": "Hoch- und Querformat-Varianten desselben Rasters. Es können nur Layouts gespeichert werden, die von diesem Generic Web Display unterstützt werden.",
+      "fr": "Variantes portrait et paysage de la même grille. Seules les dispositions prises en charge par ce Generic Web Display peuvent être enregistrées.",
+      "da": "Portræt- og landskabsvarianter af det samme gitter. Kun layouts understøttet af dette Generic Web Display kan gemmes.",
+      "es": "Variantes vertical y horizontal de la misma cuadrícula. Solo se pueden guardar los diseños compatibles con este Generic Web Display.",
+      "pt": "Variantes retrato e paisagem da mesma grelha. Só podem ser guardados layouts suportados por este Generic Web Display."
+    },
+    {
+      "en": "Press to open the pedestrian gate",
+      "it": "Premi per aprire il cancello pedonale",
+      "de": "Drücken, um das Fußgängertor zu öffnen",
+      "fr": "Appuyez pour ouvrir le portillon piéton",
+      "da": "Tryk for at åbne fodgængerporten",
+      "es": "Pulsa para abrir el portón peatonal",
+      "pt": "Prima para abrir o portão pedonal"
+    },
+    {
+      "en": "Queries the Shelly RPC API (Shelly.ListMethods) and refreshes detected hardware features.",
+      "it": "Interroga l'API RPC Shelly (Shelly.ListMethods) e aggiorna le funzionalità hardware rilevate.",
+      "de": "Fragt die Shelly-RPC-API (Shelly.ListMethods) ab und aktualisiert erkannte Hardwarefunktionen.",
+      "fr": "Interroge l'API RPC Shelly (Shelly.ListMethods) et actualise les fonctionnalités matérielles détectées.",
+      "da": "Forespørger Shelly RPC API (Shelly.ListMethods) og opdaterer registrerede hardwarefunktioner.",
+      "es": "Consulta la API RPC de Shelly (Shelly.ListMethods) y actualiza las funciones de hardware detectadas.",
+      "pt": "Consulta a API RPC Shelly (Shelly.ListMethods) e atualiza as funcionalidades de hardware detetadas."
+    },
+    {
+      "en": "Reboot",
+      "it": "Riavvio",
+      "de": "Neustart",
+      "fr": "Redémarrage",
+      "da": "Genstart",
+      "es": "Reinicio",
+      "pt": "Reinício"
+    },
+    {
+      "en": "Reboot display",
+      "it": "Riavvia il display",
+      "de": "Display neu starten",
+      "fr": "Redémarrer le display",
+      "da": "Genstart display",
+      "es": "Reiniciar el display",
+      "pt": "Reiniciar o display"
+    },
+    {
+      "en": "Remove all notifications",
+      "it": "Rimuovi tutte le notifiche",
+      "de": "Alle Benachrichtigungen entfernen",
+      "fr": "Supprimer toutes les notifications",
+      "da": "Fjern alle notifikationer",
+      "es": "Eliminar todas las notificaciones",
+      "pt": "Remover todas as notificações"
+    },
+    {
+      "en": "Remove notification",
+      "it": "Rimuovi notifica",
+      "de": "Benachrichtigung entfernen",
+      "fr": "Supprimer la notification",
+      "da": "Fjern notifikation",
+      "es": "Eliminar notificación",
+      "pt": "Remover notificação"
+    },
+    {
+      "en": "Remove notification [[notification_key]]",
+      "it": "Rimuovi notifica [[notification_key]]",
+      "de": "Benachrichtigung entfernen [[notification_key]]",
+      "fr": "Supprimer la notification [[notification_key]]",
+      "da": "Fjern notifikation [[notification_key]]",
+      "es": "Eliminar notificación [[notification_key]]",
+      "pt": "Remover notificação [[notification_key]]"
+    },
+    {
+      "en": "Removes every active notification for this Wall Display only. Other Displays are unchanged.",
+      "it": "Rimuove tutte le notifiche attive solo di questo Wall Display. Gli altri Display non cambiano.",
+      "de": "Entfernt alle aktiven Benachrichtigungen nur für dieses Wall Display. Andere Displays bleiben unverändert.",
+      "fr": "Supprime toutes les notifications actives de ce Wall Display uniquement. Les autres Displays restent inchangés.",
+      "da": "Fjerner alle aktive notifikationer kun for dette Wall Display. Andre Displays er uændrede.",
+      "es": "Elimina todas las notificaciones activas solo de este Wall Display. Los demás Displays no cambian.",
+      "pt": "Remove todas as notificações ativas apenas deste Wall Display. Os outros Displays permanecem inalterados."
+    },
+    {
+      "en": "Removes the notification identified by Notification Key on this Display. Safe if the key does not exist.",
+      "it": "Rimuove la notifica identificata dalla Notification Key su questo Display. Sicuro se la chiave non esiste.",
+      "de": "Entfernt die Benachrichtigung, die auf diesem Display per Notification Key identifiziert ist. Unbedenklich, wenn der Schlüssel nicht existiert.",
+      "fr": "Supprime la notification identifiée par Notification Key sur ce Display. Sans risque si la clé n'existe pas.",
+      "da": "Fjerner notifikationen identificeret via Notification Key på dette Display. Sikker, hvis nøglen ikke findes.",
+      "es": "Elimina la notificación identificada por Notification Key en este Display. Seguro si la clave no existe.",
+      "pt": "Remove a notificação identificada pela Notification Key neste Display. Seguro se a chave não existir."
+    },
+    {
+      "en": "RPC methods",
+      "it": "Metodi RPC",
+      "de": "RPC-Methoden",
+      "fr": "Méthodes RPC",
+      "da": "RPC-metoder",
+      "es": "Métodos RPC",
+      "pt": "Métodos RPC"
+    },
+    {
+      "en": "Same as in Show interactive, e.g. open-gate",
+      "it": "Uguale a Mostra interattiva, es. open-gate",
+      "de": "Wie in „Interaktive Benachrichtigung anzeigen“, z. B. open-gate",
+      "fr": "Identique à Afficher une notification interactive, p. ex. open-gate",
+      "da": "Samme som i Vis interaktiv notifikation, f.eks. open-gate",
+      "es": "Igual que en Mostrar notificación interactiva, p. ej. open-gate",
+      "pt": "Igual ao de Mostrar notificação interativa, p. ex. open-gate"
+    },
+    {
+      "en": "Sends the official Shelly.Reboot RPC command. The display may disconnect immediately while restarting.",
+      "it": "Invia il comando RPC ufficiale Shelly.Reboot. Il display può disconnettersi subito durante il riavvio.",
+      "de": "Sendet den offiziellen Shelly.Reboot-RPC-Befehl. Das Display kann während des Neustarts sofort die Verbindung trennen.",
+      "fr": "Envoie la commande RPC officielle Shelly.Reboot. Le display peut se déconnecter immédiatement pendant le redémarrage.",
+      "da": "Sender den officielle Shelly.Reboot RPC-kommando. Displayet kan afbryde forbindelsen med det samme under genstart.",
+      "es": "Envía el comando RPC oficial Shelly.Reboot. El display puede desconectarse de inmediato durante el reinicio.",
+      "pt": "Envia o comando RPC oficial Shelly.Reboot. O display pode desligar-se imediatamente durante o reinício."
+    },
+    {
+      "en": "Severity",
+      "it": "Severity",
+      "de": "Severity",
+      "fr": "Severity",
+      "da": "Severity",
+      "es": "Severity",
+      "pt": "Severity"
+    },
+    {
+      "en": "Shelly Wall Display",
+      "it": "Shelly Wall Display",
+      "de": "Shelly Wall Display",
+      "fr": "Shelly Wall Display",
+      "da": "Shelly Wall Display",
+      "es": "Shelly Wall Display",
+      "pt": "Shelly Wall Display"
+    },
+    {
+      "en": "Show interactive notification",
+      "it": "Mostra notifica interattiva",
+      "de": "Interaktive Benachrichtigung anzeigen",
+      "fr": "Afficher une notification interactive",
+      "da": "Vis interaktiv notifikation",
+      "es": "Mostrar notificación interactiva",
+      "pt": "Mostrar notificação interativa"
+    },
+    {
+      "en": "Show interactive notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+      "it": "Mostra notifica interattiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], apri auto [[auto_open]], chiusura auto [[auto_close_seconds]]s, azione [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+      "de": "Interaktive Benachrichtigung anzeigen [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+      "fr": "Afficher une notification interactive [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+      "da": "Vis interaktiv notifikation [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+      "es": "Mostrar notificación interactiva [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])",
+      "pt": "Mostrar notificação interativa [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], auto-open [[auto_open]], auto-close [[auto_close_seconds]]s, action [[enable_action]] [[action_id]] [[action_label]] [[action_text]], media [[media]])"
+    },
+    {
+      "en": "Show notification",
+      "it": "Mostra notifica",
+      "de": "Benachrichtigung anzeigen",
+      "fr": "Afficher une notification",
+      "da": "Vis notifikation",
+      "es": "Mostrar notificación",
+      "pt": "Mostrar notificação"
+    },
+    {
+      "en": "Show notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+      "it": "Mostra notifica [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], evidenzia [[highlight]], nascondibile [[dismissable]], media [[media]])",
+      "de": "Benachrichtigung anzeigen [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+      "fr": "Afficher une notification [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+      "da": "Vis notifikation [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+      "es": "Mostrar notificación [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])",
+      "pt": "Mostrar notificação [[notification_key]] — [[title]] [[message]] ([[severity]], [[icon]], highlight [[highlight]], dismissable [[dismissable]], media [[media]])"
+    },
+    {
+      "en": "Shown on the button, e.g. Open gate",
+      "it": "Scritto sul pulsante, es. Apri cancello",
+      "de": "Auf der Schaltfläche angezeigt, z. B. Tor öffnen",
+      "fr": "Affiché sur le bouton, p. ex. Ouvrir le portail",
+      "da": "Vises på knappen, f.eks. Åbn port",
+      "es": "Mostrado en el botón, p. ej. Abrir portón",
+      "pt": "Mostrado no botão, p. ex. Abrir portão"
+    },
+    {
+      "en": "Someone rang at the entrance",
+      "it": "Qualcuno ha suonato all'ingresso",
+      "de": "Jemand hat an der Eingangstür geklingelt",
+      "fr": "Quelqu'un a sonné à l'entrée",
+      "da": "Nogen ringede på ved indgangen",
+      "es": "Alguien ha llamado a la entrada",
+      "pt": "Alguém tocou à campainha na entrada"
+    },
+    {
+      "en": "Success",
+      "it": "Successo",
+      "de": "Erfolg",
+      "fr": "Succès",
+      "da": "Succes",
+      "es": "Éxito",
+      "pt": "Sucesso"
+    },
+    {
+      "en": "Title",
+      "it": "Titolo",
+      "de": "Titel",
+      "fr": "Titre",
+      "da": "Titel",
+      "es": "Título",
+      "pt": "Título"
+    },
+    {
+      "en": "Upsert with auto-open, optional auto-close, and one optional action button. Use this card (not “Show notification”) if you want a button. Fill Action ID and button label — that is enough to show the CTA. Action ID is a name you invent (e.g. open-gate) to match the WHEN card. It is not a Homey device and is not shown on the Display.",
+      "it": "Upsert con apertura/chiusura automatica e pulsante azione opzionale. Usa questa card (non “Mostra notifica”) se vuoi un pulsante. Compila ID azione e testo pulsante: basta quello per mostrare la CTA. L’ID azione è un nome che inventi (es. open-gate) per la card WHEN. Non è un dispositivo Homey e non compare sul Display.",
+      "de": "Upsert mit Auto-Open, optionalem Auto-Close und einer optionalen Aktionsschaltfläche. Verwende diese Karte (nicht „Benachrichtigung anzeigen“), wenn du eine Schaltfläche möchtest. Action ID und Beschriftung ausfüllen — das reicht für die CTA. Die Action ID ist ein von dir gewählter Name (z. B. open-gate) für die WHEN-Karte. Es ist kein Homey-Gerät und wird nicht auf dem Display angezeigt.",
+      "fr": "Upsert avec ouverture automatique, fermeture automatique optionnelle et un bouton d'action optionnel. Utilisez cette carte (pas « Afficher une notification ») si vous voulez un bouton. Renseignez Action ID et le libellé du bouton — cela suffit pour afficher le CTA. L'Action ID est un nom que vous inventez (p. ex. open-gate) pour correspondre à la carte WHEN. Ce n'est pas un appareil Homey et n'apparaît pas sur le Display.",
+      "da": "Upsert med auto-åbning, valgfri auto-luk og én valgfri handlingsknap. Brug dette kort (ikke «Vis notifikation»), hvis du vil have en knap. Udfyld Action ID og knapetiket — det er nok til at vise CTA'en. Action ID er et navn, du opfinder (f.eks. open-gate), der matcher WHEN-kortet. Det er ikke en Homey-enhed og vises ikke på Displayet.",
+      "es": "Upsert con apertura automática, cierre automático opcional y un botón de acción opcional. Usa esta tarjeta (no «Mostrar notificación») si quieres un botón. Rellena Action ID y la etiqueta del botón — eso basta para mostrar el CTA. El Action ID es un nombre que inventas (p. ej. open-gate) para coincidir con la tarjeta WHEN. No es un dispositivo Homey y no se muestra en el Display.",
+      "pt": "Upsert com abertura automática, fecho automático opcional e um botão de ação opcional. Use este cartão (não «Mostrar notificação») se quiser um botão. Preencha Action ID e a etiqueta do botão — isso basta para mostrar o CTA. O Action ID é um nome que inventa (p. ex. open-gate) para corresponder ao cartão WHEN. Não é um dispositivo Homey e não aparece no Display."
+    },
+    {
+      "en": "Use Maintenance actions to detect hardware capabilities again.",
+      "it": "Usa Azioni di manutenzione per rilevare nuovamente le funzionalità hardware.",
+      "de": "Verwende Wartungsaktionen, um Hardwarefunktionen erneut zu erkennen.",
+      "fr": "Utilisez les actions de maintenance pour détecter à nouveau les capacités matérielles.",
+      "da": "Brug vedligeholdelseshandlinger til at registrere hardwarefunktioner igen.",
+      "es": "Usa las acciones de mantenimiento para detectar de nuevo las capacidades de hardware.",
+      "pt": "Use ações de manutenção para detetar novamente as capacidades de hardware."
+    },
+    {
+      "en": "UUID / Serial",
+      "it": "UUID / Seriale",
+      "de": "UUID / Seriennummer",
+      "fr": "UUID / Numéro de série",
+      "da": "UUID / Serienummer",
+      "es": "UUID / Número de serie",
+      "pt": "UUID / Número de série"
+    },
+    {
+      "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, optional camera media, auto-close, and Homey Flow notification actions.",
+      "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, media camera opzionale, chiusura automatica e azioni Flow native per le notifiche.",
+      "de": "Vanilla-Widget-Dashboard für Homey Pro Wall Displays mit interaktiven Steuerungen, Notification Center, optionalen Kameramedien, Auto-Close und Homey Flow-Benachrichtigungsaktionen.",
+      "fr": "Tableau de bord à widgets vanilla pour wall displays Homey Pro avec contrôles interactifs, Notification Center, médias caméra optionnels, fermeture automatique et actions de notification Homey Flow.",
+      "da": "Vanilla widget-dashboard til Homey Pro wall displays med interaktive kontroller, Notification Center, valgfrie kameramedier, auto-luk og Homey Flow-notifikationshandlinger.",
+      "es": "Panel de widgets vanilla para wall displays Homey Pro con controles interactivos, Notification Center, medios de cámara opcionales, cierre automático y acciones de notificación de Homey Flow.",
+      "pt": "Painel de widgets vanilla para wall displays Homey Pro com controlos interativos, Notification Center, media de câmara opcional, fecho automático e ações de notificação Homey Flow."
+    },
+    {
+      "en": "Warning",
+      "it": "Attenzione",
+      "de": "Warnung",
+      "fr": "Avertissement",
+      "da": "Advarsel",
+      "es": "Advertencia",
+      "pt": "Aviso"
+    },
+    {
+      "en": "Washing machine",
+      "it": "Lavatrice",
+      "de": "Waschmaschine",
+      "fr": "Machine à laver",
+      "da": "Vaskemaskine",
+      "es": "Lavadora",
+      "pt": "Máquina de lavar"
+    },
+    {
+      "en": "You choose this, e.g. open-gate",
+      "it": "Lo scegli tu, es. open-gate",
+      "de": "Du wählst dies selbst, z. B. open-gate",
+      "fr": "Vous le choisissez, p. ex. open-gate",
+      "da": "Du vælger dette selv, f.eks. open-gate",
+      "es": "Lo eliges tú, p. ej. open-gate",
+      "pt": "Escolhe isto tu, p. ex. open-gate"
+    }
+  ],
+  "app": {
+    "name": {
+      "en": "LocalDashboard",
+      "it": "LocalDashboard",
+      "de": "LocalDashboard",
+      "fr": "LocalDashboard",
+      "da": "LocalDashboard",
+      "es": "LocalDashboard",
+      "pt": "LocalDashboard"
+    },
+    "description": {
+      "en": "Vanilla widget dashboard for Homey Pro wall displays with interactive controls, Notification Center, optional camera media, auto-close, and Homey Flow notification actions.",
+      "it": "Dashboard a widget vanilla per wall display Homey Pro con controlli interattivi, Notification Center, media camera opzionale, chiusura automatica e azioni Flow native per le notifiche.",
+      "de": "Vanilla-Widget-Dashboard für Homey Pro Wall Displays mit interaktiven Steuerungen, Notification Center, optionalen Kameramedien, Auto-Close und Homey Flow-Benachrichtigungsaktionen.",
+      "fr": "Tableau de bord à widgets vanilla pour wall displays Homey Pro avec contrôles interactifs, Notification Center, médias caméra optionnels, fermeture automatique et actions de notification Homey Flow.",
+      "da": "Vanilla widget-dashboard til Homey Pro wall displays med interaktive kontroller, Notification Center, valgfrie kameramedier, auto-luk og Homey Flow-notifikationshandlinger.",
+      "es": "Panel de widgets vanilla para wall displays Homey Pro con controles interactivos, Notification Center, medios de cámara opcionales, cierre automático y acciones de notificación de Homey Flow.",
+      "pt": "Painel de widgets vanilla para wall displays Homey Pro com controlos interativos, Notification Center, media de câmara opcional, fecho automático e ações de notificação Homey Flow."
+    },
+    "tags": {
+      "en": [
+        "http",
+        "websocket",
+        "dashboard",
+        "wall display",
+        "widgets",
+        "light",
+        "cover",
+        "notifications",
+        "flow",
+        "realtime",
+        "diagnostics"
+      ],
+      "it": [
+        "http",
+        "websocket",
+        "dashboard",
+        "wall display",
+        "widget",
+        "luce",
+        "tapparella",
+        "notifiche",
+        "flow",
+        "realtime",
+        "diagnostica"
+      ],
+      "de": [
+        "http",
+        "websocket",
+        "dashboard",
+        "wall display",
+        "widgets",
+        "licht",
+        "rollo",
+        "benachrichtigungen",
+        "flow",
+        "realtime",
+        "diagnostik"
+      ],
+      "fr": [
+        "http",
+        "websocket",
+        "tableau de bord",
+        "wall display",
+        "widgets",
+        "lumière",
+        "volet",
+        "notifications",
+        "flow",
+        "realtime",
+        "diagnostic"
+      ],
+      "da": [
+        "http",
+        "websocket",
+        "dashboard",
+        "wall display",
+        "widgets",
+        "lys",
+        "gardin",
+        "notifikationer",
+        "flow",
+        "realtime",
+        "diagnostik"
+      ],
+      "es": [
+        "http",
+        "websocket",
+        "panel",
+        "wall display",
+        "widgets",
+        "luz",
+        "persiana",
+        "notificaciones",
+        "flow",
+        "realtime",
+        "diagnóstico"
+      ],
+      "pt": [
+        "http",
+        "websocket",
+        "painel",
+        "wall display",
+        "widgets",
+        "luz",
+        "estore",
+        "notificações",
+        "flow",
+        "realtime",
+        "diagnóstico"
+      ]
+    }
+  }
+}

@@ -53,6 +53,11 @@ describe('DateTimeWidget helpers', () => {
   it('normalizes locales', () => {
     assert.equal(normalizeLocale('it'), 'it-IT');
     assert.equal(normalizeLocale('en'), 'en-US');
+    assert.equal(normalizeLocale('de'), 'de-DE');
+    assert.equal(normalizeLocale('fr'), 'fr-FR');
+    assert.equal(normalizeLocale('da'), 'da-DK');
+    assert.equal(normalizeLocale('es'), 'es-ES');
+    assert.equal(normalizeLocale('pt'), 'pt-PT');
   });
 });
 

@@ -2,7 +2,12 @@
   "type": "number",
   "title": {
     "en": "Active notifications",
-    "it": "Notifiche attive"
+    "it": "Notifiche attive",
+    "de": "Aktive Benachrichtigungen",
+    "fr": "Notifications actives",
+    "da": "Aktive notifikationer",
+    "es": "Notificaciones activas",
+    "pt": "Notificações ativas"
   },
   "getable": true,
   "setable": false,

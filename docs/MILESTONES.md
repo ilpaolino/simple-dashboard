@@ -237,6 +237,22 @@
 - Automatic layout from viewport
 - QR code, mDNS discovery, cloud pairing
 
+## Milestone 16 — LocalDashboard v1 release hardening
+
+**Status:** Done. Details: [MILESTONE-16.md](MILESTONE-16.md).
+
+### In scope (implemented)
+
+- User-facing rebrand to **LocalDashboard** (technical id unchanged)
+- Backward compatibility audit (devices, dashboard Device Store, Flow ids, capabilities)
+- Security/resilience fixes (LAN IP trust, session replacement cleanup, media revocation, subscription acquire race)
+- Documentation consolidation + manual v1 checklist
+- Automated M16 regression tests
+
+### Out of scope (explicit)
+
+- New widgets, sensors, global notify-all Flow, camera transcoding, UI redesign
+
 ## Later milestones (not started)
 
 - Additional widget types (sensors, thermostats)
@@ -246,6 +262,7 @@
 
 ## Manual test checklist
 
+- Milestone 16 (v1): [MILESTONE-16.md](MILESTONE-16.md)
 - Milestone 15: [MILESTONE-15.md](MILESTONE-15.md)
 - Milestone 14: [MILESTONE-14.md](MILESTONE-14.md)
 - Milestone 11: [MILESTONE-11.md](MILESTONE-11.md)

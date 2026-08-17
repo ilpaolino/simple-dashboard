@@ -938,6 +938,12 @@ export class RealtimeGateway {
       return notFound;
     }
 
+    const activeNotification =
+      this.notifications.getActiveNotification(notificationId);
+    if (!activeNotification?.media) {
+      return notFound;
+    }
+
     const binding = this.notifications.getMediaBinding(notificationId);
     if (!binding || !this.mediaResolver) {
       return notFound;
@@ -973,6 +979,15 @@ export class RealtimeGateway {
       binaryBody: image.bytes,
       cacheControl: 'private, no-store',
     };
+  }
+
+  private purgeNotificationImageCache(notificationId: string): void {
+    const prefix = `${notificationId}\0`;
+    for (const key of [...this.notificationImageRefCache.keys()]) {
+      if (key.startsWith(prefix)) {
+        this.notificationImageRefCache.delete(key);
+      }
+    }
   }
 
   public serveNotificationVideo(): HttpResponse {
@@ -1101,7 +1116,14 @@ export class RealtimeGateway {
   private handleNotificationChange(event: NotificationChangeEvent): void {
     if (event.kind === 'removed') {
       this.mediaSessions.stopForNotification(event.notificationId);
+      this.purgeNotificationImageCache(event.notificationId);
       this.metrics.setActiveMediaSessions(this.mediaSessions.getActiveCount());
+    } else if (
+      event.kind === 'updated' &&
+      event.notification &&
+      !event.notification.media
+    ) {
+      this.purgeNotificationImageCache(event.notificationId);
     }
     for (const displayId of event.affectedDisplayIds) {
       if (!this.sessions.hasActiveSession(displayId)) {
@@ -1169,6 +1191,11 @@ export class RealtimeGateway {
   private async handleSessionClosed(
     session: DisplayRealtimeSession,
   ): Promise<void> {
+    const active = this.sessions.getByDisplayId(session.displayId);
+    if (active && active.connectionId !== session.connectionId) {
+      return;
+    }
+
     const cancelled = this.pendingCommands.cancelForDisplay(session.displayId);
     if (cancelled.length > 0) {
       this.logger.info('Cleared pending commands on socket close', {

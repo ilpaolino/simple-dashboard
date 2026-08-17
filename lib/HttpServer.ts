@@ -248,13 +248,9 @@ export class HttpServer {
 }
 
 function extractRequestInfo(request: http.IncomingMessage): RequestInfo {
-  const forwarded = request.headers['x-forwarded-for'];
-  const forwardedIp = Array.isArray(forwarded)
-    ? forwarded[0]
-    : forwarded?.split(',')[0]?.trim();
-
-  const socketIp = request.socket.remoteAddress ?? 'unknown';
-  const rawIp = forwardedIp && forwardedIp.length > 0 ? forwardedIp : socketIp;
+  // LAN trust model: bind directly on Homey Pro — never trust X-Forwarded-For,
+  // which would let any client impersonate a paired Display IP.
+  const rawIp = request.socket.remoteAddress ?? 'unknown';
 
   return {
     clientIp: normalizeClientIp(rawIp),

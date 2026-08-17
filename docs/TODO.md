@@ -1,66 +1,28 @@
 # TODO
 
-## Milestone 15 follow-up (optional, not blocking)
+## A. Required before v1 release (manual on Homey Pro)
 
-- [ ] Browser at unconfigured IP → pairing page + 6-digit code
-- [ ] Homey Generic pairing with code → IP auto-filled on confirm
-- [ ] After pairing: browser reload → dashboard (no re-pair)
-- [ ] Clear browser cache/cookies/localStorage → same IP still recognized
-- [ ] Change client IP → pairing page; fix IP in Device Settings → dashboard
-- [ ] Wait 8+ minutes → old code rejected; refresh browser → new code
-- [ ] `/diagnostics` shows pending pairings (masked) and Generic browser profile
-- [ ] Shelly pairing and dashboard unchanged
+Use the checklist in [MILESTONE-16.md](MILESTONE-16.md). Automated validation must be green first:
 
-## Milestone 14 follow-up (optional, not blocking)
+```bash
+npm run typecheck && npm run build && npm test && npm run measure:frontend && homey app validate
+```
 
-- [ ] Pair Shelly Wall Display; verify hardware summary at confirm step
-- [ ] Restart app; confirm one ListMethods per Shelly in logs; no periodic discovery
-- [ ] Maintenance → Detect hardware capabilities again; verify settings + diagnostics
-- [ ] Flow: Shelly → Reboot display; expect brief disconnect then recovery
-- [ ] Generic Web Display: no reboot card, no hardware maintenance action
+Nothing in this section is complete until executed on real Homey Pro hardware.
 
-## Milestone 13 follow-up (optional, not blocking)
+## B. Manual Homey Pro verification (representative)
 
-- [ ] Homey Pro: doorbell Flow with Camera / Media + auto-close 60s + action `open-gate`
-- [ ] Confirm snapshot appears when the camera app exposes a Homey Image
-- [ ] Confirm video types (RTSP/WebRTC/…) fall back to a live snapshot (3 s refresh, no broken `<video>`)
-- [ ] Confirm remaining auto-close seconds appear in the header when auto-close is set
-- [ ] Close Center → `/diagnostics` `activeMediaSessions` = 0
-- [ ] Existing Flows without Camera / Media still run unchanged
-- [ ] Measure RSS/heap via `/diagnostics` during open → video/image → close cycles
+- [ ] Upgrade from a pre-M16 dev install — devices, dashboard, Flows intact
+- [ ] Generic pairing end-to-end on a wall browser
+- [ ] Shelly pairing + optional reboot Flow
+- [ ] Notification + camera media + auto-close on a real camera device
+- [ ] Repeated connect/disconnect — diagnostics counts return toward baseline
 
-## Milestone 12 follow-up (optional, not blocking)
-
-- [ ] Homey Pro: **Show interactive notification** with auto-open + auto-close 15s + action `open-gate`
-- [ ] Confirm CTA tap starts the WHEN card (same Action ID) and leaves loading (Action sent / Action failed, never infinite)
-- [ ] Confirm existing **Show notification** Flows still run unchanged
-- [ ] Second Flow: WHEN notification action pressed, Action ID = same `open-gate` string as the THEN card
-- [ ] Verify CTA pending, Action sent feedback, Center stays open, ribbon after auto-close
-- [ ] Verify pre-M12 Flows still run without re-saving cards
-- [ ] Measure RSS/heap on Homey Pro via `/diagnostics` during show → auto-close → action cycles
-
-## Milestone 11B follow-up (optional, not blocking)
-
-- [ ] Create Homey Flow on Homey Pro: Display → Show notification (`test-info`) and verify ribbon + Center
-- [ ] Upsert same key with severity `warning` / highlight; confirm no duplicate
-- [ ] Remove by key + Remove all; confirm other Display unchanged
-- [ ] Offline Display: publish via Flow, reconnect, snapshot shows notification
-- [ ] Dismiss locally → Flow upsert re-surfaces; Flow remove + show restores visibility
-- [ ] Confirm `notification_count` / `highest_notification_severity` on device after Flow ops (dismiss does not change them)
-- [ ] If Homey CLI compose rewrites `app.json`, commit the generated file as-is
-
-## Milestone 11 follow-up (optional, not blocking)
-
-- [ ] Exercise Notification Center on Homey Pro with two Wall Displays (shared notification + local dismiss)
-- [ ] Confirm highlight pulse and `prefers-reduced-motion` on Shelly Wall Display browser
-- [ ] Measure RSS/heap on Homey Pro via `/diagnostics` with several active notifications
-
-## Next milestone (do not start here)
-
-Only when a later milestone is requested:
+## C. Future / non-blocking (post-v1)
 
 - [ ] Optional global Flow: show notification on all Displays
 - [ ] Additional widget types (sensors, thermostats)
 - [ ] Drag & drop editor enhancements (still Homey App Settings only)
 - [ ] Shelly authenticated RPC if probe fails with 401
 - [ ] Additional Shelly hardware controls when officially documented (brightness, volume, …)
+- [ ] Pairing brute-force rate limiting (if LAN threat model changes)

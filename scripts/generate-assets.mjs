@@ -89,7 +89,7 @@ writeFileSync(join(imagesDir, 'large.png'), createPng(500, 350, brand));
 writeFileSync(join(imagesDir, 'xlarge.png'), createPng(1000, 700, brand));
 
 const iconSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Simple Dashboard">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="LocalDashboard">
   <rect width="100" height="100" rx="18" fill="#1F4B5C"/>
   <rect x="18" y="24" width="64" height="42" rx="4" fill="none" stroke="#F4F7F8" stroke-width="4"/>
   <rect x="38" y="70" width="24" height="6" rx="2" fill="#F4F7F8"/>

@@ -1,5 +1,5 @@
 /**
- * Shared contracts for the Simple Dashboard Homey app.
+ * Shared contracts for the LocalDashboard Homey app.
  */
 
 export type LogLevel = 'info' | 'warn' | 'error';

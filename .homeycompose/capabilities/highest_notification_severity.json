@@ -2,7 +2,12 @@
   "type": "enum",
   "title": {
     "en": "Highest notification severity",
-    "it": "Severity massima notifiche"
+    "it": "Severity massima notifiche",
+    "de": "Höchste Benachrichtigungs-Severity",
+    "fr": "Severity maximale des notifications",
+    "da": "Højeste notifikations-severity",
+    "es": "Severity máxima de las notificaciones",
+    "pt": "Severity máxima das notificações"
   },
   "getable": true,
   "setable": false,
@@ -11,23 +16,63 @@
   "values": [
     {
       "id": "none",
-      "title": { "en": "None", "it": "Nessuna" }
+      "title": {
+        "en": "None",
+        "it": "Nessuna",
+        "de": "Keine",
+        "fr": "Aucune",
+        "da": "Ingen",
+        "es": "Ninguna",
+        "pt": "Nenhuma"
+      }
     },
     {
       "id": "info",
-      "title": { "en": "Info", "it": "Informazione" }
+      "title": {
+        "en": "Info",
+        "it": "Informazione",
+        "de": "Info",
+        "fr": "Info",
+        "da": "Info",
+        "es": "Info",
+        "pt": "Info"
+      }
     },
     {
       "id": "success",
-      "title": { "en": "Success", "it": "Successo" }
+      "title": {
+        "en": "Success",
+        "it": "Successo",
+        "de": "Erfolg",
+        "fr": "Succès",
+        "da": "Succes",
+        "es": "Éxito",
+        "pt": "Sucesso"
+      }
     },
     {
       "id": "warning",
-      "title": { "en": "Warning", "it": "Attenzione" }
+      "title": {
+        "en": "Warning",
+        "it": "Attenzione",
+        "de": "Warnung",
+        "fr": "Avertissement",
+        "da": "Advarsel",
+        "es": "Advertencia",
+        "pt": "Aviso"
+      }
     },
     {
       "id": "critical",
-      "title": { "en": "Critical", "it": "Critico" }
+      "title": {
+        "en": "Critical",
+        "it": "Critico",
+        "de": "Kritisch",
+        "fr": "Critique",
+        "da": "Kritisk",
+        "es": "Crítico",
+        "pt": "Crítico"
+      }
     }
   ]
 }

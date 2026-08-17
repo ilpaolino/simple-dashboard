@@ -3,7 +3,12 @@
     "type": "group",
     "label": {
       "en": "Connection",
-      "it": "Connessione"
+      "it": "Connessione",
+      "de": "Verbindung",
+      "fr": "Connexion",
+      "da": "Forbindelse",
+      "es": "Conexión",
+      "pt": "Ligação"
     },
     "children": [
       {
@@ -11,12 +16,22 @@
         "type": "text",
         "label": {
           "en": "IP address",
-          "it": "Indirizzo IP"
+          "it": "Indirizzo IP",
+          "de": "IP-Adresse",
+          "fr": "Adresse IP",
+          "da": "IP-adresse",
+          "es": "Dirección IP",
+          "pt": "Endereço IP"
         },
         "value": "",
         "hint": {
           "en": "IPv4 address of the generic web display. Changing this does not change the device identity.",
-          "it": "Indirizzo IPv4 del display web generico. La modifica non cambia l'identità del dispositivo."
+          "it": "Indirizzo IPv4 del display web generico. La modifica non cambia l'identità del dispositivo.",
+          "de": "IPv4-Adresse des Generic Web Display. Eine Änderung ändert nicht die Geräteidentität.",
+          "fr": "Adresse IPv4 du Generic Web Display. La modifier ne change pas l'identité de l'appareil.",
+          "da": "IPv4-adresse på Generic Web Display. Ændring af denne ændrer ikke enhedens identitet.",
+          "es": "Dirección IPv4 del Generic Web Display. Cambiarla no modifica la identidad del dispositivo.",
+          "pt": "Endereço IPv4 do Generic Web Display. Alterá-lo não muda a identidade do dispositivo."
         },
         "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
         "highlight": true
@@ -27,7 +42,12 @@
     "type": "group",
     "label": {
       "en": "Display",
-      "it": "Display"
+      "it": "Display",
+      "de": "Display",
+      "fr": "Display",
+      "da": "Display",
+      "es": "Display",
+      "pt": "Display"
     },
     "children": [
       {
@@ -35,12 +55,22 @@
         "type": "dropdown",
         "label": {
           "en": "Layout",
-          "it": "Layout"
+          "it": "Layout",
+          "de": "Layout",
+          "fr": "Disposition",
+          "da": "Layout",
+          "es": "Diseño",
+          "pt": "Layout"
         },
         "value": "2x4",
         "hint": {
           "en": "Portrait and landscape variants of the same grid. Only layouts supported by this Generic Web Display can be saved.",
-          "it": "Varianti verticale e orizzontale della stessa griglia. È possibile salvare solo i layout supportati da questo Generic Web Display."
+          "it": "Varianti verticale e orizzontale della stessa griglia. È possibile salvare solo i layout supportati da questo Generic Web Display.",
+          "de": "Hoch- und Querformat-Varianten desselben Rasters. Es können nur Layouts gespeichert werden, die von diesem Generic Web Display unterstützt werden.",
+          "fr": "Variantes portrait et paysage de la même grille. Seules les dispositions prises en charge par ce Generic Web Display peuvent être enregistrées.",
+          "da": "Portræt- og landskabsvarianter af det samme gitter. Kun layouts understøttet af dette Generic Web Display kan gemmes.",
+          "es": "Variantes vertical y horizontal de la misma cuadrícula. Solo se pueden guardar los diseños compatibles con este Generic Web Display.",
+          "pt": "Variantes retrato e paisagem da mesma grelha. Só podem ser guardados layouts suportados por este Generic Web Display."
         },
         "highlight": true,
         "values": [
@@ -48,28 +78,48 @@
             "id": "2x4",
             "label": {
               "en": "2 × 4 (portrait)",
-              "it": "2 × 4 (verticale)"
+              "it": "2 × 4 (verticale)",
+              "de": "2 × 4 (Hochformat)",
+              "fr": "2 × 4 (portrait)",
+              "da": "2 × 4 (portræt)",
+              "es": "2 × 4 (vertical)",
+              "pt": "2 × 4 (retrato)"
             }
           },
           {
             "id": "4x2",
             "label": {
               "en": "4 × 2 (landscape)",
-              "it": "4 × 2 (orizzontale)"
+              "it": "4 × 2 (orizzontale)",
+              "de": "4 × 2 (Querformat)",
+              "fr": "4 × 2 (paysage)",
+              "da": "4 × 2 (landskab)",
+              "es": "4 × 2 (horizontal)",
+              "pt": "4 × 2 (paisagem)"
             }
           },
           {
             "id": "3x6",
             "label": {
               "en": "3 × 6 (portrait)",
-              "it": "3 × 6 (verticale)"
+              "it": "3 × 6 (verticale)",
+              "de": "3 × 6 (Hochformat)",
+              "fr": "3 × 6 (portrait)",
+              "da": "3 × 6 (portræt)",
+              "es": "3 × 6 (vertical)",
+              "pt": "3 × 6 (retrato)"
             }
           },
           {
             "id": "6x3",
             "label": {
               "en": "6 × 3 (landscape)",
-              "it": "6 × 3 (orizzontale)"
+              "it": "6 × 3 (orizzontale)",
+              "de": "6 × 3 (Querformat)",
+              "fr": "6 × 3 (paysage)",
+              "da": "6 × 3 (landskab)",
+              "es": "6 × 3 (horizontal)",
+              "pt": "6 × 3 (paisagem)"
             }
           }
         ]
@@ -78,8 +128,13 @@
         "id": "dashboard_editor_note",
         "type": "label",
         "label": {
-          "en": "Grid and widget configuration is managed from the Wall Display app settings.",
-          "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni dell'app Wall Display."
+          "en": "Grid and widget configuration is managed from LocalDashboard App Settings.",
+          "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni app LocalDashboard.",
+          "de": "Raster- und Widget-Konfiguration wird in den LocalDashboard-App-Einstellungen verwaltet.",
+          "fr": "La configuration de la grille et des widgets se gère dans les paramètres de l'app LocalDashboard.",
+          "da": "Gitter- og widget-konfiguration administreres fra LocalDashboard app-indstillinger.",
+          "es": "La configuración de la cuadrícula y los widgets se gestiona desde los ajustes de la app LocalDashboard.",
+          "pt": "A configuração da grelha e dos widgets é gerida nas definições da app LocalDashboard."
         },
         "value": ""
       }

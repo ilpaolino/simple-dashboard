@@ -1,12 +1,24 @@
 {
   "name": {
     "en": "Generic Web Display",
-    "it": "Generic Web Display"
+    "it": "Generic Web Display",
+    "de": "Generic Web Display",
+    "fr": "Generic Web Display",
+    "da": "Generic Web Display",
+    "es": "Generic Web Display",
+    "pt": "Generic Web Display"
   },
   "class": "other",
-  "capabilities": ["notification_count", "highest_notification_severity"],
-  "platforms": ["local"],
-  "connectivity": ["lan"],
+  "capabilities": [
+    "notification_count",
+    "highest_notification_severity"
+  ],
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
   "icon": "{{driverAssetsPath}}/icon.svg",
   "images": {
     "small": "{{driverAssetsPath}}/images/small.png",

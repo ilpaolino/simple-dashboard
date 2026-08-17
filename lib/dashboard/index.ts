@@ -295,7 +295,7 @@ export function buildDashboardModel(
       locale: 'en',
       emptyState: {
         heading: 'No widgets configured',
-        lead: 'Configure this display from the Wall Display app settings.',
+        lead: 'Configure this display from LocalDashboard App Settings.',
         nameLabel: 'Name',
         typeLabel: 'Type',
         idLabel: 'ID',

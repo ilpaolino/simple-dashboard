@@ -195,6 +195,12 @@ export class GenericDisplayPairingManager {
       return false;
     }
 
+    if (session.expiresAt.getTime() <= this.now().getTime()) {
+      this.removeSession(session);
+      this.rejectedCodes += 1;
+      return false;
+    }
+
     const ipAddress = session.ipAddress;
     this.removeSession(session);
     this.successfulPairings += 1;

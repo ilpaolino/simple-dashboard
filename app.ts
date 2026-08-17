@@ -241,7 +241,7 @@ class WelcomeWallApp extends Homey.App {
       this.logger.error('HTTP server did not start during app init', error);
     }
 
-    this.logger.info('Simple Dashboard app initialized', {
+    this.logger.info('LocalDashboard app initialized', {
       diagnosticsEnabled: this.settingsManager.isDiagnosticsEnabled(),
       realtime: this.realtimeGateway.isActive(),
     });
@@ -772,7 +772,7 @@ class WelcomeWallApp extends Homey.App {
     this.genericPairingManager.destroy();
     this.shellyHardware.clear();
     this.diagnosticsLog.clear();
-    this.logger.info('Simple Dashboard app uninitialized');
+    this.logger.info('LocalDashboard app uninitialized');
   }
 
   private listShellyHardwareDeviceRefs() {

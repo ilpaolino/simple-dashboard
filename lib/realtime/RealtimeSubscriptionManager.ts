@@ -60,6 +60,7 @@ export class RealtimeSubscriptionManager {
   private readonly logger: Logger;
   private readonly onCapabilityValue: RealtimeSubscriptionManagerOptions['onCapabilityValue'];
   private readonly onDeviceRemoved: RealtimeSubscriptionManagerOptions['onDeviceRemoved'];
+  private readonly acquiringByKey = new Map<string, Promise<void>>();
 
   public constructor(options: RealtimeSubscriptionManagerOptions) {
     this.subscriber = options.subscriber;
@@ -201,6 +202,12 @@ export class RealtimeSubscriptionManager {
     ref: HomeyCapabilityRef,
   ): Promise<void> {
     const key = subscriptionKey(ref.deviceId, ref.capabilityId);
+
+    const inFlight = this.acquiringByKey.get(key);
+    if (inFlight) {
+      await inFlight;
+    }
+
     let entry = this.byKey.get(key);
     if (!entry) {
       entry = {
@@ -217,6 +224,26 @@ export class RealtimeSubscriptionManager {
     entry.refCount = entry.displayIds.size;
 
     if (entry.subscription) {
+      return;
+    }
+
+    const acquireTask = this.createSubscription(key, ref);
+    this.acquiringByKey.set(key, acquireTask);
+    try {
+      await acquireTask;
+    } finally {
+      if (this.acquiringByKey.get(key) === acquireTask) {
+        this.acquiringByKey.delete(key);
+      }
+    }
+  }
+
+  private async createSubscription(
+    key: string,
+    ref: HomeyCapabilityRef,
+  ): Promise<void> {
+    const entry = this.byKey.get(key);
+    if (!entry || entry.subscription) {
       return;
     }
 
@@ -250,6 +277,15 @@ export class RealtimeSubscriptionManager {
         },
       });
 
+      const current = this.byKey.get(key);
+      if (!current || current.refCount === 0) {
+        subscription?.destroy();
+        if (current && current.refCount === 0) {
+          this.byKey.delete(key);
+        }
+        return;
+      }
+
       if (!subscription) {
         this.logger.warn('Homey device unavailable for realtime subscription', {
           deviceId: ref.deviceId,
@@ -259,11 +295,11 @@ export class RealtimeSubscriptionManager {
         return;
       }
 
-      entry.subscription = subscription;
+      current.subscription = subscription;
       this.logger.info('Homey capability subscribed', {
         deviceId: ref.deviceId,
         capabilityId: ref.capabilityId,
-        refCount: entry.refCount,
+        refCount: current.refCount,
       });
     } catch (error) {
       this.logger.error('Failed to subscribe Homey capability', {

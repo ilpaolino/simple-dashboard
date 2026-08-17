@@ -1,5 +1,21 @@
 # Decisions
 
+Architectural choices for Milestone 16 (v1). Earlier decisions remain in force below and in prior milestone docs.
+
+## LocalDashboard is the product name; app id is unchanged
+
+**Choice:** User-facing branding is **LocalDashboard**. The Homey application identifier remains `dev.dadda.simpledashboard`.
+
+**Why:** Homey uses the app id for install/update identity. Renaming it would publish a different app and break in-place upgrades.
+
+## LAN HTTP trust uses socket IP only
+
+**Choice:** The local HTTP server derives client identity from `socket.remoteAddress` only. `X-Forwarded-For` is ignored.
+
+**Why:** The server binds directly on Homey Pro LAN. Trusting forwarded headers would let any client impersonate a paired Display IP.
+
+---
+
 Architectural choices for Milestone 15. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Generic Web Display remains IP-based

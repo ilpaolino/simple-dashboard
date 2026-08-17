@@ -235,11 +235,13 @@ export class NotificationManager {
           ? normalized.value.media
           : prev.media;
     const nextMediaBinding =
-      normalized.value.mediaDeviceId === null
+      normalized.value.media === null
         ? undefined
-        : normalized.value.mediaDeviceId !== undefined
-          ? { deviceId: normalized.value.mediaDeviceId }
-          : stored.mediaBinding;
+        : normalized.value.mediaDeviceId === null
+          ? undefined
+          : normalized.value.mediaDeviceId !== undefined
+            ? { deviceId: normalized.value.mediaDeviceId }
+            : stored.mediaBinding;
     const nextKey =
       normalized.value.notificationKey === null
         ? undefined

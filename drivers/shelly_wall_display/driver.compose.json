@@ -1,7 +1,12 @@
 {
   "name": {
     "en": "Shelly Wall Display",
-    "it": "Shelly Wall Display"
+    "it": "Shelly Wall Display",
+    "de": "Shelly Wall Display",
+    "fr": "Shelly Wall Display",
+    "da": "Shelly Wall Display",
+    "es": "Shelly Wall Display",
+    "pt": "Shelly Wall Display"
   },
   "class": "other",
   "capabilities": [
@@ -14,16 +19,30 @@
       "maintenanceAction": true,
       "title": {
         "en": "Detect hardware capabilities again",
-        "it": "Rileva nuovamente funzionalità hardware"
+        "it": "Rileva nuovamente funzionalità hardware",
+        "de": "Hardwarefunktionen erneut erkennen",
+        "fr": "Détecter à nouveau les capacités matérielles",
+        "da": "Registrer hardwarefunktioner igen",
+        "es": "Detectar de nuevo las capacidades de hardware",
+        "pt": "Detetar novamente as capacidades de hardware"
       },
       "desc": {
         "en": "Queries the Shelly RPC API (Shelly.ListMethods) and refreshes detected hardware features.",
-        "it": "Interroga l'API RPC Shelly (Shelly.ListMethods) e aggiorna le funzionalità hardware rilevate."
+        "it": "Interroga l'API RPC Shelly (Shelly.ListMethods) e aggiorna le funzionalità hardware rilevate.",
+        "de": "Fragt die Shelly-RPC-API (Shelly.ListMethods) ab und aktualisiert erkannte Hardwarefunktionen.",
+        "fr": "Interroge l'API RPC Shelly (Shelly.ListMethods) et actualise les fonctionnalités matérielles détectées.",
+        "da": "Forespørger Shelly RPC API (Shelly.ListMethods) og opdaterer registrerede hardwarefunktioner.",
+        "es": "Consulta la API RPC de Shelly (Shelly.ListMethods) y actualiza las funciones de hardware detectadas.",
+        "pt": "Consulta a API RPC Shelly (Shelly.ListMethods) e atualiza as funcionalidades de hardware detetadas."
       }
     }
   },
-  "platforms": ["local"],
-  "connectivity": ["lan"],
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
   "icon": "{{driverAssetsPath}}/icon.svg",
   "images": {
     "small": "{{driverAssetsPath}}/images/small.png",

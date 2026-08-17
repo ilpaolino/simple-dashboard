@@ -159,6 +159,21 @@ export function normalizeLocale(locale: string): string {
   if (trimmed.startsWith('en')) {
     return 'en-US';
   }
+  if (trimmed.startsWith('de')) {
+    return 'de-DE';
+  }
+  if (trimmed.startsWith('fr')) {
+    return 'fr-FR';
+  }
+  if (trimmed.startsWith('da')) {
+    return 'da-DK';
+  }
+  if (trimmed.startsWith('es')) {
+    return 'es-ES';
+  }
+  if (trimmed.startsWith('pt')) {
+    return 'pt-PT';
+  }
   return locale || 'en-US';
 }
 

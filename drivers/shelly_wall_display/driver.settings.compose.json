@@ -3,7 +3,12 @@
     "type": "group",
     "label": {
       "en": "Connection",
-      "it": "Connessione"
+      "it": "Connessione",
+      "de": "Verbindung",
+      "fr": "Connexion",
+      "da": "Forbindelse",
+      "es": "Conexión",
+      "pt": "Ligação"
     },
     "children": [
       {
@@ -11,12 +16,22 @@
         "type": "text",
         "label": {
           "en": "IP address",
-          "it": "Indirizzo IP"
+          "it": "Indirizzo IP",
+          "de": "IP-Adresse",
+          "fr": "Adresse IP",
+          "da": "IP-adresse",
+          "es": "Dirección IP",
+          "pt": "Endereço IP"
         },
         "value": "",
         "hint": {
           "en": "IPv4 address of the Shelly Wall Display. Changing this does not change the device identity.",
-          "it": "Indirizzo IPv4 dello Shelly Wall Display. La modifica non cambia l'identità del dispositivo."
+          "it": "Indirizzo IPv4 dello Shelly Wall Display. La modifica non cambia l'identità del dispositivo.",
+          "de": "IPv4-Adresse des Shelly Wall Display. Eine Änderung ändert nicht die Geräteidentität.",
+          "fr": "Adresse IPv4 du Shelly Wall Display. La modifier ne change pas l'identité de l'appareil.",
+          "da": "IPv4-adresse på Shelly Wall Display. Ændring af denne ændrer ikke enhedens identitet.",
+          "es": "Dirección IPv4 del Shelly Wall Display. Cambiarla no modifica la identidad del dispositivo.",
+          "pt": "Endereço IPv4 do Shelly Wall Display. Alterá-lo não muda a identidade do dispositivo."
         },
         "pattern": "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
         "highlight": true
@@ -27,7 +42,12 @@
     "type": "group",
     "label": {
       "en": "Device",
-      "it": "Dispositivo"
+      "it": "Dispositivo",
+      "de": "Gerät",
+      "fr": "Appareil",
+      "da": "Enhed",
+      "es": "Dispositivo",
+      "pt": "Dispositivo"
     },
     "children": [
       {
@@ -35,7 +55,12 @@
         "type": "label",
         "label": {
           "en": "Manufacturer",
-          "it": "Produttore"
+          "it": "Produttore",
+          "de": "Hersteller",
+          "fr": "Fabricant",
+          "da": "Producent",
+          "es": "Fabricante",
+          "pt": "Fabricante"
         },
         "value": ""
       },
@@ -44,7 +69,12 @@
         "type": "label",
         "label": {
           "en": "Model",
-          "it": "Modello"
+          "it": "Modello",
+          "de": "Modell",
+          "fr": "Modèle",
+          "da": "Model",
+          "es": "Modelo",
+          "pt": "Modelo"
         },
         "value": ""
       },
@@ -53,7 +83,12 @@
         "type": "label",
         "label": {
           "en": "Firmware",
-          "it": "Firmware"
+          "it": "Firmware",
+          "de": "Firmware",
+          "fr": "Firmware",
+          "da": "Firmware",
+          "es": "Firmware",
+          "pt": "Firmware"
         },
         "value": ""
       },
@@ -62,7 +97,12 @@
         "type": "label",
         "label": {
           "en": "UUID / Serial",
-          "it": "UUID / Seriale"
+          "it": "UUID / Seriale",
+          "de": "UUID / Seriennummer",
+          "fr": "UUID / Numéro de série",
+          "da": "UUID / Serienummer",
+          "es": "UUID / Número de serie",
+          "pt": "UUID / Número de série"
         },
         "value": ""
       }
@@ -72,7 +112,12 @@
     "type": "group",
     "label": {
       "en": "Display",
-      "it": "Display"
+      "it": "Display",
+      "de": "Display",
+      "fr": "Display",
+      "da": "Display",
+      "es": "Display",
+      "pt": "Display"
     },
     "children": [
       {
@@ -80,12 +125,22 @@
         "type": "dropdown",
         "label": {
           "en": "Layout",
-          "it": "Layout"
+          "it": "Layout",
+          "de": "Layout",
+          "fr": "Disposition",
+          "da": "Layout",
+          "es": "Diseño",
+          "pt": "Layout"
         },
         "value": "2x2",
         "hint": {
           "en": "Only layouts supported by this Shelly Wall Display can be saved.",
-          "it": "È possibile salvare solo i layout supportati da questo Shelly Wall Display."
+          "it": "È possibile salvare solo i layout supportati da questo Shelly Wall Display.",
+          "de": "Es können nur Layouts gespeichert werden, die von diesem Shelly Wall Display unterstützt werden.",
+          "fr": "Seules les dispositions prises en charge par ce Shelly Wall Display peuvent être enregistrées.",
+          "da": "Kun layouts understøttet af dette Shelly Wall Display kan gemmes.",
+          "es": "Solo se pueden guardar los diseños compatibles con este Shelly Wall Display.",
+          "pt": "Só podem ser guardados layouts suportados por este Shelly Wall Display."
         },
         "highlight": true,
         "values": [
@@ -93,14 +148,24 @@
             "id": "2x2",
             "label": {
               "en": "2 × 2",
-              "it": "2 × 2"
+              "it": "2 × 2",
+              "de": "2 × 2",
+              "fr": "2 × 2",
+              "da": "2 × 2",
+              "es": "2 × 2",
+              "pt": "2 × 2"
             }
           },
           {
             "id": "3x3",
             "label": {
               "en": "3 × 3",
-              "it": "3 × 3"
+              "it": "3 × 3",
+              "de": "3 × 3",
+              "fr": "3 × 3",
+              "da": "3 × 3",
+              "es": "3 × 3",
+              "pt": "3 × 3"
             }
           }
         ]
@@ -109,8 +174,13 @@
         "id": "dashboard_editor_note",
         "type": "label",
         "label": {
-          "en": "Grid and widget configuration is managed from the Wall Display app settings.",
-          "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni dell'app Wall Display."
+          "en": "Grid and widget configuration is managed from LocalDashboard App Settings.",
+          "it": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni app LocalDashboard.",
+          "de": "Raster- und Widget-Konfiguration wird in den LocalDashboard-App-Einstellungen verwaltet.",
+          "fr": "La configuration de la grille et des widgets se gère dans les paramètres de l'app LocalDashboard.",
+          "da": "Gitter- og widget-konfiguration administreres fra LocalDashboard app-indstillinger.",
+          "es": "La configuración de la cuadrícula y los widgets se gestiona desde los ajustes de la app LocalDashboard.",
+          "pt": "A configuração da grelha e dos widgets é gerida nas definições da app LocalDashboard."
         },
         "value": ""
       }
@@ -120,7 +190,12 @@
     "type": "group",
     "label": {
       "en": "Hardware capabilities",
-      "it": "Funzionalità hardware"
+      "it": "Funzionalità hardware",
+      "de": "Hardwarefunktionen",
+      "fr": "Capacités matérielles",
+      "da": "Hardwarefunktioner",
+      "es": "Capacidades de hardware",
+      "pt": "Capacidades de hardware"
     },
     "children": [
       {
@@ -128,7 +203,12 @@
         "type": "label",
         "label": {
           "en": "Discovery status",
-          "it": "Stato rilevamento"
+          "it": "Stato rilevamento",
+          "de": "Erkennungsstatus",
+          "fr": "État de la détection",
+          "da": "Registreringsstatus",
+          "es": "Estado del descubrimiento",
+          "pt": "Estado da deteção"
         },
         "value": ""
       },
@@ -137,7 +217,12 @@
         "type": "label",
         "label": {
           "en": "Last discovery",
-          "it": "Ultimo rilevamento"
+          "it": "Ultimo rilevamento",
+          "de": "Letzte Erkennung",
+          "fr": "Dernière détection",
+          "da": "Seneste registrering",
+          "es": "Último descubrimiento",
+          "pt": "Última deteção"
         },
         "value": ""
       },
@@ -146,7 +231,12 @@
         "type": "label",
         "label": {
           "en": "Reboot",
-          "it": "Riavvio"
+          "it": "Riavvio",
+          "de": "Neustart",
+          "fr": "Redémarrage",
+          "da": "Genstart",
+          "es": "Reinicio",
+          "pt": "Reinício"
         },
         "value": ""
       },
@@ -155,7 +245,12 @@
         "type": "label",
         "label": {
           "en": "RPC methods",
-          "it": "Metodi RPC"
+          "it": "Metodi RPC",
+          "de": "RPC-Methoden",
+          "fr": "Méthodes RPC",
+          "da": "RPC-metoder",
+          "es": "Métodos RPC",
+          "pt": "Métodos RPC"
         },
         "value": ""
       },
@@ -164,7 +259,12 @@
         "type": "label",
         "label": {
           "en": "Last hardware error",
-          "it": "Ultimo errore hardware"
+          "it": "Ultimo errore hardware",
+          "de": "Letzter Hardwarefehler",
+          "fr": "Dernière erreur matérielle",
+          "da": "Seneste hardwarefejl",
+          "es": "Último error de hardware",
+          "pt": "Último erro de hardware"
         },
         "value": ""
       },
@@ -173,7 +273,12 @@
         "type": "label",
         "label": {
           "en": "Use Maintenance actions to detect hardware capabilities again.",
-          "it": "Usa Azioni di manutenzione per rilevare nuovamente le funzionalità hardware."
+          "it": "Usa Azioni di manutenzione per rilevare nuovamente le funzionalità hardware.",
+          "de": "Verwende Wartungsaktionen, um Hardwarefunktionen erneut zu erkennen.",
+          "fr": "Utilisez les actions de maintenance pour détecter à nouveau les capacités matérielles.",
+          "da": "Brug vedligeholdelseshandlinger til at registrere hardwarefunktioner igen.",
+          "es": "Usa las acciones de mantenimiento para detectar de nuevo las capacidades de hardware.",
+          "pt": "Use ações de manutenção para detetar novamente as capacidades de hardware."
         },
         "value": ""
       }

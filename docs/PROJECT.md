@@ -2,13 +2,15 @@
 
 ## What this is
 
-**Simple Dashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
+**LocalDashboard** (`dev.dadda.simpledashboard`) is a Homey Pro app (Apps SDK v3, local platform only).
 
 It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added a global **Notification Center**. Milestone **11B** added native **Homey Flow Action Cards**. Milestone **12** added configurable auto-open / auto-close and a single semantic notification action. Milestone **13** adds optional Homey camera/media **inside** those notifications — without a separate camera overlay.
 
+**Product name:** LocalDashboard. **Technical app id:** `dev.dadda.simpledashboard` (retained for Homey upgrade compatibility).
+
 ## Current status
 
-**Milestone 15 is implemented.** Milestone 0–14 behavior is preserved (Shelly pairing unchanged).
+**Milestone 16 (v1 hardening) is implemented.** Milestone 0–15 behavior is preserved.
 
 | Area | Status |
 | --- | --- |
@@ -18,7 +20,7 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
 | IP matching + Shelly hardware validation | Done (M2) |
-| Diagnostics page | Done (M2–M14) |
+| Diagnostics page | Done (M2–M16) |
 | Vanilla grid rendering from device layout | Done (M3) |
 | Widget Registry + Title / DateTime widgets | Done (M4) |
 | Dashboard Editor in App Settings | Done (M4/M5/M8) |
@@ -32,12 +34,20 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 | Notification auto-open / auto-close + semantic actions | Done (M12) |
 | Optional Homey camera/media inside Notifications | Done (M13) |
 | Shelly RPC hardware discovery + reboot Flow | Done (M14) |
+| Generic code pairing + browser capabilities | Done (M15) |
+| LocalDashboard branding + v1 release audit | Done (M16) |
 | WebSocket realtime (same port) | Done (M6/M11/M12/M13 notifications) |
 | Selective Homey capability subscriptions | Done (M6/M8/M9/M10 light optional caps) |
 | Live dashboard configuration | Done (M6) |
 | Bidirectional widget commands | Done (M7/M9/M10) |
 | Dim / color / color temperature | Done (M10) |
 | Flow cards (notifications) | Done (M11B/M12) |
+
+## Documentation
+
+**Product documentation (v1):** start at [README.md](../README.md) in the repository root, or browse [docs/README.md](README.md).
+
+User guides cover installation, Displays, widgets, realtime, notifications, camera media, diagnostics, security, troubleshooting, and examples. Developer references: [development.md](development.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
 
 ## How to resume after a break
 
@@ -98,7 +108,7 @@ homey app run --remote
 | `lib/pairing/` | Shared pairing state machine + Generic code pairing (M15) |
 | `drivers/shelly_wall_display/` | Shelly driver, device, pairing, settings |
 | `drivers/generic_web_display/` | Generic driver, device, pairing, settings |
-| `locales/` | `en` + `it` |
+| `locales/` | `en`, `it`, `de`, `fr`, `da`, `es`, `pt` |
 | `.homeycompose/app.json` | Compose source for the app manifest |
 | `docs/` | Project memory |
 

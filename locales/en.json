@@ -1,6 +1,6 @@
 {
   "settings": {
-    "title": "Simple Dashboard Settings",
+    "title": "LocalDashboard Settings",
     "subtitle": "Configure the local HTTP server, diagnostics, and dashboard widgets",
     "httpPort": "HTTP port",
     "httpPortHelp": "Default port is 7999. The server restarts automatically when the port changes.",
@@ -12,7 +12,7 @@
   },
   "editor": {
     "title": "Dashboard Editor",
-    "subtitle": "Configure widgets for a Wall Display. Changes apply live when the display is connected.",
+    "subtitle": "Configure widgets for a Display. Changes apply live when the display is connected.",
     "selectDisplay": "Select display",
     "theme": "Display appearance",
     "themeDark": "Dark",
@@ -143,7 +143,7 @@
     "defaultNameShelly": "Shelly Wall Display",
     "defaultNameGeneric": "Generic Web Display",
     "notAvailable": "Not available",
-    "dashboardEditorNote": "Grid and widget configuration is managed from the Wall Display app settings."
+    "dashboardEditorNote": "Grid and widget configuration is managed from LocalDashboard App Settings."
   },
   "pair": {
     "back": "Back",
@@ -224,7 +224,7 @@
     },
     "dashboardEmpty": {
       "heading": "No widgets configured",
-      "lead": "Configure the grid and widgets from the Wall Display app settings in Homey."
+      "lead": "Configure the grid and widgets from LocalDashboard App Settings in Homey."
     },
     "invalidLayout": {
       "title": "Invalid display configuration",
@@ -253,7 +253,7 @@
     },
     "genericPairing": {
       "title": "Display not configured",
-      "brand": "Wall Display",
+      "brand": "LocalDashboard",
       "heading": "Display not configured",
       "lead": "This browser is not associated with a Homey display yet.",
       "codeLabel": "Pairing code",
@@ -423,7 +423,7 @@
     "diagnosticsDisabled": {
       "title": "Diagnostics disabled",
       "heading": "Diagnostics disabled",
-      "lead": "Enable diagnostics in the Simple Dashboard app settings to view this page."
+      "lead": "Enable diagnostics in the LocalDashboard app settings to view this page."
     },
     "status": {
       "recognized": "Recognized",

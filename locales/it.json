@@ -1,6 +1,6 @@
 {
   "settings": {
-    "title": "Impostazioni Simple Dashboard",
+    "title": "Impostazioni LocalDashboard",
     "subtitle": "Configura il server HTTP locale, la diagnostica e i widget della dashboard",
     "httpPort": "Porta HTTP",
     "httpPortHelp": "La porta predefinita è 7999. Il server si riavvia automaticamente quando la porta cambia.",
@@ -12,7 +12,7 @@
   },
   "editor": {
     "title": "Editor Dashboard",
-    "subtitle": "Configura i widget di un Wall Display. Le modifiche si applicano in tempo reale se il display è connesso.",
+    "subtitle": "Configura i widget di un Display. Le modifiche si applicano in tempo reale se il display è connesso.",
     "selectDisplay": "Seleziona display",
     "theme": "Aspetto del display",
     "themeDark": "Scuro",
@@ -143,7 +143,7 @@
     "defaultNameShelly": "Shelly Wall Display",
     "defaultNameGeneric": "Generic Web Display",
     "notAvailable": "Non disponibile",
-    "dashboardEditorNote": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni dell'app Wall Display."
+    "dashboardEditorNote": "La configurazione della griglia e dei widget si gestisce dalle Impostazioni app LocalDashboard."
   },
   "pair": {
     "back": "Indietro",
@@ -224,7 +224,7 @@
     },
     "dashboardEmpty": {
       "heading": "Nessun widget configurato",
-      "lead": "Configura la griglia e i widget dalle Impostazioni dell'app Wall Display in Homey."
+      "lead": "Configura la griglia e i widget dalle Impostazioni app LocalDashboard in Homey."
     },
     "invalidLayout": {
       "title": "Configurazione display non valida",
@@ -253,7 +253,7 @@
     },
     "genericPairing": {
       "title": "Display non configurato",
-      "brand": "Wall Display",
+      "brand": "LocalDashboard",
       "heading": "Display non configurato",
       "lead": "Questo browser non è ancora associato a un display Homey.",
       "codeLabel": "Codice di associazione",
@@ -423,7 +423,7 @@
     "diagnosticsDisabled": {
       "title": "Diagnostica disabilitata",
       "heading": "Diagnostica disabilitata",
-      "lead": "Abilita la diagnostica nelle impostazioni dell'app Simple Dashboard per visualizzare questa pagina."
+      "lead": "Abilita la diagnostica nelle impostazioni dell'app LocalDashboard per visualizzare questa pagina."
     },
     "status": {
       "recognized": "Riconosciuto",
