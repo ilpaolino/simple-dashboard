@@ -17,6 +17,8 @@ export interface SettingsChangeInput {
   readonly changedKeys: readonly string[];
   readonly newSettings: Readonly<Record<string, SettingsValue>>;
   readonly store: WallDisplayStore | null;
+  /** When set, rejects IP changes that collide with another display. */
+  readonly isIpTaken?: (ip: string) => boolean;
 }
 
 export type SettingsChangeResult =
@@ -33,7 +35,10 @@ export function validateDeviceSettingsChange(
 ): SettingsChangeResult {
   if (input.changedKeys.includes('ip')) {
     try {
-      parseIpv4(input.newSettings.ip);
+      const ip = parseIpv4(input.newSettings.ip);
+      if (input.isIpTaken?.(ip)) {
+        return { ok: false, errorKey: 'errors.pairingIpTaken' };
+      }
     } catch {
       return { ok: false, errorKey: 'errors.invalidIp' };
     }

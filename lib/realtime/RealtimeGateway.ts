@@ -76,6 +76,11 @@ import {
 } from '../notifications';
 import type { NotificationMediaResolver } from '../homey/NotificationMediaResolver';
 import type { HomeyDeviceImageRef } from '../homey/parseHomeyMedia';
+import {
+  GenericBrowserCapabilityStore,
+  parseGenericClientHello,
+  PairingRealtimeSessionManager,
+} from '../pairing';
 
 export interface RealtimeGatewayOptions {
   readonly registry: DisplayRegistry;
@@ -100,6 +105,7 @@ export interface RealtimeGatewayOptions {
     readonly state: NotificationActionTriggerState;
   }) => Promise<void>;
   readonly mediaResolver?: NotificationMediaResolver | null;
+  readonly genericBrowserCapabilities?: GenericBrowserCapabilityStore | null;
 }
 
 /**
@@ -124,6 +130,8 @@ export class RealtimeGateway {
       }) => Promise<void>)
     | null;
   private readonly mediaResolver: NotificationMediaResolver | null;
+  private readonly genericBrowserCapabilities: GenericBrowserCapabilityStore;
+  private readonly pairingSockets: PairingRealtimeSessionManager;
   private readonly notificationImageRefCache = new Map<
     string,
     { readonly image: HomeyDeviceImageRef; readonly expiresAt: number }
@@ -156,6 +164,9 @@ export class RealtimeGateway {
     this.onNotificationActionPressed =
       options.onNotificationActionPressed ?? null;
     this.mediaResolver = options.mediaResolver ?? null;
+    this.genericBrowserCapabilities =
+      options.genericBrowserCapabilities ?? new GenericBrowserCapabilityStore();
+    this.pairingSockets = new PairingRealtimeSessionManager(this.logger);
 
     this.pendingCommands = new PendingCommandManager({
       onTimeout: (command) => {
@@ -264,6 +275,9 @@ export class RealtimeGateway {
           this.handleNotificationMediaTelemetry(session, message);
         }
       },
+      onGenericClientHello: (session, hello) => {
+        this.handleGenericClientHello(session.displayId, session.remoteAddress, hello);
+      },
     });
 
     this.subscriptions = new RealtimeSubscriptionManager({
@@ -281,6 +295,14 @@ export class RealtimeGateway {
         void this.handleDeviceRemoved(deviceId, capabilityId);
       },
     });
+  }
+
+  public getGenericBrowserCapabilities(): GenericBrowserCapabilityStore {
+    return this.genericBrowserCapabilities;
+  }
+
+  public notifyGenericPairingCompleted(ipAddress: string): void {
+    this.pairingSockets.notifyPairingCompleted(ipAddress);
   }
 
   public isActive(): boolean {
@@ -354,6 +376,7 @@ export class RealtimeGateway {
 
     this.sessions.closeAll(1001, 'server_restart');
     this.pendingCommands.destroy();
+    this.pairingSockets.clear();
 
     if (this.wss) {
       try {
@@ -499,6 +522,7 @@ export class RealtimeGateway {
     await this.subscriptions.removeDisplay(displayId);
     this.notifications.removeDisplay(displayId);
     this.registry.markRealtimeDisconnected(displayId);
+    this.genericBrowserCapabilities.remove(displayId);
   }
 
   private async handleWidgetAction(
@@ -578,17 +602,74 @@ export class RealtimeGateway {
     const entry = this.registry.findByIp(remoteAddress);
 
     if (!entry) {
-      this.metrics.recordRejectedConnection();
-      this.logger.warn('Rejected WebSocket from unconfigured display', {
-        remoteAddress,
+      this.wss.handleUpgrade(request, socket, head, (ws) => {
+        this.acceptPairingConnection(ws, remoteAddress);
       });
-      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
-      socket.destroy();
       return;
     }
 
     this.wss.handleUpgrade(request, socket, head, (ws) => {
       void this.acceptConnection(ws, entry.config.displayId, remoteAddress);
+    });
+  }
+
+  private acceptPairingConnection(
+    socket: WebSocket,
+    remoteAddress: string,
+  ): void {
+    this.pairingSockets.register(remoteAddress, socket);
+
+    socket.on('message', (data: Buffer | ArrayBuffer | Buffer[]) => {
+      const raw = Buffer.isBuffer(data)
+        ? data.toString('utf8')
+        : Array.isArray(data)
+          ? Buffer.concat(data).toString('utf8')
+          : Buffer.from(data).toString('utf8');
+
+      if (this.pairingSockets.handleMessage(remoteAddress, socket, raw)) {
+        return;
+      }
+
+      if (isUnpairedPrivilegedMessage(raw)) {
+        this.logger.warn('Rejected privileged message from unpaired client', {
+          remoteAddress,
+        });
+      }
+    });
+
+    this.logger.info('Pairing realtime session opened', { remoteAddress });
+  }
+
+  private handleGenericClientHello(
+    displayId: string,
+    remoteAddress: string,
+    raw: unknown,
+  ): void {
+    const hello = parseGenericClientHello(raw);
+    if (!hello) {
+      this.logger.warn('Invalid generic client hello', { displayId, remoteAddress });
+      return;
+    }
+
+    const entry = this.registry.getById(displayId);
+    if (!entry || entry.config.typeId !== DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY) {
+      return;
+    }
+
+    this.genericBrowserCapabilities.set(displayId, {
+      capabilities: hello.capabilities,
+      viewport: hello.viewport,
+      userAgent: '',
+      lastHelloAt: new Date(),
+    });
+
+    this.logger.info('Generic browser capability hello', {
+      displayId,
+      remoteAddress,
+      touch: hello.capabilities.touch,
+      fullscreen: hello.capabilities.fullscreen,
+      audioPlayback: hello.capabilities.audioPlayback,
+      viewport: hello.viewport,
     });
   }
 
@@ -1846,6 +1927,28 @@ function typeLabelForDisplay(
 function pathOnly(url: string): string {
   const noQuery = url.split('?', 1)[0] ?? '/';
   return noQuery === '' ? '/' : noQuery;
+}
+
+const UNPAIRED_PRIVILEGED_CLIENT_TYPES = new Set([
+  'widget-action',
+  'notification-dismiss',
+  'notification-action',
+  'notification-media-start',
+  'notification-media-stop',
+  'client-ready',
+]);
+
+function isUnpairedPrivilegedMessage(raw: string): boolean {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) {
+      return false;
+    }
+    const type = (parsed as { readonly type?: unknown }).type;
+    return typeof type === 'string' && UNPAIRED_PRIVILEGED_CLIENT_TYPES.has(type);
+  } catch {
+    return false;
+  }
 }
 
 /** Adapter so HomeyDeviceRepository / HomeyWebApi can feed the subscription manager. */

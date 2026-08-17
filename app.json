@@ -1353,7 +1353,10 @@
       },
       "pair": [
         {
-          "id": "enter_ip"
+          "id": "enter_code"
+        },
+        {
+          "id": "confirm"
         }
       ],
       "id": "generic_web_display",

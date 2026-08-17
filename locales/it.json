@@ -162,6 +162,21 @@
       "subtitle": "Inserisci l'indirizzo IPv4 del display web generico.",
       "add": "Aggiungi dispositivo"
     },
+    "enterCode": {
+      "title": "Codice di associazione",
+      "subtitle": "Inserisci il codice mostrato sul browser del display.",
+      "legend": "Associazione",
+      "code": "Codice di associazione",
+      "codeHelp": "Sei cifre, ad esempio 483921",
+      "continue": "Continua"
+    },
+    "genericConfirm": {
+      "title": "Conferma display",
+      "subtitle": "Verifica il browser rilevato prima di aggiungere il dispositivo.",
+      "legend": "Informazioni rilevate",
+      "layoutNote": "Layout",
+      "layoutHelp": "Configura il layout della dashboard successivamente nelle Impostazioni app."
+    },
     "confirm": {
       "title": "Dispositivo trovato",
       "subtitle": "Conferma che questo è il wall display da aggiungere.",
@@ -235,6 +250,22 @@
       "ip": "IP rilevato",
       "userAgent": "User Agent",
       "timestamp": "Timestamp"
+    },
+    "genericPairing": {
+      "title": "Display non configurato",
+      "brand": "Wall Display",
+      "heading": "Display non configurato",
+      "lead": "Questo browser non è ancora associato a un display Homey.",
+      "codeLabel": "Codice di associazione",
+      "expiryNote": "Il codice scadrà tra pochi minuti",
+      "ip": "IP rilevato",
+      "instructionsTitle": "In Homey",
+      "instructionsBody": "Aggiungi dispositivo → Generic Web Display → inserisci questo codice"
+    },
+    "genericPairingLimit": {
+      "title": "Associazione non disponibile",
+      "heading": "Associazione temporaneamente non disponibile",
+      "lead": "Troppe sessioni di associazione in sospeso. Ricarica questa pagina tra poco."
     },
     "mismatch": {
       "title": "Dispositivo diverso rilevato",
@@ -310,6 +341,23 @@
       "subscriptions": "Subscription Homey",
       "noRealtime": "Metriche realtime non disponibili.",
       "noSubscriptions": "Nessuna subscription Homey attiva.",
+      "genericPairing": "Associazioni Generic in sospeso",
+      "genericPairingPending": "Codici di associazione attivi",
+      "genericPairingExpiredCleaned": "Sessioni scadute rimosse",
+      "genericPairingSuccessful": "Associazioni riuscite",
+      "genericPairingRejected": "Codici rifiutati",
+      "genericPairingMaxReached": "Limite sessioni raggiunto",
+      "genericPairingCode": "Codice (mascherato)",
+      "genericPairingExpires": "Scadenza",
+      "genericBrowserProfile": "Profilo browser Generic",
+      "genericBrowserTouch": "Touch",
+      "genericBrowserFullscreen": "Supporto fullscreen",
+      "genericBrowserAudio": "Riproduzione audio",
+      "genericBrowserViewport": "Viewport",
+      "genericBrowserUserAgent": "User agent",
+      "genericBrowserLastHello": "Ultimo capability hello",
+      "noGenericPairing": "Nessuna sessione di associazione Generic in sospeso.",
+      "noGenericBrowserProfile": "Nessun profilo browser runtime ancora.",
       "connectionsOpened": "Connessioni aperte",
       "connectionsClosed": "Connessioni chiuse",
       "reconnects": "Riconnessioni (runtime)",
@@ -502,6 +550,10 @@
     "deviceNotIdentified": "Nessun dispositivo identificato da confermare.",
     "invalidConfiguration": "La configurazione memorizzata del dispositivo manca o non è valida.",
     "createDeviceFailed": "Impossibile aggiungere il dispositivo. Riprova.",
-    "notShellyWallDisplay": "Nessuno Shelly Wall Display trovato a questo indirizzo IP."
+    "notShellyWallDisplay": "Nessuno Shelly Wall Display trovato a questo indirizzo IP.",
+    "pairingCodeInvalid": "Codice non valido.",
+    "pairingCodeExpired": "Codice scaduto. Ricarica il browser e riprova.",
+    "pairingIpTaken": "Un altro display usa già questo indirizzo IP.",
+    "pairingUnavailable": "Associazione non disponibile durante l'avvio dell'app."
   }
 }

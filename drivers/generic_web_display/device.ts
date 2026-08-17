@@ -3,6 +3,7 @@ import { buildDisplaySnapshot } from '../../lib/device/buildDisplaySnapshot';
 import {
   getDisplayId,
   isDisplayAppHost,
+  isGenericPairingAppHost,
 } from '../../lib/device/DisplayAppHost';
 import { withExpandedSupportedLayouts } from '../../lib/device/configuration';
 import { ensureNotificationCapabilities } from '../../lib/device/notificationCapabilities';
@@ -50,10 +51,15 @@ class GenericWebDisplayDevice extends Homey.Device {
     changedKeys: string[];
   }): Promise<void> {
     const store = parseWallDisplayStore(this.getStore());
+    const displayId = getDisplayId(this.getData());
+    const app = this.homey.app;
     const result = validateDeviceSettingsChange({
       changedKeys,
       newSettings,
       store,
+      isIpTaken: (ip) =>
+        isGenericPairingAppHost(app) &&
+        app.isDisplayIpTaken(ip, displayId ?? undefined),
     });
 
     if (!result.ok) {

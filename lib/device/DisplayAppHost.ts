@@ -1,4 +1,6 @@
 import type { DisplaySnapshot, DisplayTypeId } from '../display/types';
+import type { GenericDisplayPairingManager } from '../pairing/GenericDisplayPairingManager';
+import type { GenericPairingValidationResult } from '../pairing/types';
 
 /**
  * Minimal app surface used by Homey Devices to sync the runtime registry.
@@ -8,6 +10,30 @@ export interface DisplayAppHost {
   unregisterDisplay(displayId: string): void;
   updateDisplay(snapshot: DisplaySnapshot): void;
   syncNotificationCapabilities?(displayId: string): void;
+}
+
+/** App surface for Generic Web Display code-based pairing (M15). */
+export interface GenericPairingAppHost extends DisplayAppHost {
+  readonly displayRegistry: import('../display/DisplayRegistry').DisplayRegistry;
+  getGenericPairingManager(): GenericDisplayPairingManager;
+  validateGenericPairingCode(code: string): GenericPairingValidationResult;
+  consumeGenericPairingCode(code: string): boolean;
+  isDisplayIpTaken(ipAddress: string, excludeDisplayId?: string): boolean;
+}
+
+export function isGenericPairingAppHost(
+  value: unknown,
+): value is GenericPairingAppHost {
+  if (!isDisplayAppHost(value)) {
+    return false;
+  }
+  const candidate = value as GenericPairingAppHost;
+  return (
+    typeof candidate.getGenericPairingManager === 'function' &&
+    typeof candidate.validateGenericPairingCode === 'function' &&
+    typeof candidate.consumeGenericPairingCode === 'function' &&
+    typeof candidate.isDisplayIpTaken === 'function'
+  );
 }
 
 export interface ShellyHardwareAppHost extends DisplayAppHost {

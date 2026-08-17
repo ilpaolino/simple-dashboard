@@ -1,12 +1,12 @@
 import Homey from 'homey';
-import { AdapterRegistry } from '../../lib/adapters/AdapterRegistry';
+import { randomUUID } from 'node:crypto';
 import { GenericWebDisplayAdapter } from '../../lib/adapters/GenericWebDisplayAdapter';
-import { ADAPTER_IDS } from '../../lib/adapters/types';
+import { isGenericPairingAppHost } from '../../lib/device/DisplayAppHost';
 import { AppLogger } from '../../lib/Logger';
-import { PairingFlow } from '../../lib/pairing/PairingFlow';
+import { GenericCodePairingFlow } from '../../lib/pairing/GenericCodePairingFlow';
 
 /**
- * Generic Web Display driver — IP-only pairing, no Shelly protocol.
+ * Generic Web Display driver — temporary pairing code resolves client IP.
  * @see https://apps.developer.homey.app/the-basics/devices
  */
 class GenericWebDisplayDriver extends Homey.Driver {
@@ -20,24 +20,30 @@ class GenericWebDisplayDriver extends Homey.Driver {
   public async onPair(session: Homey.Driver.PairSession): Promise<void> {
     this.logger.info('Generic Web Display pairing session started');
 
-    const flow = new PairingFlow({
-      registry: new AdapterRegistry([new GenericWebDisplayAdapter()]),
-      mode: 'ip_only',
-      adapterId: ADAPTER_IDS.GENERIC_WEB_DISPLAY,
+    const app = this.homey.app;
+    if (!isGenericPairingAppHost(app)) {
+      throw new Error(this.homey.__('errors.pairingUnavailable'));
+    }
+
+    const flow = new GenericCodePairingFlow({
+      pairingManager: app.getGenericPairingManager(),
+      registry: app.displayRegistry,
+      adapter: new GenericWebDisplayAdapter(),
       translate: (key: string) => this.homey.__(key),
+      createId: () => randomUUID(),
       logger: this.logger,
     });
 
     flow.bind({
       setHandler: (event, handler) => {
         session.setHandler(event, async (data: unknown) => {
-          this.logger.info('Pairing handler invoked', { event });
+          this.logger.info('Generic pairing handler invoked', { event });
           try {
             const result = await handler(data);
-            this.logger.info('Pairing handler completed', { event });
+            this.logger.info('Generic pairing handler completed', { event });
             return result;
           } catch (error) {
-            this.logger.error('Pairing handler failed', { event, error });
+            this.logger.error('Generic pairing handler failed', { event, error });
             throw error;
           }
         });

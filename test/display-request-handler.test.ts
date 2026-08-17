@@ -14,6 +14,7 @@ import { DisplayRegistry } from '../lib/display/DisplayRegistry';
 import { DISPLAY_TYPE_IDS } from '../lib/display/types';
 import { DashboardAssetStore } from '../lib/http/DashboardAssetStore';
 import { DisplayRequestHandler } from '../lib/http/DisplayRequestHandler';
+import { GenericDisplayPairingManager } from '../lib/pairing';
 import type { JsonHttpClient } from '../lib/http/JsonHttpClient';
 import type { Logger, RequestInfo } from '../lib/types';
 import type { LayoutId } from '../lib/adapters/types';
@@ -56,7 +57,10 @@ function createTempAssets(): DashboardAssetStore {
 }
 
 describe('DisplayRequestHandler', () => {
-  it('returns unconfigured for unknown IPs', async () => {
+  it('returns a pairing page for unknown IPs', async () => {
+    const pairingManager = new GenericDisplayPairingManager({
+      enableCleanupTimer: false,
+    });
     const registry = new DisplayRegistry();
     const handler = new DisplayRequestHandler({
       registry,
@@ -70,11 +74,19 @@ describe('DisplayRequestHandler', () => {
       getPort: () => 7999,
       getUptimeSeconds: () => 12,
       assets: createTempAssets(),
+      genericPairingManager: pairingManager,
     });
 
     const response = await handler.handle(request({ clientIp: '10.0.0.9' }));
     assert.equal(response.statusCode, 200);
-    assert.match(response.body, /pages\.unconfigured\.heading/);
+    assert.match(response.body, /pages\.genericPairing\.heading/);
+    assert.match(response.body, /\d{6}/);
+
+    const second = await handler.handle(request({ clientIp: '10.0.0.9' }));
+    const firstCode = response.body.match(/\d{6}/)?.[0];
+    const secondCode = second.body.match(/\d{6}/)?.[0];
+    assert.equal(firstCode, secondCode);
+    pairingManager.destroy();
   });
 
   it('serves a dashboard bootstrap for a Generic display', async () => {

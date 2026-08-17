@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <section id="step-confirm">
+      <header class="homey-header">
+        <h1 class="homey-title" data-i18n="pair.genericConfirm.title">Confirm display</h1>
+        <p class="homey-subtitle" data-i18n="pair.genericConfirm.subtitle">
+          Review the detected browser before adding the device.
+        </p>
+      </header>
+
+      <div class="homey-form">
+        <fieldset class="homey-form-fieldset">
+          <legend class="homey-form-legend" data-i18n="pair.genericConfirm.legend">
+            Detected information
+          </legend>
+
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.confirm.adapter">Type</label>
+            <p class="homey-form-help" id="adapter">—</p>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.enterIp.ip">IP address</label>
+            <p class="homey-form-help" id="ip">—</p>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label" data-i18n="pair.genericConfirm.layoutNote">Layout</label>
+            <p class="homey-form-help" data-i18n="pair.genericConfirm.layoutHelp">
+              Configure the dashboard layout later in App Settings.
+            </p>
+          </div>
+        </fieldset>
+
+        <button
+          id="confirm-add"
+          type="button"
+          class="homey-button-primary-full"
+          data-i18n="pair.confirm.confirm"
+        >
+          Add device
+        </button>
+        <button
+          id="confirm-back"
+          type="button"
+          class="homey-button-secondary-shadow"
+          data-i18n="pair.back"
+        >
+          Back
+        </button>
+      </div>
+    </section>
+
+    <script type="application/javascript">
+      (function () {
+        var started = false;
+
+        function start(Homey) {
+          if (started) {
+            return;
+          }
+          started = true;
+
+          Homey.setNavigationClose();
+          Homey.setTitle(Homey.__('pair.genericConfirm.title'));
+
+          var confirmAddButton = document.getElementById('confirm-add');
+          var confirmBackButton = document.getElementById('confirm-back');
+
+          function setLoading(button, loading) {
+            if (loading) {
+              button.classList.add('is-loading');
+              button.disabled = true;
+              try {
+                Homey.showLoadingOverlay();
+              } catch (error) {}
+              return;
+            }
+            button.classList.remove('is-loading');
+            button.disabled = false;
+            try {
+              Homey.hideLoadingOverlay();
+            } catch (error) {}
+          }
+
+          Homey.emit('get_pairing_preview')
+            .then(function (preview) {
+              document.getElementById('adapter').textContent = preview.adapterName;
+              document.getElementById('ip').textContent = preview.ipAddress;
+            })
+            .catch(function (error) {
+              Homey.alert(
+                (error && error.message) || Homey.__('errors.pairingCodeExpired'),
+              );
+              Homey.showView('enter_code');
+            });
+
+          confirmAddButton.addEventListener('click', function () {
+            setLoading(confirmAddButton, true);
+            Homey.emit('get_pairing_device')
+              .then(function (device) {
+                return Homey.createDevice(device);
+              })
+              .then(function () {
+                return Homey.emit('consume_pairing');
+              })
+              .then(function () {
+                Homey.done();
+              })
+              .catch(function (error) {
+                setLoading(confirmAddButton, false);
+                Homey.alert(
+                  (error && error.message) ||
+                    Homey.__('errors.createDeviceFailed'),
+                );
+              });
+          });
+
+          confirmBackButton.addEventListener('click', function () {
+            Homey.showView('enter_code');
+          });
+        }
+
+        if (typeof Homey !== 'undefined') {
+          start(Homey);
+        }
+
+        window.onHomeyReady = function (HomeyApi) {
+          start(HomeyApi);
+        };
+      })();
+    </script>
+  </body>
+</html>

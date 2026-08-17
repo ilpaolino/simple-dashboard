@@ -253,30 +253,37 @@ describe('RealtimeGateway WebSocket', () => {
     }, { onoff: true });
   });
 
-  it('rejects an unknown display IP', async () => {
+  it('accepts a pairing websocket for an unknown display IP', async () => {
     await withGateway(
-      async ({ port, gateway }) => {
-        const code = await new Promise<number>((resolve, reject) => {
-          const socket = new WebSocket(
-            `ws://127.0.0.1:${port}${REALTIME_WEBSOCKET_PATH}`,
-          );
-          const finish = (status: number): void => {
-            socket.terminate();
-            resolve(status);
-          };
-          socket.once('open', () => {
-            socket.terminate();
-            reject(new Error('Unknown display should not open'));
-          });
-          socket.once('unexpected-response', (_req, res) => {
-            finish(res.statusCode ?? 0);
-          });
-          socket.once('error', () => {});
-          setTimeout(() => {
-            finish(gateway.getMetrics().rejectedConnections > 0 ? 403 : 0);
-          }, 300);
+      async ({ port }) => {
+        const socket = new WebSocket(
+          `ws://127.0.0.1:${port}${REALTIME_WEBSOCKET_PATH}`,
+        );
+        await new Promise<void>((resolve, reject) => {
+          socket.once('open', () => resolve());
+          socket.once('error', reject);
         });
-        assert.ok(code === 403 || gateway.getMetrics().rejectedConnections >= 1);
+        socket.send(
+          JSON.stringify({
+            type: 'generic-client-hello',
+            capabilities: {
+              touch: true,
+              fullscreen: false,
+              audioPlayback: true,
+              canReloadPage: true,
+            },
+            viewport: { width: 800, height: 480, devicePixelRatio: 2 },
+          }),
+        );
+        socket.send(
+          JSON.stringify({
+            type: 'widget-action',
+            widgetId: 'x',
+            action: 'toggle',
+            requestId: 'r1',
+          }),
+        );
+        await closeSocket(socket);
       },
       { snapshot: displaySnapshot({ ipAddress: '10.0.0.9' }) },
     );

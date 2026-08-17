@@ -8,6 +8,10 @@ import type { RealtimeMetricsSnapshot } from '../../realtime/RealtimeMetrics';
 import type { SubscriptionDiagnostic } from '../../realtime/RealtimeSubscriptionManager';
 import type { NotificationDiagnosticsSnapshot } from '../../notifications';
 import type { ShellyHardwareDiagnosticsEntry } from '../../shelly';
+import type {
+  GenericBrowserRuntimeProfile,
+  GenericPairingDiagnosticsSnapshot,
+} from '../../pairing/types';
 import { escapeHtml, TECHNICAL_PAGE_STYLES } from './html';
 
 export interface DiagnosticsRealtimeSection {
@@ -28,6 +32,10 @@ export interface DiagnosticsPageInput {
   readonly realtime?: DiagnosticsRealtimeSection | null;
   readonly notifications?: NotificationDiagnosticsSnapshot | null;
   readonly shellyHardware?: readonly ShellyHardwareDiagnosticsEntry[] | null;
+  readonly genericPairing?: GenericPairingDiagnosticsSnapshot | null;
+  readonly genericBrowserProfiles?: Readonly<
+    Record<string, GenericBrowserRuntimeProfile>
+  > | null;
   readonly now?: Date;
 }
 
@@ -751,6 +759,95 @@ export function renderDiagnosticsPage(input: DiagnosticsPageInput): string {
 main { width: min(96rem, 100%); overflow-x: auto; }
 `;
 
+  const genericPairing = input.genericPairing;
+  const genericPairingSummary =
+    genericPairing === null || genericPairing === undefined
+      ? `<p>${escapeHtml(t('pages.diagnostics.noGenericPairing'))}</p>`
+      : `<dl>
+      <dt>${escapeHtml(t('pages.diagnostics.genericPairingPending'))}</dt>
+      <dd>${escapeHtml(String(genericPairing.pendingCount))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.genericPairingExpiredCleaned'))}</dt>
+      <dd>${escapeHtml(String(genericPairing.expiredCleanedCount))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.genericPairingSuccessful'))}</dt>
+      <dd>${escapeHtml(String(genericPairing.successfulPairings))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.genericPairingRejected'))}</dt>
+      <dd>${escapeHtml(String(genericPairing.rejectedCodes))}</dd>
+      <dt>${escapeHtml(t('pages.diagnostics.genericPairingMaxReached'))}</dt>
+      <dd>${escapeHtml(String(genericPairing.maxPendingReachedCount))}</dd>
+    </dl>`;
+
+  const genericPairingRows = (genericPairing?.activeCodes ?? []).map(
+    (session) =>
+      `<tr>
+        <td>${escapeHtml(session.codeMasked)}</td>
+        <td>${escapeHtml(session.ipAddress)}</td>
+        <td>${escapeHtml(session.expiresAt)}</td>
+      </tr>`,
+  );
+  const genericPairingTable =
+    genericPairingRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noGenericPairing'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.diagnostics.genericPairingCode'))}</th>
+          <th>${escapeHtml(t('pages.recognized.ip'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.genericPairingExpires'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${genericPairingRows.join('\n')}
+      </tbody>
+    </table>`;
+
+  const browserProfiles = input.genericBrowserProfiles ?? {};
+  const genericBrowserRows = displays
+    .filter((entry) => entry.config.typeId === DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY)
+    .map((entry) => {
+      const profile = browserProfiles[entry.config.displayId];
+      if (!profile) {
+        return `<tr>
+        <td>${escapeHtml(entry.config.name)}</td>
+        <td>${escapeHtml(entry.config.ipAddress)}</td>
+        <td colspan="6">${escapeHtml(t('pages.diagnostics.noGenericBrowserProfile'))}</td>
+      </tr>`;
+      }
+      const online =
+        input.registry.getOnlineStatus(entry.config.displayId, now) === 'online'
+          ? t('pages.status.online')
+          : t('pages.status.offline');
+      return `<tr>
+        <td>${escapeHtml(entry.config.name)}</td>
+        <td>${escapeHtml(entry.config.ipAddress)}</td>
+        <td>${escapeHtml(online)}</td>
+        <td>${escapeHtml(profile.capabilities.touch ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(profile.capabilities.fullscreen ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(profile.capabilities.audioPlayback ? t('pages.diagnostics.yes') : t('pages.diagnostics.no'))}</td>
+        <td>${escapeHtml(`${profile.viewport.width}×${profile.viewport.height} @${profile.viewport.devicePixelRatio}`)}</td>
+        <td>${escapeHtml(formatTimestamp(profile.lastHelloAt, never))}</td>
+      </tr>`;
+    });
+  const genericBrowserTable =
+    genericBrowserRows.length === 0
+      ? `<p>${escapeHtml(t('pages.diagnostics.noDisplays'))}</p>`
+      : `<table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pages.recognized.name'))}</th>
+          <th>${escapeHtml(t('pages.recognized.ip'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.online'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.genericBrowserTouch'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.genericBrowserFullscreen'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.genericBrowserAudio'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.genericBrowserViewport'))}</th>
+          <th>${escapeHtml(t('pages.diagnostics.genericBrowserLastHello'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${genericBrowserRows.join('\n')}
+      </tbody>
+    </table>`;
+
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(input.lang)}">
 <head>
@@ -768,6 +865,11 @@ ${diagnosticsStyles}
     <dl>
       ${summaryHtml}
     </dl>
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.genericPairing'))}</h1>
+    ${genericPairingSummary}
+    ${genericPairingTable}
+    <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.genericBrowserProfile'))}</h1>
+    ${genericBrowserTable}
     <h1 style="margin-top:2rem;font-size:1.25rem;">${escapeHtml(t('pages.diagnostics.displays'))}</h1>
     <table>
       <thead>

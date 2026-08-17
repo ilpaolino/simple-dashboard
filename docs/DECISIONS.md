@@ -1,5 +1,45 @@
 # Decisions
 
+Architectural choices for Milestone 15. Earlier decisions remain in force below and in prior milestone docs.
+
+## Generic Web Display remains IP-based
+
+**Choice:** Runtime and persistent routing identity for Generic displays stays `settings.ip`. Pairing code is not stored on the device.
+
+**Why:** Wall browsers must work after cache/cookie clears; IP is the configured Homey setting.
+
+## Pairing code is temporary correlation only
+
+**Choice:** Six-digit codes live in `GenericDisplayPairingManager` RAM, bound to client IP, consumed after successful Homey pairing.
+
+**Why:** Simplifies first setup without inventing browser credentials.
+
+## No browser-persisted identity
+
+**Choice:** No localStorage, cookies, UUID, or fingerprint for recognition.
+
+**Why:** Explicit M15 requirement; IP remains the sole routing key.
+
+## Pairing sessions are runtime-only
+
+**Choice:** Pending codes are lost on app restart; browsers must show a fresh code.
+
+**Why:** Minimal persistence; codes are cheap to regenerate.
+
+## Layout is never inferred automatically
+
+**Choice:** Viewport and browser capabilities are diagnostics/runtime metadata only.
+
+**Why:** Layout stays user-configured in App Settings / Device Store.
+
+## Browser capabilities are runtime metadata
+
+**Choice:** `GenericBrowserCapabilityStore` holds the latest `generic-client-hello` per online Generic display.
+
+**Why:** Useful for diagnostics and future UX; not identity.
+
+---
+
 Architectural choices for Milestone 14. Earlier decisions remain in force below and in prior milestone docs.
 
 ## Hardware features are discovered, not assumed

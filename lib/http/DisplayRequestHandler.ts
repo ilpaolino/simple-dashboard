@@ -32,8 +32,12 @@ import {
   renderDiagnosticsDisabledPage,
   renderMismatchPage,
   renderProbeFailedPage,
-  renderUnconfiguredPage,
 } from './pages/displayPages';
+import {
+  renderGenericPairingLimitPage,
+  renderGenericPairingPage,
+} from '../pairing/renderGenericPairingPage';
+import type { GenericDisplayPairingManager } from '../pairing/GenericDisplayPairingManager';
 
 export interface DisplayRequestHandlerOptions {
   readonly registry: DisplayRegistry;
@@ -51,6 +55,10 @@ export interface DisplayRequestHandlerOptions {
   readonly getRealtimeDiagnostics?: () => DiagnosticsRealtimeSection | null;
   readonly getNotificationDiagnostics?: () => NotificationDiagnosticsSnapshot | null;
   readonly getShellyHardwareDiagnostics?: () => readonly ShellyHardwareDiagnosticsEntry[];
+  readonly genericPairingManager?: GenericDisplayPairingManager | null;
+  readonly getGenericBrowserProfiles?: () => Readonly<
+    Record<string, import('../pairing/types').GenericBrowserRuntimeProfile>
+  >;
   readonly serveNotificationMedia?: (input: {
     readonly displayId: string;
     readonly notificationId: string;
@@ -131,6 +139,10 @@ export class DisplayRequestHandler {
           realtime,
           notifications: this.options.getNotificationDiagnostics?.() ?? null,
           shellyHardware: this.options.getShellyHardwareDiagnostics?.() ?? null,
+          genericPairing:
+            this.options.genericPairingManager?.diagnosticsSnapshot() ?? null,
+          genericBrowserProfiles:
+            this.options.getGenericBrowserProfiles?.() ?? null,
         }),
       );
     } catch (error) {
@@ -174,19 +186,7 @@ export class DisplayRequestHandler {
     const entry = this.options.registry.findByIp(clientIp);
 
     if (!entry) {
-      this.options.logger.info('Root request from unconfigured display', {
-        clientIp,
-      });
-      return htmlResponse(
-        200,
-        renderUnconfiguredPage({
-          lang,
-          translate,
-          clientIp,
-          userAgent: info.userAgent,
-          timestamp: info.timestamp,
-        }),
-      );
+      return this.handleUnknownClient(info, lang, translate, clientIp);
     }
 
     const { config } = entry;
@@ -369,6 +369,52 @@ export class DisplayRequestHandler {
         lang,
         title: translate('pages.dashboard.title'),
         bootstrap,
+      }),
+    );
+  }
+
+  private handleUnknownClient(
+    _info: RequestInfo,
+    lang: string,
+    translate: (key: string) => string,
+    clientIp: string,
+  ): HttpResponse {
+    this.options.logger.info('Root request from unconfigured display', {
+      clientIp,
+    });
+
+    const pairingManager = this.options.genericPairingManager;
+    if (!pairingManager) {
+      return htmlResponse(
+        200,
+        renderGenericPairingLimitPage({
+          lang,
+          translate,
+          clientIp,
+        }),
+      );
+    }
+
+    const session = pairingManager.getOrCreateForIp(clientIp);
+    if (!session) {
+      return htmlResponse(
+        200,
+        renderGenericPairingLimitPage({
+          lang,
+          translate,
+          clientIp,
+        }),
+      );
+    }
+
+    return htmlResponse(
+      200,
+      renderGenericPairingPage({
+        lang,
+        translate,
+        code: session.code,
+        clientIp,
+        expiresAt: session.expiresAt.toISOString(),
       }),
     );
   }

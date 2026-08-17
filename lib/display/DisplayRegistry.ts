@@ -95,6 +95,20 @@ export class DisplayRegistry {
     return null;
   }
 
+  /** Returns true when another display already uses this IP (routing collision). */
+  public isIpTaken(rawIp: string, excludeDisplayId?: string): boolean {
+    const ip = normalizeClientIp(rawIp);
+    for (const entry of this.byId.values()) {
+      if (excludeDisplayId && entry.config.displayId === excludeDisplayId) {
+        continue;
+      }
+      if (normalizeClientIp(entry.config.ipAddress) === ip) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public touch(
     displayId: string,
     ipAddress: string,

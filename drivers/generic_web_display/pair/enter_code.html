@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <section id="step-code">
+      <header class="homey-header">
+        <h1 class="homey-title" data-i18n="pair.enterCode.title">Pairing code</h1>
+        <p class="homey-subtitle" data-i18n="pair.enterCode.subtitle">
+          Enter the code shown on the browser display.
+        </p>
+      </header>
+
+      <form class="homey-form" id="code-form" action="#" method="post">
+        <fieldset class="homey-form-fieldset">
+          <legend class="homey-form-legend" data-i18n="pair.enterCode.legend">
+            Association
+          </legend>
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="code" data-i18n="pair.enterCode.code">
+              Pairing code
+            </label>
+            <input
+              class="homey-form-input"
+              id="code"
+              name="code"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              maxlength="6"
+              autocomplete="off"
+              required
+            />
+            <p class="homey-form-help" data-i18n="pair.enterCode.codeHelp">
+              Six digits, for example 483921
+            </p>
+          </div>
+        </fieldset>
+
+        <button
+          id="validate"
+          type="submit"
+          class="homey-button-primary-full"
+          data-i18n="pair.enterCode.continue"
+        >
+          Continue
+        </button>
+      </form>
+    </section>
+
+    <script type="application/javascript">
+      (function () {
+        var started = false;
+
+        function start(Homey) {
+          if (started) {
+            return;
+          }
+          started = true;
+
+          Homey.setNavigationClose();
+          Homey.setTitle(Homey.__('pair.enterCode.title'));
+
+          var codeForm = document.getElementById('code-form');
+          var codeElement = document.getElementById('code');
+          var validateButton = document.getElementById('validate');
+
+          function setLoading(button, loading) {
+            if (loading) {
+              button.classList.add('is-loading');
+              button.disabled = true;
+              try {
+                Homey.showLoadingOverlay();
+              } catch (error) {}
+              return;
+            }
+            button.classList.remove('is-loading');
+            button.disabled = false;
+            try {
+              Homey.hideLoadingOverlay();
+            } catch (error) {}
+          }
+
+          codeForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            setLoading(validateButton, true);
+
+            Homey.emit('validate_code', { code: codeElement.value })
+              .then(function () {
+                Homey.showView('confirm');
+              })
+              .catch(function (error) {
+                Homey.alert(
+                  (error && error.message) ||
+                    Homey.__('errors.pairingCodeInvalid'),
+                );
+              })
+              .then(function () {
+                setLoading(validateButton, false);
+              });
+          });
+        }
+
+        if (typeof Homey !== 'undefined') {
+          start(Homey);
+        }
+
+        window.onHomeyReady = function (HomeyApi) {
+          start(HomeyApi);
+        };
+      })();
+    </script>
+  </body>
+</html>

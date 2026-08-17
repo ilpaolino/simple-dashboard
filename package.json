@@ -1,6 +1,6 @@
 {
   "name": "dev.dadda.simpledashboard",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Simple Dashboard — Homey Flow notifications with optional camera media on Wall Displays",
   "main": "app.js",
   "scripts": {

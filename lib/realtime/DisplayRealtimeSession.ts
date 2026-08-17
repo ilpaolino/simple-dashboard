@@ -36,6 +36,10 @@ export interface DisplayRealtimeSessionOptions {
     session: DisplayRealtimeSession,
     reason: string,
   ) => void;
+  readonly onGenericClientHello?: (
+    session: DisplayRealtimeSession,
+    hello: unknown,
+  ) => void;
   readonly now?: () => Date;
   readonly heartbeatIntervalMs?: number;
   readonly heartbeatTimeoutMs?: number;
@@ -56,6 +60,7 @@ export class DisplayRealtimeSession {
   private readonly onClose: (session: DisplayRealtimeSession) => void;
   private readonly onClientMessage: DisplayRealtimeSessionOptions['onClientMessage'];
   private readonly onProtocolError: DisplayRealtimeSessionOptions['onProtocolError'];
+  private readonly onGenericClientHello: DisplayRealtimeSessionOptions['onGenericClientHello'];
   private readonly now: () => Date;
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
@@ -76,6 +81,7 @@ export class DisplayRealtimeSession {
     this.onClose = options.onClose;
     this.onClientMessage = options.onClientMessage;
     this.onProtocolError = options.onProtocolError;
+    this.onGenericClientHello = options.onGenericClientHello;
     this.now = options.now ?? (() => new Date());
     this.heartbeatIntervalMs =
       options.heartbeatIntervalMs ?? HEARTBEAT_INTERVAL_MS;
@@ -406,6 +412,11 @@ export class DisplayRealtimeSession {
     }
 
     // Typed protocol messages added later must still reach the gateway.
+    if (type === 'generic-client-hello') {
+      this.onGenericClientHello?.(this, parsed);
+      return;
+    }
+
     if (isClientMessage(parsed)) {
       this.onClientMessage(this, parsed);
       return;

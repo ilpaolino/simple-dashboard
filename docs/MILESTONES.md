@@ -216,6 +216,27 @@
 
 - Brightness, volume, sound, screen on/off, browser reload hardware commands
 
+## Milestone 15 — Generic Web Display pairing & browser capabilities
+
+**Status:** Done. Details: [MILESTONE-15.md](MILESTONE-15.md).
+
+### In scope (implemented)
+
+- Unknown Generic browser → pairing page with 6-digit code (8 min expiry)
+- `GenericDisplayPairingManager` (reuse code per IP, consume, collision handling, max 64 pending)
+- Homey pairing: enter code → confirm detected IP → create device
+- Limited pairing WebSocket (`generic-client-hello`, `pairing-completed`)
+- Runtime browser capabilities on paired Generic displays
+- Diagnostics: pending pairings + masked codes + browser profile
+- IP collision validation at pairing and Device Settings
+- IT/EN strings; automated tests
+
+### Out of scope (explicit)
+
+- Browser UUID / localStorage / cookie identity
+- Automatic layout from viewport
+- QR code, mDNS discovery, cloud pairing
+
 ## Later milestones (not started)
 
 - Additional widget types (sensors, thermostats)
@@ -225,6 +246,7 @@
 
 ## Manual test checklist
 
+- Milestone 15: [MILESTONE-15.md](MILESTONE-15.md)
 - Milestone 14: [MILESTONE-14.md](MILESTONE-14.md)
 - Milestone 11: [MILESTONE-11.md](MILESTONE-11.md)
 - Milestone 11B: [MILESTONE-11B.md](MILESTONE-11B.md)

@@ -1,5 +1,18 @@
 # Known issues
 
+## Fixed / superseded during Milestone 15
+
+- **Generic pairing required manual IP entry.** Temporary 6-digit code pairing correlates browser IP with Homey pairing; final identity remains Device Settings IP.
+- **Unknown browsers saw a generic unconfigured technical page.** Dedicated pairing page with large code and Homey instructions.
+
+## Deferred by design (Milestone 15)
+
+- **Pairing codes are lost on app restart.** Runtime-only sessions; refresh the browser to obtain a new code.
+- **Unknown Shelly browsers may see the Generic pairing page** until paired via the Shelly driver (Shelly flow unchanged).
+- **Fullscreen is detected, not forced** (browser requires user gesture).
+- **Audio capability is a probe only** — no sounds played in M15.
+- **Expiry refresh uses page reload** (30 s check), not a live countdown.
+
 ## Fixed / superseded during Milestone 13
 
 - **No camera in notifications.** Optional Homey Device media is now a field on the existing Notification (Flow autocomplete, resolver, scoped image HTTP).

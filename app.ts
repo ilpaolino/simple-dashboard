@@ -11,6 +11,8 @@ import {
 } from './lib/device/buildDisplaySnapshot';
 import { getDisplayId } from './lib/device/DisplayAppHost';
 import { DISPLAY_TYPE_IDS } from './lib/display/types';
+import { GenericDisplayPairingManager } from './lib/pairing';
+import type { GenericBrowserRuntimeProfile } from './lib/pairing/types';
 import { DisplayRequestHandler } from './lib/http/DisplayRequestHandler';
 import { HttpServer } from './lib/HttpServer';
 import { AppLogger } from './lib/Logger';
@@ -97,6 +99,7 @@ class WelcomeWallApp extends Homey.App {
   >();
   private shellyHardware!: ShellyHardwareCoordinator;
   private shellyStartupDiscoveryPromise: Promise<void> | null = null;
+  private genericPairingManager!: GenericDisplayPairingManager;
 
   public async onInit(): Promise<void> {
     this.logger = new AppLogger(this);
@@ -108,6 +111,13 @@ class WelcomeWallApp extends Homey.App {
         ? (url) => this.imageFetcher!(url)
         : undefined,
     });
+
+    this.genericPairingManager = new GenericDisplayPairingManager(
+      { logger: this.logger },
+      (ipAddress) => {
+        this.realtimeGateway?.notifyGenericPairingCompleted(ipAddress);
+      },
+    );
 
     this.realtimeGateway = new RealtimeGateway({
       registry: this.displayRegistry,
@@ -171,6 +181,23 @@ class WelcomeWallApp extends Homey.App {
       getNotificationDiagnostics: () =>
         this.realtimeGateway.getNotificationDiagnostics(),
       getShellyHardwareDiagnostics: () => this.getShellyHardwareDiagnostics(),
+      genericPairingManager: this.genericPairingManager,
+      getGenericBrowserProfiles: (): Readonly<
+        Record<string, GenericBrowserRuntimeProfile>
+      > => {
+        const store = this.realtimeGateway.getGenericBrowserCapabilities();
+        const profiles: Record<string, GenericBrowserRuntimeProfile> = {};
+        for (const entry of this.displayRegistry.getAll()) {
+          if (entry.config.typeId !== DISPLAY_TYPE_IDS.GENERIC_WEB_DISPLAY) {
+            continue;
+          }
+          const profile = store.get(entry.config.displayId);
+          if (profile) {
+            profiles[entry.config.displayId] = profile;
+          }
+        }
+        return profiles;
+      },
       serveNotificationMedia: async (input) => {
         if (input.kind === 'video') {
           return this.realtimeGateway.serveNotificationVideo();
@@ -259,6 +286,22 @@ class WelcomeWallApp extends Homey.App {
       typeId: snapshot.typeId,
       ip: snapshot.ipAddress,
     });
+  }
+
+  public getGenericPairingManager(): GenericDisplayPairingManager {
+    return this.genericPairingManager;
+  }
+
+  public validateGenericPairingCode(code: string) {
+    return this.genericPairingManager.validateCode(code);
+  }
+
+  public consumeGenericPairingCode(code: string): boolean {
+    return this.genericPairingManager.consume(code);
+  }
+
+  public isDisplayIpTaken(ipAddress: string, excludeDisplayId?: string): boolean {
+    return this.displayRegistry.isIpTaken(ipAddress, excludeDisplayId);
   }
 
   public unregisterDisplay(displayId: string): void {
@@ -726,6 +769,7 @@ class WelcomeWallApp extends Homey.App {
     }
 
     this.displayRegistry.clear();
+    this.genericPairingManager.destroy();
     this.shellyHardware.clear();
     this.diagnosticsLog.clear();
     this.logger.info('Simple Dashboard app uninitialized');

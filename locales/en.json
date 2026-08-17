@@ -162,6 +162,21 @@
       "subtitle": "Enter the IPv4 address of the generic web display.",
       "add": "Add device"
     },
+    "enterCode": {
+      "title": "Pairing code",
+      "subtitle": "Enter the code shown on the browser display.",
+      "legend": "Association",
+      "code": "Pairing code",
+      "codeHelp": "Six digits, for example 483921",
+      "continue": "Continue"
+    },
+    "genericConfirm": {
+      "title": "Confirm display",
+      "subtitle": "Review the detected browser before adding the device.",
+      "legend": "Detected information",
+      "layoutNote": "Layout",
+      "layoutHelp": "Configure the dashboard layout later in App Settings."
+    },
     "confirm": {
       "title": "Device found",
       "subtitle": "Confirm that this is the wall display you want to add.",
@@ -235,6 +250,22 @@
       "ip": "Detected IP",
       "userAgent": "User Agent",
       "timestamp": "Timestamp"
+    },
+    "genericPairing": {
+      "title": "Display not configured",
+      "brand": "Wall Display",
+      "heading": "Display not configured",
+      "lead": "This browser is not associated with a Homey display yet.",
+      "codeLabel": "Pairing code",
+      "expiryNote": "The code expires in a few minutes",
+      "ip": "Detected IP",
+      "instructionsTitle": "In Homey",
+      "instructionsBody": "Add device → Generic Web Display → enter this code"
+    },
+    "genericPairingLimit": {
+      "title": "Pairing unavailable",
+      "heading": "Pairing temporarily unavailable",
+      "lead": "Too many pending pairing sessions. Refresh this page in a moment."
     },
     "mismatch": {
       "title": "Different device detected",
@@ -310,6 +341,23 @@
       "subscriptions": "Homey subscriptions",
       "noRealtime": "Realtime metrics unavailable.",
       "noSubscriptions": "No Homey capability subscriptions.",
+      "genericPairing": "Pending Generic pairings",
+      "genericPairingPending": "Active pairing codes",
+      "genericPairingExpiredCleaned": "Expired sessions cleaned",
+      "genericPairingSuccessful": "Successful pairings",
+      "genericPairingRejected": "Rejected codes",
+      "genericPairingMaxReached": "Max pending reached",
+      "genericPairingCode": "Code (masked)",
+      "genericPairingExpires": "Expires",
+      "genericBrowserProfile": "Generic browser profile",
+      "genericBrowserTouch": "Touch",
+      "genericBrowserFullscreen": "Fullscreen support",
+      "genericBrowserAudio": "Audio playback",
+      "genericBrowserViewport": "Viewport",
+      "genericBrowserUserAgent": "User agent",
+      "genericBrowserLastHello": "Last capability hello",
+      "noGenericPairing": "No pending Generic pairing sessions.",
+      "noGenericBrowserProfile": "No runtime browser profile yet.",
       "connectionsOpened": "Connections opened",
       "connectionsClosed": "Connections closed",
       "reconnects": "Reconnects (runtime)",
@@ -502,6 +550,10 @@
     "deviceNotIdentified": "No identified device is available to confirm.",
     "invalidConfiguration": "The stored device configuration is missing or invalid.",
     "createDeviceFailed": "The device could not be added. Try again.",
-    "notShellyWallDisplay": "No Shelly Wall Display was found at this IP address."
+    "notShellyWallDisplay": "No Shelly Wall Display was found at this IP address.",
+    "pairingCodeInvalid": "Invalid pairing code.",
+    "pairingCodeExpired": "Pairing code expired. Refresh the browser and try again.",
+    "pairingIpTaken": "Another display already uses this IP address.",
+    "pairingUnavailable": "Pairing is unavailable while the app is starting."
   }
 }

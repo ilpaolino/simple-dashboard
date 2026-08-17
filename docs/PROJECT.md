@@ -8,11 +8,12 @@ It hosts a local HTTP + WebSocket endpoint for wall displays. Milestone 11 added
 
 ## Current status
 
-**Milestone 14 is implemented.** Milestone 0–13 behavior is preserved.
+**Milestone 15 is implemented.** Milestone 0–14 behavior is preserved (Shelly pairing unchanged).
 
 | Area | Status |
 | --- | --- |
 | Local HTTP server on Homey Pro | Done (M0) |
+| Generic Web Display pairing code + IP identity | Done (M15) |
 | App settings (HTTP port + diagnostics) | Done (M0/M2) |
 | Separate drivers: Shelly + Generic | Done (M2) |
 | DisplayRegistry (runtime, Homey SoT) | Done (M2/M6 online via WS) |
@@ -94,7 +95,7 @@ homey app run --remote
 | `settings/` | Official Homey app settings + Dashboard Editor |
 | `lib/shelly/` | Shelly RPC client, hardware discovery, runtime profile store (M14) |
 | `lib/adapters/` | Shelly + Generic protocol adapters |
-| `lib/pairing/` | Shared pairing state machine |
+| `lib/pairing/` | Shared pairing state machine + Generic code pairing (M15) |
 | `drivers/shelly_wall_display/` | Shelly driver, device, pairing, settings |
 | `drivers/generic_web_display/` | Generic driver, device, pairing, settings |
 | `locales/` | `en` + `it` |

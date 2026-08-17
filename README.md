@@ -1,6 +1,6 @@
 # Simple Dashboard
 
-Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync, interactive Light/Cover widgets, Flow-driven Notification Center, and Shelly Wall Display hardware discovery (RPC reboot).
+Homey Pro app (`dev.dadda.simpledashboard`) — Wall Display recognition plus a vanilla HTML/CSS/TypeScript grid dashboard with WebSocket realtime sync, interactive Light/Cover widgets, Flow-driven Notification Center, Shelly hardware discovery, and Generic Web Display pairing via temporary code.
 
 See [`docs/PROJECT.md`](docs/PROJECT.md) for current milestone status.
 
@@ -59,14 +59,25 @@ homey app install
 
 ## Pair a display
 
+### Shelly Wall Display
+
 1. Open the Homey mobile/web app
-2. Add device → **Simple Dashboard**
-3. Choose **Shelly Wall Display** or **Generic Web Display**
-4. Enter the display IPv4 address
-5. Shelly: confirm detected hardware info, then add
-6. Generic: add after entering the IP
-7. Open Advanced settings → set layout (Shelly: 2x2 / 3x3 — Generic: 2x4 / 4x2 / 3x6 / 6x3)
-8. Open the dashboard URL from the display browser (WebSocket sync starts automatically; editor saves apply live when connected)
+2. Add device → **Simple Dashboard** → **Shelly Wall Display**
+3. Enter the display IPv4 address
+4. Confirm detected hardware info, then add
+5. Open Advanced settings → set layout (2x2 / 3x3)
+6. Open `http://<HOMEY_LAN_IP>:7999/` from the display browser
+
+### Generic Web Display
+
+1. On the tablet/browser, open `http://<HOMEY_LAN_IP>:7999/` (pairing page shows a 6-digit code)
+2. In Homey: Add device → **Simple Dashboard** → **Generic Web Display**
+3. Enter the pairing code from the browser
+4. Confirm the detected IP, then add
+5. Refresh the browser → dashboard loads
+6. Configure layout in Advanced settings (2x4 / 4x2 / 3x6 / 6x3) and widgets in App Settings
+
+Identity is always the configured **IP address** (not browser storage). Clearing cache/cookies does not break recognition.
 
 ## Configure HTTP port and diagnostics
 
@@ -96,5 +107,6 @@ Persistent project memory lives in [`docs/`](docs/):
 - [MILESTONE-6.md](docs/MILESTONE-6.md)
 - [MILESTONE-12.md](docs/MILESTONE-12.md) (Action ID: filter that matches SHOW ↔ WHEN)
 - [MILESTONE-13.md](docs/MILESTONE-13.md) (optional camera media inside notifications)
+- [MILESTONE-15.md](docs/MILESTONE-15.md) (Generic pairing code + browser capabilities)
 - [TODO.md](docs/TODO.md)
 - [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)

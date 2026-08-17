@@ -1,5 +1,16 @@
 # TODO
 
+## Milestone 15 follow-up (optional, not blocking)
+
+- [ ] Browser at unconfigured IP → pairing page + 6-digit code
+- [ ] Homey Generic pairing with code → IP auto-filled on confirm
+- [ ] After pairing: browser reload → dashboard (no re-pair)
+- [ ] Clear browser cache/cookies/localStorage → same IP still recognized
+- [ ] Change client IP → pairing page; fix IP in Device Settings → dashboard
+- [ ] Wait 8+ minutes → old code rejected; refresh browser → new code
+- [ ] `/diagnostics` shows pending pairings (masked) and Generic browser profile
+- [ ] Shelly pairing and dashboard unchanged
+
 ## Milestone 14 follow-up (optional, not blocking)
 
 - [ ] Pair Shelly Wall Display; verify hardware summary at confirm step

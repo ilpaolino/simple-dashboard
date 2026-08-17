@@ -16,6 +16,10 @@ export interface RealtimeSessionManagerOptions {
     session: DisplayRealtimeSession,
     message: ClientMessage,
   ) => void;
+  readonly onGenericClientHello?: (
+    session: DisplayRealtimeSession,
+    hello: unknown,
+  ) => void;
 }
 
 /**
@@ -29,6 +33,7 @@ export class RealtimeSessionManager {
   private readonly onSessionOpened: RealtimeSessionManagerOptions['onSessionOpened'];
   private readonly onSessionClosed: RealtimeSessionManagerOptions['onSessionClosed'];
   private readonly onClientMessage: RealtimeSessionManagerOptions['onClientMessage'];
+  private readonly onGenericClientHello: RealtimeSessionManagerOptions['onGenericClientHello'];
 
   public constructor(options: RealtimeSessionManagerOptions) {
     this.metrics = options.metrics;
@@ -36,6 +41,7 @@ export class RealtimeSessionManager {
     this.onSessionOpened = options.onSessionOpened;
     this.onSessionClosed = options.onSessionClosed;
     this.onClientMessage = options.onClientMessage;
+    this.onGenericClientHello = options.onGenericClientHello;
   }
 
   public open(options: {
@@ -62,6 +68,9 @@ export class RealtimeSessionManager {
       },
       onClientMessage: (active, message) => {
         this.onClientMessage?.(active, message);
+      },
+      onGenericClientHello: (active, hello) => {
+        this.onGenericClientHello?.(active, hello);
       },
       onProtocolError: (active, reason) => {
         this.logger.warn('Realtime protocol error', {

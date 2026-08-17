@@ -15,7 +15,10 @@
   },
   "pair": [
     {
-      "id": "enter_ip"
+      "id": "enter_code"
+    },
+    {
+      "id": "confirm"
     }
   ]
 }

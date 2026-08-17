@@ -86,6 +86,24 @@ GET /notification-media/:id/video  (415 — no transcoding)
 
 Homey camera video types (RTSP / WebRTC / HLS / DASH / RTMP) are **detected** but not piped to `<video>`. When Homey also exposes an image, that snapshot is shown and refreshed every 3 s while the Center is open. See [MILESTONE-13.md](MILESTONE-13.md).
 
+### Milestone 15 — Generic pairing & browser capabilities
+
+```text
+Unknown browser GET /
+        │
+        ▼
+GenericDisplayPairingManager (runtime RAM, 8 min expiry)
+        │
+        ├─ pairing page + optional pairing WebSocket
+        └─ Homey Generic driver: validate code → settings.ip
+                │
+Paired Generic display WebSocket
+        │
+        └─ generic-client-hello → GenericBrowserCapabilityStore (runtime)
+```
+
+See [MILESTONE-15.md](MILESTONE-15.md).
+
 ### Milestone 14 — Shelly hardware discovery & reboot
 
 ```text

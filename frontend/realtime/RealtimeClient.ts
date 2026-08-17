@@ -353,6 +353,7 @@ export class RealtimeClient {
 
     socket.addEventListener('open', () => {
       this.send({ type: 'client-ready' });
+      this.sendGenericClientHello();
     });
 
     socket.addEventListener('message', (event) => {
@@ -677,6 +678,22 @@ export class RealtimeClient {
     });
   }
 
+  private sendGenericClientHello(): void {
+    this.sendRaw({
+      type: 'generic-client-hello',
+      capabilities: detectGenericBrowserCapabilities(),
+      viewport: detectGenericBrowserViewport(),
+    });
+  }
+
+  private sendRaw(payload: Record<string, unknown>): boolean {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+    this.socket.send(JSON.stringify(payload));
+    return true;
+  }
+
   private send(message: ClientMessage): boolean {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       return false;
@@ -708,4 +725,58 @@ export class RealtimeClient {
 function buildRealtimeUrl(): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}${REALTIME_WEBSOCKET_PATH}`;
+}
+
+function detectGenericBrowserCapabilities(): {
+  readonly touch: boolean;
+  readonly fullscreen: boolean;
+  readonly audioPlayback: boolean;
+  readonly canReloadPage: boolean;
+} {
+  let touch = false;
+  try {
+    touch =
+      (window.matchMedia?.('(pointer: coarse)').matches ?? false) ||
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0;
+  } catch {
+    touch = false;
+  }
+
+  let fullscreen = false;
+  try {
+    fullscreen = Boolean(
+      document.fullscreenEnabled ||
+        (document as Document & { webkitFullscreenEnabled?: boolean })
+          .webkitFullscreenEnabled,
+    );
+  } catch {
+    fullscreen = false;
+  }
+
+  let audioPlayback = false;
+  try {
+    audioPlayback = typeof Audio !== 'undefined';
+  } catch {
+    audioPlayback = false;
+  }
+
+  return {
+    touch,
+    fullscreen,
+    audioPlayback,
+    canReloadPage: true,
+  };
+}
+
+function detectGenericBrowserViewport(): {
+  readonly width: number;
+  readonly height: number;
+  readonly devicePixelRatio: number;
+} {
+  return {
+    width: window.innerWidth || 0,
+    height: window.innerHeight || 0,
+    devicePixelRatio: window.devicePixelRatio || 1,
+  };
 }
